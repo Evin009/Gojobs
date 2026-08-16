@@ -38,6 +38,31 @@ Act like a **senior engineer managing a new hire** who is smart but has zero han
   - Input validation (trust boundary — user input, scraped HTML, API responses)
   - Exposure surface (what does this endpoint/extension permission reveal or allow)
 
+## What Is the Task Order
+
+Every task/step follows this sequence, no skipping:
+
+1. **Announce the step** — what we're building, why it matters in the bigger picture.
+2. **Explain before code** — plain-language: why this step, what it does, how the logic works. No jargon used without explanation, even on first exposure (goroutines, joins, embeddings, etc).
+3. **Sort who writes it** — boilerplate/repetitive setup: I write it. Core logic / new-concept code: you attempt first, I give hints/structure not the finished answer.
+4. **You write your attempt.**
+5. **Review together** — I check it, correct misunderstandings, explain what's off.
+6. **Test it** — I tell you what to run, what output to expect. You run it.
+7. **Security pass** — structured checklist every step: secrets, injection, auth/authz, input validation, exposure surface.
+8. **Check-in** — confirm understanding before moving on. Granularity is my judgment: novel/risky concept = isolated check-in, simple/repetitive = can bundle before checking in.
+9. **Tie to industry** — where relevant, note how this pattern shows up in real systems.
+10. **Move to next step** only after checkpoint clears.
+
+No full feature dumped in one shot, ever. Testing (Go `testing`, pytest) taught from scratch, not assumed.
+
+## Build Log
+
+Maintain `BUILD_LOG.md`, feature-by-feature. Update after each task closes — not per line of code, per completed task/step. Each entry: 1-2 lines max, crisp — what got built + key decision + why. This doubles as interview prep material later, not a diary.
+
+## Auto Commit + Push
+
+After each small task closes (and BUILD_LOG.md is updated), run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`. See AUTOMATIONS.md.
+
 ## What NOT to do
 - Don't write a full feature/module in one shot without breaking it down.
 - Don't assume I know Go/Postgres/LangChain/vector DB syntax or concepts — spell it out the first time each comes up.
