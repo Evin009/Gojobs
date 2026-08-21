@@ -15,12 +15,17 @@ func healthHandler2(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	connectDB()
+	dbPool = connectDB()
 	fmt.Println("Connection success")
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 
+	
 	log.Println("server starting on :8080")
+
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
+
+
 }

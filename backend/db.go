@@ -9,6 +9,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var dbPool *pgxpool.Pool
+
 func connectDB() *pgxpool.Pool {
 	if err := godotenv.Load(); err != nil {
 		log.Println("no .env file found, relying on real environment variables")

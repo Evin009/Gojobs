@@ -42,5 +42,8 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-20 — Organized SQL into migrations folder
 - Built: moved `table.sql` → `backend/migrations/001_create_jobs.sql`, added trailing semicolon.
 
-## Phase 1 — Go backend skeleton
-_(in progress — next: Go inserts/queries against `jobs`)_
+### 2026-08-21 — InsertJob writes to Supabase
+- Built: `backend/jobs.go` (`InsertJob`) — parameterized INSERT with `ON CONFLICT (url) DO NOTHING` dedupe; verified a real row lands in Supabase via direct SQL check.
+- Decision: package-level `dbPool` var in `db.go`, set once in `main()` — simplest sharing approach for current project size.
+
+## Phase 1 — Go backend skeleton: complete
