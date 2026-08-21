@@ -8,4 +8,4 @@ create table jobs (
     created_at TIMESTAMPTZ not null  default now()
 
 
-)
+);
