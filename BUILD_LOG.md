@@ -35,5 +35,9 @@ Format per entry (1-2 lines max, no more):
 - Built: `backend/db.go` (`connectDB()` — pgx pool + Ping), wired into `main.go`; used Session Pooler connection string (direct connection needs IPv6, unavailable on this network).
 - Decision: `connectDB()` crashes via `log.Fatalf` on connection failure instead of returning an error — app is useless without DB, fail fast at startup.
 
+### 2026-08-20 — Created `jobs` table
+- Built: `backend/table.sql` — `jobs` table (id/company/role/description/url/source/created_at), unique constraint on `url` for dedupe, RLS enabled with zero policies.
+- Decision: unique `url` constraint doubles as dedupe logic — insert and let Postgres reject repeats instead of manual diff checks.
+
 ## Phase 1 — Go backend skeleton
-_(in progress — next: create `jobs` table, run first real query)_
+_(in progress — next: Go inserts/queries against `jobs`)_
