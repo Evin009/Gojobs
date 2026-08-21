@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,6 +15,9 @@ func healthHandler2(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	connectDB()
+	fmt.Println("Connection success")
+
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 

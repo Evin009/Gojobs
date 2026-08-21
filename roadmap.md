@@ -3,19 +3,19 @@
 Ordered by dependency + learning curve. Each phase = working, testable piece. Follows agent.md mentor rules — no full features dumped, checkpoints between phases.
 
 ## Phase 0 — Environment
-Install Go, Postgres, Python venv. Verify each runs. (Boilerplate, I set this up, you verify.)
+Install Go, Python venv, create Supabase project. Verify each runs. (Boilerplate, I set this up, you verify.)
 
 ## Phase 1 — Go backend skeleton
-Single `/health` endpoint, connect to Postgres, confirm query works.
-**Learn:** Go project structure, `net/http` or `chi`, DB driver basics.
+Single `/health` endpoint, connect to Supabase Postgres, confirm query works.
+**Learn:** Go project structure, `net/http` or `chi`, DB driver basics, Supabase connection string.
 
 ## Phase 2 — Greenhouse monitor (single company)
 Go hits one Greenhouse JSON API, parses response, prints matching jobs.
 **Learn:** HTTP client in Go, JSON unmarshaling, structs.
 
 ## Phase 3 — Persist + dedupe
-Save fetched postings to Postgres `jobs` table. Skip ones already seen.
-**Learn:** SQL inserts, basic query, simple diff logic.
+Save fetched postings to Supabase `jobs` table. Skip ones already seen.
+**Learn:** SQL inserts, basic query, simple diff logic, RLS basics (why it matters even for a solo backend service).
 
 ## Phase 4 — Slack notify
 POST to Slack webhook when a new job is found.
@@ -59,6 +59,6 @@ Kanban CRUD (Applied/OA/Interview/Offer/Rejected), auto-updated on apply.
 
 ---
 
-**Why this order:** Go+Postgres fundamentals first (phases 1-6, no AI yet — simplest layer). Then simplest possible AI call (phase 7-9, no agent framework). Then add real complexity last (RAG, extension DOM work, judgment fields) once fundamentals are solid.
+**Why this order:** Go+Supabase fundamentals first (phases 1-6, no AI yet — simplest layer). Then simplest possible AI call (phase 7-9, no agent framework). Then add real complexity last (RAG, extension DOM work, judgment fields) once fundamentals are solid.
 
 Start at Phase 0/1 whenever ready.

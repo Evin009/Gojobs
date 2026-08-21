@@ -23,9 +23,10 @@ Go Backend (cron + goroutines)
    - Slack webhook on match
    - /jobs/process         (orchestrates tailoring + autofill pipeline)
    - /tracker              (CRUD)
-   - Postgres client
+   - Supabase client (Postgres + Auth)
    |
-   |--> Postgres (users, resumes [.tex], jobs, applications/tracker, writing_samples)
+   |--> Supabase Postgres (users, resumes [.tex], jobs, applications/tracker, writing_samples)
+   |--> Supabase Auth (user accounts, sessions)
    |
    |  HTTP
    v
@@ -42,8 +43,8 @@ Claude API
 
 Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, triggered when user opens an application page.
 
-## Postgres Schema (rough)
-- `users` — account info
+## Supabase (Postgres) Schema (rough)
+- `users` — account info (Supabase Auth handles auth itself; this table holds app-specific profile data linked to `auth.users`)
 - `resumes` — raw `.tex` content, versioned
 - `jobs` — company, role, description, url, source (greenhouse/github)
 - `applications` — tracker: job_id, resume_version, status, date_applied
@@ -54,7 +55,7 @@ Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, trig
 |---|---|
 | Extension | JavaScript/TypeScript, Manifest V3 |
 | Backend | Go (`net/http` or `chi`/`gin`) |
-| Backend DB | Postgres |
+| Backend DB + Auth | Supabase (managed Postgres + Auth + RLS) |
 | Concurrency | Go goroutines (multi-company/repo polling) |
 | Notifications | Slack webhook |
 | AI service | Python, FastAPI |

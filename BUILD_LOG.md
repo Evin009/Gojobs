@@ -27,5 +27,13 @@ Format per entry (1-2 lines max, no more):
 - Built: `backend/go.mod`, `backend/main.go` with stdlib `net/http` server, `/health` → "ok", `/ping` → "pong".
 - Decision: raw `net/http` over gin/chi for now — learn routing/handlers manually before reaching for a framework.
 
+### 2026-08-20 — Switched Postgres to Supabase
+- Decision: use Supabase (managed Postgres + Auth + RLS) instead of local Postgres — avoids local install/multi-version conflicts hit during setup, adds free Auth for later phases.
+- Built: `.gitignore`, `backend/.env` (real secrets, gitignored) + `.env.example`; plan.md/roadmap.md updated to reference Supabase throughout.
+
+### 2026-08-20 — Go connects to Supabase Postgres
+- Built: `backend/db.go` (`connectDB()` — pgx pool + Ping), wired into `main.go`; used Session Pooler connection string (direct connection needs IPv6, unavailable on this network).
+- Decision: `connectDB()` crashes via `log.Fatalf` on connection failure instead of returning an error — app is useless without DB, fail fast at startup.
+
 ## Phase 1 — Go backend skeleton
-_(in progress — next: Postgres connection)_
+_(in progress — next: create `jobs` table, run first real query)_
