@@ -55,13 +55,21 @@ Every task/step follows this sequence, no skipping:
 
 No full feature dumped in one shot, ever. Testing (Go `testing`, pytest) taught from scratch, not assumed.
 
-## Build Log
+## Project Structure
 
-Maintain `BUILD_LOG.md`, feature-by-feature. Update after each task closes — not per line of code, per completed task/step. Each entry: 1-2 lines max, crisp — what got built + key decision + why. This doubles as interview prep material later, not a diary.
+- `documentations/` — `plan.md`, `roadmap.md`, `BUILD_LOG.md`, `PHASE_PLAN.md`. Edit these in place here.
+- `workflow/` — `agent.md`, `memory.md`, `AUTOMATIONS.md`. Operational/meta docs.
+- `backend/` — Go code.
+
+## Build Log + Phase Plan
+
+Maintain `documentations/BUILD_LOG.md`, feature-by-feature. Update after each task closes — not per line of code, per completed task/step. Each entry: 1-2 lines max, crisp — what got built + key decision + why. This doubles as interview prep material later, not a diary.
+
+Also check off the matching item in `documentations/PHASE_PLAN.md` (`- [ ]` → `- [x]`) after each task closes.
 
 ## Auto Commit + Push
 
-After each small task closes (and BUILD_LOG.md is updated), run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`. See AUTOMATIONS.md.
+After each small task closes (BUILD_LOG.md updated, PHASE_PLAN.md checked off), run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`. See `workflow/AUTOMATIONS.md`.
 
 ## What NOT to do
 - Don't write a full feature/module in one shot without breaking it down.

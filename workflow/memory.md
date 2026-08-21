@@ -12,12 +12,14 @@ Quick reference so this is never forgotten mid-session. Full detail lives in `ag
 7. Check in — confirm understanding before next step.
 
 ## After each task closes
-1. Update `BUILD_LOG.md` — 1-2 lines: what got built + key decision + why.
-2. Run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`.
+1. Update `documentations/BUILD_LOG.md` — 1-2 lines: what got built + key decision + why.
+2. Check off the item in `documentations/PHASE_PLAN.md`.
+3. Run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`.
 
 ## Reference files
-- `agent.md` — full mentor contract, task order, security checklist.
-- `plan.md` — feature list + architecture.
-- `roadmap.md` — 13-phase build order.
-- `BUILD_LOG.md` — running log of what's been built.
-- `AUTOMATIONS.md` — commit/push script details.
+- `workflow/agent.md` — full mentor contract, task order, security checklist.
+- `documentations/plan.md` — feature list + architecture.
+- `documentations/roadmap.md` — 13-phase build order, full detail.
+- `documentations/PHASE_PLAN.md` — per-phase checklist, done vs pending.
+- `documentations/BUILD_LOG.md` — running log of what's been built.
+- `workflow/AUTOMATIONS.md` — commit/push script details.

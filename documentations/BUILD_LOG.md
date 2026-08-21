@@ -46,4 +46,8 @@ Format per entry (1-2 lines max, no more):
 - Built: `backend/jobs.go` (`InsertJob`) — parameterized INSERT with `ON CONFLICT (url) DO NOTHING` dedupe; verified a real row lands in Supabase via direct SQL check.
 - Decision: package-level `dbPool` var in `db.go`, set once in `main()` — simplest sharing approach for current project size.
 
+### 2026-08-21 — Docs reorganized, phase checklist added
+- Built: `documentations/` (plan/roadmap/build log) and `workflow/` (agent.md/memory.md/automations) folders; `documentations/PHASE_PLAN.md` — per-phase checkbox list.
+- Decision: `agent.md`/`memory.md` updated to point at new paths and to check off `PHASE_PLAN.md` after each task.
+
 ## Phase 1 — Go backend skeleton: complete
