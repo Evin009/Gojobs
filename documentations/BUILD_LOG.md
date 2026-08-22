@@ -51,3 +51,7 @@ Format per entry (1-2 lines max, no more):
 - Decision: `agent.md`/`memory.md` updated to point at new paths and to check off `PHASE_PLAN.md` after each task.
 
 ## Phase 1 — Go backend skeleton: complete
+
+### 2026-08-22 — Greenhouse fetch working
+- Built: `backend/greenhouse.go` — `FetchGreenhouseJobs(company)`, structs matching Greenhouse's JSON shape; verified live against Stripe's real board (576 jobs parsed).
+- Decision: list endpoint has no full job description — storing empty placeholder for now, deferred to a later per-job detail fetch.

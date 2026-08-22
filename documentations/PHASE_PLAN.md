@@ -12,8 +12,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] `InsertJob` writes + dedupes, verified end to end
 
 ## Phase 2 — Greenhouse monitor (single company)
-- [ ] Go HTTP client hits Greenhouse JSON API
-- [ ] Parse response into Go structs
+- [x] Go HTTP client hits Greenhouse JSON API
+- [x] Parse response into Go structs
 - [ ] Print matching postings by keyword
 
 ## Phase 3 — Persist + dedupe
