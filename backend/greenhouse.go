@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 )
 
-type GreenhouseLocation struct {
+type GreenhouseLocation struct { // lcn := GreenhouseLocation{Name: "San Fransisco"}
 	Name string `json:"name"`
 }
 
+// api response structure
 type GreenhouseJob struct {
 	ID          int                `json:"id"`
 	Title       string             `json:"title"`
@@ -18,6 +19,21 @@ type GreenhouseJob struct {
 	UpdatedAt   string             `json:"updated_at"`
 }
 
+/*
+job := GreenhouseJob{
+	ID:          8130725,
+	Title:       "Account Executive",
+	AbsoluteURL: "https://stripe.com/jobs/8130725",
+	CompanyName: "Stripe",
+	Location: GreenhouseLocation{
+		Name: "San Francisco",
+	},
+	UpdatedAt: "2026-08-19T14:02:07-04:00",
+}
+*/
+
+
+// list called Jobs - of api responses
 type GreenhouseResponse struct {
 	Jobs []GreenhouseJob `json:"jobs"`
 }
