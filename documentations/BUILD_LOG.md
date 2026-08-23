@@ -66,3 +66,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-22 — Slack notify wired end to end
 - Built: `backend/slack.go` (`SendSlackMessage`) — JSON-encodes and POSTs to a Slack Incoming Webhook; `InsertJob` now returns `(inserted bool, error)` via `RowsAffected()` so `SaveGreenhouseJobs` only notifies on genuinely new jobs, not duplicates.
 - Verified live against Airbnb's board — 2 new "intern" matches triggered 2 real Slack messages. Phase 4 complete.
+
+### 2026-08-22 — Batched Slack notify + keyword filter fix
+- Built: `SaveGreenhouseJobs` now returns newly-inserted jobs instead of notifying per-job; `NotifyNewJobs` sends one summary message (count + timestamp + numbered list) instead of spamming one message per job.
+- Bug found + fixed: `filterJobsKeyword` used substring matching, so keyword "intern" matched "Internal Audit" jobs. Switched to `regexp` with `\b` word boundaries — verified live against Coinbase (correctly went from 6 false matches to 0 real ones).
