@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
+	"time"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ func main() {
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 
-	
+	go StartMonitorLoop([]string{"gitlab", "coinbase", "figma", "brex"}, "engineer", 30*time.Minute)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

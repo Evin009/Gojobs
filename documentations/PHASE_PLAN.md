@@ -24,8 +24,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] POST to Slack webhook on new job found
 
 ## Phase 5 — Concurrency + scheduling
-- [ ] Poll multiple companies concurrently (goroutines)
-- [ ] Repeat on interval (`time.Ticker`)
+- [x] Poll multiple companies concurrently (goroutines)
+- [x] Repeat on interval (`time.Ticker`)
 
 ## Phase 6 — GitHub repo monitor
 - [ ] Second data source, reuse monitor pattern

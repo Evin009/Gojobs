@@ -70,3 +70,8 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-22 — Batched Slack notify + keyword filter fix
 - Built: `SaveGreenhouseJobs` now returns newly-inserted jobs instead of notifying per-job; `NotifyNewJobs` sends one summary message (count + timestamp + numbered list) instead of spamming one message per job.
 - Bug found + fixed: `filterJobsKeyword` used substring matching, so keyword "intern" matched "Internal Audit" jobs. Switched to `regexp` with `\b` word boundaries — verified live against Coinbase (correctly went from 6 false matches to 0 real ones).
+
+### 2026-08-22 — Concurrent multi-company monitor + scheduling
+- Built: `backend/monitor.go` — `MonitorGreenhouseCompanies` (goroutines + channel + WaitGroup, checks all companies in parallel, one combined Slack summary), `StartMonitorLoop` (`time.Ticker`, repeats forever). Wired into `main.go` at a real 30-minute interval.
+- Verified live: Figma + Brex fetched/saved concurrently (70 rows), Slack summary received. Phase 5 complete.
+- Noted for later: `FetchGreenhouseJobs` has no request timeout — a hung request could cause overlapping runs since later ticks launch via `go`. Flagged, not yet fixed. Company list/keyword still hardcoded — becomes a real setting once user-config exists.
