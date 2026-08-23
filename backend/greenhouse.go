@@ -84,9 +84,17 @@ func SaveGreenhouseJobs(jobs []GreenhouseJob) {
 		description := ""
 		url := job.AbsoluteURL
 		source := "greenhouse"
-
-		if err := InsertJob(company, role, description, url, source); err != nil {
+		
+		// return insrted = true (if new addiiton)
+		inserted, err := InsertJob(company, role, description, url, source)
+		if err != nil {		
 			fmt.Println(err)
+			continue
+		}
+		
+		// send data to slack
+		if inserted {
+			SendSlackMessage("New job: " + job.Title + " — " + job.AbsoluteURL)
 		}
 	}
 }

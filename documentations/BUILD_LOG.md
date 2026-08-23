@@ -62,3 +62,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-22 — Save + dedupe verified end to end
 - Built: `SaveGreenhouseJobs(jobs)` — loops matched jobs, calls `InsertJob`, logs failures without stopping the batch.
 - Verified live: first run inserted 129 rows, second identical run left row count unchanged — `ON CONFLICT (url) DO NOTHING` dedupe confirmed working. Phase 3 complete.
+
+### 2026-08-22 — Slack notify wired end to end
+- Built: `backend/slack.go` (`SendSlackMessage`) — JSON-encodes and POSTs to a Slack Incoming Webhook; `InsertJob` now returns `(inserted bool, error)` via `RowsAffected()` so `SaveGreenhouseJobs` only notifies on genuinely new jobs, not duplicates.
+- Verified live against Airbnb's board — 2 new "intern" matches triggered 2 real Slack messages. Phase 4 complete.

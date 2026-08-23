@@ -21,7 +21,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Confirm duplicates get skipped
 
 ## Phase 4 — Slack notify
-- [ ] POST to Slack webhook on new job found
+- [x] POST to Slack webhook on new job found
 
 ## Phase 5 — Concurrency + scheduling
 - [ ] Poll multiple companies concurrently (goroutines)
