@@ -58,3 +58,7 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-22 — Keyword filter for Greenhouse jobs
 - Built: `filterJobsKeyword(jobs, keyword)` — case-insensitive title match via `strings.Contains`/`ToLower`; verified live (129/575 Stripe jobs matched "engineer"). Phase 2 complete.
+
+### 2026-08-22 — Save + dedupe verified end to end
+- Built: `SaveGreenhouseJobs(jobs)` — loops matched jobs, calls `InsertJob`, logs failures without stopping the batch.
+- Verified live: first run inserted 129 rows, second identical run left row count unchanged — `ON CONFLICT (url) DO NOTHING` dedupe confirmed working. Phase 3 complete.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"encoding/json"
 	"strings"
@@ -72,4 +73,20 @@ func filterJobsKeyword(jobs []GreenhouseJob, keyword string) []GreenhouseJob {
 
 	return matches
 
+}
+
+
+// insert greenshouse matched jobs to db
+func SaveGreenhouseJobs(jobs []GreenhouseJob) {
+	for _, job := range jobs {
+		company := job.CompanyName
+		role := job.Title
+		description := ""
+		url := job.AbsoluteURL
+		source := "greenhouse"
+
+		if err := InsertJob(company, role, description, url, source); err != nil {
+			fmt.Println(err)
+		}
+	}
 }

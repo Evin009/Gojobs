@@ -17,8 +17,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Print matching postings by keyword
 
 ## Phase 3 — Persist + dedupe
-- [ ] Save fetched postings via `InsertJob`
-- [ ] Confirm duplicates get skipped
+- [x] Save fetched postings via `InsertJob`
+- [x] Confirm duplicates get skipped
 
 ## Phase 4 — Slack notify
 - [ ] POST to Slack webhook on new job found
