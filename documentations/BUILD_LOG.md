@@ -55,3 +55,6 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-22 — Greenhouse fetch working
 - Built: `backend/greenhouse.go` — `FetchGreenhouseJobs(company)`, structs matching Greenhouse's JSON shape; verified live against Stripe's real board (576 jobs parsed).
 - Decision: list endpoint has no full job description — storing empty placeholder for now, deferred to a later per-job detail fetch.
+
+### 2026-08-22 — Keyword filter for Greenhouse jobs
+- Built: `filterJobsKeyword(jobs, keyword)` — case-insensitive title match via `strings.Contains`/`ToLower`; verified live (129/575 Stripe jobs matched "engineer"). Phase 2 complete.

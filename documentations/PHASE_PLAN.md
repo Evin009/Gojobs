@@ -14,7 +14,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 ## Phase 2 — Greenhouse monitor (single company)
 - [x] Go HTTP client hits Greenhouse JSON API
 - [x] Parse response into Go structs
-- [ ] Print matching postings by keyword
+- [x] Print matching postings by keyword
 
 ## Phase 3 — Persist + dedupe
 - [ ] Save fetched postings via `InsertJob`
