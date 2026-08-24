@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"encoding/json"
 	"regexp"
-	"strings"
-	"time"
 )
 
 type GreenhouseLocation struct { // lcn := GreenhouseLocation{Name: "San Fransisco"}
@@ -85,9 +83,9 @@ func filterJobsKeywords(jobs []GreenhouseJob, keywords []string) []GreenhouseJob
 }
 
 
-// insert greenshouse matched jobs to db
-func SaveGreenhouseJobs(jobs []GreenhouseJob) []GreenhouseJob {
-	var newJobs []GreenhouseJob
+// insert greenhouse matched jobs to db, return the ones that were actually new
+func SaveGreenhouseJobs(jobs []GreenhouseJob) []JobPosting {
+	var newJobs []JobPosting
 
 	for _, job := range jobs {
 		company := job.CompanyName
@@ -95,35 +93,23 @@ func SaveGreenhouseJobs(jobs []GreenhouseJob) []GreenhouseJob {
 		description := ""
 		url := job.AbsoluteURL
 		source := "greenhouse"
-		
-		// return insrted = true (if new addiiton)
+
 		inserted, err := InsertJob(company, role, description, url, source)
-		if err != nil {		
+		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		
-		// send data to slack
+
 		if inserted {
-			newJobs = append(newJobs, job)
+			newJobs = append(newJobs, JobPosting{
+				CompanyName: job.CompanyName,
+				Title:       job.Title,
+				AbsoluteURL: job.AbsoluteURL,
+				Location:    job.Location.Name,
+				Source:      "greenhouse",
+			})
 		}
 	}
 
 	return newJobs
-}
-
-// send one batched slack message summarizing all new jobs found in this check
-func NotifyNewJobs(newJobs []GreenhouseJob) error {
-	if len(newJobs) == 0 {
-		return nil
-	}
-
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("📋 *%d new jobs* (checked at %s)\n", len(newJobs), time.Now().Format("3:04 PM")))
-
-	for i, job := range newJobs {
-		sb.WriteString(fmt.Sprintf("%d. *%s* — <%s|%s> (%s)\n", i+1, job.CompanyName, job.AbsoluteURL, job.Title, job.Location.Name))
-	}
-
-	return SendSlackMessage(sb.String())
 }

@@ -28,7 +28,9 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Repeat on interval (`time.Ticker`)
 
 ## Phase 6 — GitHub repo monitor
-- [ ] Second data source, reuse monitor pattern
+- [ ] `monitored_repos` Supabase table (dynamic repo list, not hardcoded)
+- [ ] Fetch + filter + save GitHub listings JSON feed (reuse monitor pattern)
+- [ ] Notify via same batched Slack summary
 
 ## Phase 7 — Python AI service skeleton
 - [ ] FastAPI hello-world
@@ -48,6 +50,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 ## Phase 11 — Extension skeleton
 - [ ] Manifest V3 setup
 - [ ] Detect job application page, read form fields
+- [ ] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos`
 
 ## Phase 12 — AI-judgment autofill
 - [ ] Classify field types

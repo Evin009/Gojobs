@@ -26,8 +26,8 @@ Poll 5-10 companies concurrently via goroutines, repeat on interval (cron).
 **Learn:** goroutines, channels, `time.Ticker`.
 
 ## Phase 6 — GitHub repo monitor
-Second data source, reuse Phase 2-5 pattern (diff + notify).
-**Learn:** GitHub API, applying an established pattern to new input.
+Second data source, reuse Phase 2-5 pattern (fetch JSON listings feed + notify). Repo list is dynamic — stored in a new `monitored_repos` Supabase table, not hardcoded — so it's ready for the extension to add repos later (Phase 11+).
+**Learn:** GitHub API/JSON listings feeds, applying an established pattern to new input, designing for a not-yet-built consumer (the extension).
 
 ## Phase 7 — Python AI service skeleton
 FastAPI hello-world, one endpoint that calls Claude API directly (no LangChain yet).
@@ -46,7 +46,7 @@ Introduce Chroma + LangChain. Embed past writing samples, retrieve relevant ones
 **Learn:** embeddings, vector search, RAG basics.
 
 ## Phase 11 — Extension skeleton
-Manifest V3 extension, detect job application page, read form fields.
+Manifest V3 extension, detect job application page, read form fields. Also: when the user visits any GitHub repo page, show a popup asking "monitor this repo for updates?" — on click, calls the backend to add it to `monitored_repos` (built in Phase 6).
 **Learn:** content scripts, DOM access, extension permissions.
 
 ## Phase 12 — AI-judgment autofill

@@ -12,7 +12,7 @@ import (
 // If nothing new matched, NotifyNewJobs stays silent (no empty pings).
 func MonitorGreenhouseCompanies(companies []string, keywords []string) {
 	// buffered so each goroutine can drop its result in without waiting for a reader
-	resultsChan := make(chan []GreenhouseJob, len(companies))
+	resultsChan := make(chan []JobPosting, len(companies))
 	var wg sync.WaitGroup
 
 	for _, company := range companies {
@@ -39,7 +39,7 @@ func MonitorGreenhouseCompanies(companies []string, keywords []string) {
 	close(resultsChan)
 
 	// combine every company's results into one slice before notifying
-	var allNew []GreenhouseJob
+	var allNew []JobPosting
 	for jobs := range resultsChan {
 		allNew = append(allNew, jobs...)
 	}

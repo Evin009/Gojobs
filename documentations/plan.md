@@ -6,7 +6,7 @@ System that monitors job boards/repos for new postings matching your criteria, a
 ## Features
 
 1. **Job monitoring — Greenhouse** — poll public Greenhouse JSON API per company, filter by keyword (e.g. "software engineering intern").
-2. **Job monitoring — GitHub repos** — watch tracker repos (e.g. "Summer2026-Internships"), diff commits/README for new posting rows.
+2. **Job monitoring — GitHub repos** — watch tracker repos (e.g. "Summer2026-Internships") via their JSON listings feed; repo list is dynamic (stored in DB), not hardcoded — user adds repos via the extension's "monitor this repo?" popup shown when they visit a GitHub repo page (Phase 11+).
 3. **Slack notification** — alert user the moment a new matching posting is found from either source.
 4. **Resume tailoring (LaTeX)** — take user's raw `.tex` resume, AI rewrites/inserts keywords into bullet content only, structure/commands untouched, recompiled to PDF.
 5. **Cover letter generation** — AI writes cover letter in user's own voice, style learned from past writing samples.
@@ -47,6 +47,7 @@ Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, trig
 - `users` — account info (Supabase Auth handles auth itself; this table holds app-specific profile data linked to `auth.users`)
 - `resumes` — raw `.tex` content, versioned
 - `jobs` — company, role, description, url, source (greenhouse/github)
+- `monitored_repos` — url, added_at (dynamic GitHub repo list, user-added via extension popup)
 - `applications` — tracker: job_id, resume_version, status, date_applied
 - `writing_samples` — raw text used to seed vector DB
 
