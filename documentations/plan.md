@@ -66,6 +66,12 @@ Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, trig
 | Resume format | LaTeX (`.tex` in, `.tex` out, compiled via `pdflatex`/`tectonic`) |
 | Infra (later) | Docker, docker-compose |
 
+## Hosting (future — review later)
+- **Decision leaning:** always-on host (Railway/Fly.io/Render), not serverless cron.
+- **Why:** extension needs a live synchronous API anyway (login, add-repo, tracker CRUD) — that means an always-on server either way, so monitoring should live in the same process rather than a second deployment target. Serverless functions also cap execution time, risky once monitoring covers many users' companies/repos in one run.
+- **Multi-tenant note:** hosting choice doesn't solve multi-user support by itself — that needs per-user companies/keywords/Slack webhook (application-level change). `monitored_repos` already being DB-backed instead of hardcoded is a head start on that pattern.
+- Not started — revisit when ready to actually deploy.
+
 ## Why this stack
 - Go: fast concurrent I/O layer — polling, routing, DB, orchestration. Mirrors real industry use (K8s, Docker, Uber-style backend infra).
 - Python: richest AI/agent tooling (LangChain/LangGraph, official Claude SDK, vector DB libraries).
