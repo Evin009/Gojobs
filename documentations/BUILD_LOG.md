@@ -83,3 +83,6 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-23 — Refactored to shared JobPosting type; scoped GitHub monitor design
 - Built: `backend/jobposting.go` — `JobPosting` struct (company/title/url/location/source) + `NotifyNewJobs` now generic across sources; `SaveGreenhouseJobs` converts to it. Regression-tested against Block, still correct.
 - Decision: GitHub repo list will be dynamic (new `monitored_repos` Supabase table), not hardcoded — sets up for the extension's future "monitor this repo?" popup (Phase 11) to add repos via the backend. Docs (plan/roadmap/phase plan) updated to record this before building it.
+
+### 2026-08-23 — monitored_repos table + Go read/write
+- Built: `monitored_repos` table (url unique, RLS enabled); `AddMonitoredRepo`/`GetMonitoredRepos` in `backend/monitored_repo.go` — first use of `pool.Query`/`rows.Scan` for reading multiple rows back (vs `Exec` for writes). Verified live end to end.
