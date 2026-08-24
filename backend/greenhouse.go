@@ -64,14 +64,20 @@ func FetchGreenhouseJobs(company string) ([]GreenhouseJob, error){
 
 }
 
-// filter jobs in arr with specific keyword (whole-word match, not substring)
-func filterJobsKeyword(jobs []GreenhouseJob, keyword string) []GreenhouseJob {
-	pattern := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(keyword) + `\b`)
-
+// keeps jobs whose title whole-word-matches ANY of the given keywords (not substring).
+// e.g. keywords=["intern","internship"] matches "Software Engineer Intern" and
+// "Marketing Internship" but not "Internal Audit".
+func filterJobsKeywords(jobs []GreenhouseJob, keywords []string) []GreenhouseJob {
 	var matches []GreenhouseJob
+
 	for _, job := range jobs {
-		if pattern.MatchString(job.Title) {
-			matches = append(matches, job)
+		for _, keyword := range keywords {
+			// \b = word boundary, so "intern" won't match inside "internal"
+			pattern := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(keyword) + `\b`)
+			if pattern.MatchString(job.Title) {
+				matches = append(matches, job)
+				break // already matched this job, no need to check remaining keywords
+			}
 		}
 	}
 
@@ -116,7 +122,7 @@ func NotifyNewJobs(newJobs []GreenhouseJob) error {
 	sb.WriteString(fmt.Sprintf("📋 *%d new jobs* (checked at %s)\n", len(newJobs), time.Now().Format("3:04 PM")))
 
 	for i, job := range newJobs {
-		sb.WriteString(fmt.Sprintf("%d. *%s* — <%s|%s>\n", i + 1, job.CompanyName, job.AbsoluteURL, job.Title))
+		sb.WriteString(fmt.Sprintf("%d. *%s* — <%s|%s> (%s)\n", i+1, job.CompanyName, job.AbsoluteURL, job.Title, job.Location.Name))
 	}
 
 	return SendSlackMessage(sb.String())

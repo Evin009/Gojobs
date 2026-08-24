@@ -75,3 +75,7 @@ Format per entry (1-2 lines max, no more):
 - Built: `backend/monitor.go` — `MonitorGreenhouseCompanies` (goroutines + channel + WaitGroup, checks all companies in parallel, one combined Slack summary), `StartMonitorLoop` (`time.Ticker`, repeats forever). Wired into `main.go` at a real 30-minute interval.
 - Verified live: Figma + Brex fetched/saved concurrently (70 rows), Slack summary received. Phase 5 complete.
 - Noted for later: `FetchGreenhouseJobs` has no request timeout — a hung request could cause overlapping runs since later ticks launch via `go`. Flagged, not yet fixed. Company list/keyword still hardcoded — becomes a real setting once user-config exists.
+
+### 2026-08-23 — Multi-keyword filter + location in Slack messages
+- Built: `filterJobsKeywords` now takes `[]string` (matches ANY keyword, whole-word); `MonitorGreenhouseCompanies`/`StartMonitorLoop` updated to match; Slack summary now shows `(location)` next to each job.
+- Verified live against Databricks + Robinhood with `["intern","internship"]` — 4 real matches, zero false positives (previous "engineer" test had masked the wrong-keyword issue, not a filter bug).
