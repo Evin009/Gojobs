@@ -30,7 +30,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 ## Phase 6 — GitHub repo monitor
 - [x] `monitored_repos` Supabase table (dynamic repo list, not hardcoded)
 - [x] Fetch + filter + save GitHub listings JSON feed (reuse monitor pattern)
-- [ ] Concurrent multi-repo monitor + notify via same batched Slack summary
+- [x] Concurrent multi-repo monitor + notify via same batched Slack summary
 
 ## Phase 7 — Python AI service skeleton
 - [ ] FastAPI hello-world

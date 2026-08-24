@@ -94,3 +94,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-23 — Reorganized backend into internal/ packages
 - Built: split flat `package main` files into `internal/{db,slack,jobposting,greenhouse,github,monitor}` — each a real Go package now, `main.go` only wires things together. `internal/` is a Go convention restricting imports to code within this module.
 - Verified: full rebuild + live server test (routes, DB connect) confirm nothing broke functionally.
+
+### 2026-08-23 — GitHub concurrent monitor, Phase 6 complete
+- Built: `monitor.GitHub(keywords)` — same concurrent fetch/filter/save/notify pattern as `monitor.Greenhouse`, but reads its repo list dynamically via `db.GetMonitoredRepos()` instead of a hardcoded slice. Wired into `StartLoop` so it runs immediately alongside Greenhouse, not just on the first tick.
+- Verified live: 122 real "product" matches from SimplifyJobs/Summer2026-Internships fetched/saved correctly through the full package-split pipeline.
