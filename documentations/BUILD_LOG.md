@@ -86,3 +86,11 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-23 — monitored_repos table + Go read/write
 - Built: `monitored_repos` table (url unique, RLS enabled); `AddMonitoredRepo`/`GetMonitoredRepos` in `backend/monitored_repo.go` — first use of `pool.Query`/`rows.Scan` for reading multiple rows back (vs `Exec` for writes). Verified live end to end.
+
+### 2026-08-23 — GitHub listings fetch/filter/save built
+- Built: `backend/github.go` — `FetchGitHubListings`/`filterGitHubListings`/`SaveGitHubListings`, same pattern as Greenhouse but decoding a plain-array JSON root (no wrapper object).
+- Verified live against SimplifyJobs/Summer2026-Internships (14,532 listings) — correct matches, correct dedupe, zero crashes on empty location arrays.
+
+### 2026-08-23 — Reorganized backend into internal/ packages
+- Built: split flat `package main` files into `internal/{db,slack,jobposting,greenhouse,github,monitor}` — each a real Go package now, `main.go` only wires things together. `internal/` is a Go convention restricting imports to code within this module.
+- Verified: full rebuild + live server test (routes, DB connect) confirm nothing broke functionally.

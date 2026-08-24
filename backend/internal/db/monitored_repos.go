@@ -1,23 +1,18 @@
-package main
+package db
 
-import (
-	"context"
-)
+import "context"
 
-
-// fn to insert github repo urls to the postgre db
+// AddMonitoredRepo saves a repo's listings-feed URL to watch (no-op if already added).
 func AddMonitoredRepo(url string) error {
-	_, err := dbPool.Exec(context.Background(),
+	_, err := pool.Exec(context.Background(),
 		"INSERT INTO monitored_repos (url) VALUES ($1) ON CONFLICT (url) DO NOTHING", url)
 
 	return err
-
 }
 
-// select urls stored in db
-// adding individual url to url list and return the list
+// GetMonitoredRepos returns every repo URL currently being watched.
 func GetMonitoredRepos() ([]string, error) {
-	rows, err := dbPool.Query(context.Background(), "SELECT url FROM monitored_repos")
+	rows, err := pool.Query(context.Background(), "SELECT url FROM monitored_repos")
 	if err != nil {
 		return nil, err
 	}
@@ -35,5 +30,4 @@ func GetMonitoredRepos() ([]string, error) {
 	}
 
 	return urls, nil
-
 }

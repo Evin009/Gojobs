@@ -1,4 +1,4 @@
-package main
+package db
 
 import (
 	"context"
@@ -9,24 +9,27 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var dbPool *pgxpool.Pool
+var pool *pgxpool.Pool
 
-
-func connectDB() *pgxpool.Pool {
+// Connect opens the connection pool and pings it, crashing on failure since
+// the app is useless without a DB. Must be called once before any other
+// function in this package.
+func Connect() *pgxpool.Pool {
 	if err := godotenv.Load(); err != nil {
 		log.Println("no .env file found, relying on real environment variables")
 	}
 
 	connString := os.Getenv("DATABASE_URL")
 
-	pool, err := pgxpool.New(context.Background(), connString)
+	p, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
 		log.Fatalf("failed to create connection pool: %v", err)
 	}
 
-	if err := pool.Ping(context.Background()); err != nil {
+	if err := p.Ping(context.Background()); err != nil {
 		log.Fatalf("failed to ping database: %v", err)
 	}
 
+	pool = p
 	return pool
 }

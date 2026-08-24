@@ -5,6 +5,9 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/Evin009/Gojobs/backend/internal/db"
+	"github.com/Evin009/Gojobs/backend/internal/monitor"
 )
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -15,16 +18,14 @@ func healthHandler2(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	dbPool = connectDB()
+	db.Connect()
 	fmt.Println("Connection success")
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 
-	go StartMonitorLoop([]string{"databricks", "robinhood"}, []string{"intern", "internship"}, 30*time.Minute)
+	go monitor.StartLoop([]string{"databricks", "robinhood"}, []string{"intern", "internship"}, 30*time.Minute)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-
-
 }

@@ -1,4 +1,4 @@
-package main
+package slack
 
 import (
 	"bytes"
@@ -7,14 +7,13 @@ import (
 	"os"
 )
 
-type SlackMessage struct {
+type message struct {
 	Text string `json:"text"`
 }
 
-
-// convert msg to slack struct then to JSON and then a post to slack
-func SendSlackMessage(message string) error {
-	payload := SlackMessage{Text: message}
+// Send posts a message to the Slack webhook configured via SLACK_WEBHOOK_URL.
+func Send(text string) error {
+	payload := message{Text: text}
 
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {

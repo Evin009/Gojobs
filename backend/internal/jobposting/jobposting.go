@@ -1,14 +1,17 @@
-package main
+package jobposting
 
 import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/Evin009/Gojobs/backend/internal/slack"
 )
 
-// common shape both Greenhouse and GitHub listings convert into before
-// saving/notifying, so the rest of the pipeline doesn't care which source a job came from
-type JobPosting struct {
+// Posting is the common shape every source (Greenhouse, GitHub, ...) converts
+// into before saving/notifying, so the rest of the pipeline doesn't care which
+// source a job came from.
+type Posting struct {
 	CompanyName string
 	Title       string
 	AbsoluteURL string
@@ -16,8 +19,9 @@ type JobPosting struct {
 	Source      string
 }
 
-// send one batched slack message summarizing all new jobs found in this check
-func NotifyNewJobs(newJobs []JobPosting) error {
+// NotifyNew sends one batched slack message summarizing all new jobs found in
+// this check. Stays silent if newJobs is empty.
+func NotifyNew(newJobs []Posting) error {
 	if len(newJobs) == 0 {
 		return nil
 	}
@@ -29,5 +33,5 @@ func NotifyNewJobs(newJobs []JobPosting) error {
 		sb.WriteString(fmt.Sprintf("%d. *%s* — <%s|%s> (%s)\n", i+1, job.CompanyName, job.AbsoluteURL, job.Title, job.Location))
 	}
 
-	return SendSlackMessage(sb.String())
+	return slack.Send(sb.String())
 }
