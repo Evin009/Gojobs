@@ -24,7 +24,7 @@ func main() {
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 
-	go monitor.StartLoop([]string{"databricks", "robinhood"}, []string{"intern", "internship"}, 30*time.Minute)
+	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

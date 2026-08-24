@@ -98,3 +98,8 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-23 — GitHub concurrent monitor, Phase 6 complete
 - Built: `monitor.GitHub(keywords)` — same concurrent fetch/filter/save/notify pattern as `monitor.Greenhouse`, but reads its repo list dynamically via `db.GetMonitoredRepos()` instead of a hardcoded slice. Wired into `StartLoop` so it runs immediately alongside Greenhouse, not just on the first tick.
 - Verified live: 122 real "product" matches from SimplifyJobs/Summer2026-Internships fetched/saved correctly through the full package-split pipeline.
+
+### 2026-08-24 — Grouped, deduped Slack notifications
+- Built: single combined notification per check instead of separate Greenhouse/GitHub messages. `jobposting.Posting` gained `RepoName`; `NotifyNew` now groups output into "*Source: Greenhouse*" and "*Source: GitHub*" (sub-grouped by `repo:`) sections, first-found order preserved via an ordered slice (map iteration order isn't stable in Go). `github.RepoNameFromURL` extracts a readable "owner/repo" label from the feed URL. `monitor.go`'s `Greenhouse`/`GitHub` renamed to unexported `checkGreenhouse`/`checkGitHub`, now return results instead of notifying directly — `runOnce` combines both and sends one message.
+- Confirmed: cross-source duplicate URLs already can't double-notify (unique `url` constraint + `RowsAffected()` check) — no code change needed there, just clarified with the user.
+- Verified live against Cloudflare (Greenhouse) + SimplifyJobs repo (GitHub) — 21 rows saved correctly across both sources, no errors.

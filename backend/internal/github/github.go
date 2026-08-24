@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/jobposting"
@@ -57,8 +58,22 @@ func FilterByKeywords(listings []Listing, keywords []string) []Listing {
 	return matches
 }
 
+// RepoNameFromURL extracts a readable "owner/repo" label from a raw.githubusercontent.com
+// feed URL, e.g. "https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/..."
+// becomes "SimplifyJobs/Summer2026-Internships". Falls back to the raw URL if it
+// doesn't match the expected shape.
+func RepoNameFromURL(url string) string {
+	parts := strings.Split(url, "/")
+	// parts: ["https:", "", "raw.githubusercontent.com", "OWNER", "REPO", ...]
+	if len(parts) < 5 {
+		return url
+	}
+	return parts[3] + "/" + parts[4]
+}
+
 // Save inserts matched listings, returns the ones that were actually new.
-func Save(listings []Listing) []jobposting.Posting {
+// repoName is attached to each posting so notifications can show which repo it came from.
+func Save(listings []Listing, repoName string) []jobposting.Posting {
 	var newJobs []jobposting.Posting
 
 	for _, listing := range listings {
@@ -80,6 +95,7 @@ func Save(listings []Listing) []jobposting.Posting {
 				AbsoluteURL: listing.AbsoluteURL,
 				Location:    location,
 				Source:      "github",
+				RepoName:    repoName,
 			})
 		}
 	}
