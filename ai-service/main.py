@@ -6,6 +6,7 @@ import anthropic
 
 from tailor import tailor_resume
 from latex import compile_latex
+from db import save_resume
 
 load_dotenv()  # loads ANTHROPIC_API_KEY from .env into the environment
 
@@ -35,15 +36,17 @@ def ask(request: AskRequest):
     return {"response": text}
 
 
-# full resume-tailoring pipeline: tailor via Claude, then compile the result to PDF
+# full resume-tailoring pipeline: tailor via Claude, save the version, compile to PDF
 class TailorRequest(BaseModel):
     resume_text: str
     job_description: str
+    job_id: str | None = None  # links the saved resume to a real job row, if known
 
 
 @app.post("/tailor-resume")
 def tailor_resume_endpoint(request: TailorRequest):
     tailored_tex = tailor_resume(request.resume_text, request.job_description)
+    save_resume(tailored_tex, request.job_id)
     pdf_bytes = compile_latex(tailored_tex)
 
     # raw PDF bytes, not JSON — media_type tells the client how to interpret them

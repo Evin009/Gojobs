@@ -40,7 +40,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] LaTeX compile step (`compile_latex`, via tectonic) — verified live, no Claude needed for this part
 - [x] Feed `.tex` + job desc to Claude (`tailor_resume` + `/tailor-resume` wired) — pending credits to fully verify
 - [x] Get edited `.tex` back, compile to PDF (pipeline chained, pending credits)
-- [ ] Save each tailored version as a new `resumes` row, linked to the application via `resume_id` (not overwritten)
+- [x] Save each tailored version as a new `resumes` row, linked to the application via `resume_id` (not overwritten)
 
 ## Phase 9 — Cover letter generation
 - [ ] Reuse Claude-call pattern for cover letters

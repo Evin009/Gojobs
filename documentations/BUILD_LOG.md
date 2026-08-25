@@ -125,3 +125,7 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-24 — resumes table created
 - Built: `backend/migrations/003_create_resume.sql` — `resumes` table (`content` text, nullable `job_id` FK to `jobs.id` since the base resume isn't tied to a job, `created_at`), RLS enabled. Verified live via `\d resumes`.
+
+### 2026-08-25 — Python connects to Supabase, resume saving wired end to end
+- Built: `ai-service/db.py` (`save_resume`, via `psycopg`) — Python's first direct Postgres connection, reuses the same `DATABASE_URL` as the Go backend. Verified live — real row landed in `resumes` (`job_id` correctly `NULL` for a base resume).
+- Wired `save_resume` into `POST /tailor-resume`: tailor → save → compile, in that order. `TailorRequest` gained optional `job_id` to link a tailored version to a real job. Phase 8 fully complete except live-verifying the Claude call itself (pending account credits).
