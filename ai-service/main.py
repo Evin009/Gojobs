@@ -10,6 +10,7 @@ import anthropic
 from tailor import tailor_resume
 from latex import compile_latex
 from db import save_resume
+from cover_letter import generate_cover_letter
 
 load_dotenv()
 
@@ -51,3 +52,14 @@ def tailor_resume_endpoint(request: TailorRequest):
     pdf_bytes = compile_latex(tailored_tex)
 
     return Response(content=pdf_bytes, media_type="application/pdf")
+
+
+class CoverLetterRequest(BaseModel):
+    resume_text: str
+    job_description: str
+
+
+@app.post("/cover-letter")
+def cover_letter_endpoint(request: CoverLetterRequest):
+    letter = generate_cover_letter(request.resume_text, request.job_description)
+    return {"cover_letter": letter}

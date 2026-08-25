@@ -43,7 +43,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Save each tailored version as a new `resumes` row, linked to the application via `resume_id` (not overwritten)
 
 ## Phase 9 — Cover letter generation
-- [ ] Reuse Claude-call pattern for cover letters
+- [x] Reuse Claude-call pattern for cover letters
 
 ## Phase 10 — Style memory (vector DB)
 - [ ] Chroma + LangChain set up
