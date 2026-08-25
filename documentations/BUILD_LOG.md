@@ -108,3 +108,7 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-24 — FastAPI skeleton + /health
 - Built: `ai-service/` (venv, FastAPI + uvicorn + anthropic + python-dotenv, `.env`/`.env.example`/`.gitignore`); `main.py` with `/health` route, verified live (`200 OK`).
+
+### 2026-08-24 — POST /ask endpoint (Claude API call)
+- Built: `/ask` route — Pydantic `AskRequest` body, calls `client.messages.create` (model `claude-opus-5`), extracts the text block from `response.content`.
+- Status: request reaches Anthropic correctly (confirmed via a real structured `400` back) but blocked by low account credit balance — not a code issue. Full round-trip unverified until credits are added; not marking this checklist item done yet.
