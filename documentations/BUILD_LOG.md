@@ -112,3 +112,9 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-24 — POST /ask endpoint (Claude API call)
 - Built: `/ask` route — Pydantic `AskRequest` body, calls `client.messages.create` (model `claude-opus-5`), extracts the text block from `response.content`.
 - Status: request reaches Anthropic correctly (confirmed via a real structured `400` back) but blocked by low account credit balance — not a code issue. Full round-trip unverified until credits are added; not marking this checklist item done yet.
+
+## Phase 8 — LaTeX resume tailoring
+
+### 2026-08-24 — LaTeX compile step + resume versioning design
+- Built: installed `tectonic` (self-contained LaTeX engine, no full TeX Live needed); `ai-service/latex.py` (`compile_latex`) — writes `.tex` to a temp dir, runs tectonic via `subprocess`, reads back PDF bytes. Verified live against `fixtures/sample_resume.tex` — valid PDF confirmed (`%PDF` header, correct size). No Claude/credits needed for this part.
+- Decision: confirmed `.tex` upload is a hard requirement (no reliable PDF/DOCX → LaTeX conversion) — documented in plan.md. Also clarified: every job gets its own tailored resume saved as a new `resumes` row (never overwritten), linked to its application via `resume_id`.
