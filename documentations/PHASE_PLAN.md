@@ -33,7 +33,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Concurrent multi-repo monitor + notify via same batched Slack summary
 
 ## Phase 7 — Python AI service skeleton
-- [ ] FastAPI hello-world
+- [x] FastAPI hello-world
 - [ ] One endpoint calls Claude API directly
 
 ## Phase 8 — LaTeX resume tailoring

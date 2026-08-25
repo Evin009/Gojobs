@@ -103,3 +103,8 @@ Format per entry (1-2 lines max, no more):
 - Built: single combined notification per check instead of separate Greenhouse/GitHub messages. `jobposting.Posting` gained `RepoName`; `NotifyNew` now groups output into "*Source: Greenhouse*" and "*Source: GitHub*" (sub-grouped by `repo:`) sections, first-found order preserved via an ordered slice (map iteration order isn't stable in Go). `github.RepoNameFromURL` extracts a readable "owner/repo" label from the feed URL. `monitor.go`'s `Greenhouse`/`GitHub` renamed to unexported `checkGreenhouse`/`checkGitHub`, now return results instead of notifying directly — `runOnce` combines both and sends one message.
 - Confirmed: cross-source duplicate URLs already can't double-notify (unique `url` constraint + `RowsAffected()` check) — no code change needed there, just clarified with the user.
 - Verified live against Cloudflare (Greenhouse) + SimplifyJobs repo (GitHub) — 21 rows saved correctly across both sources, no errors.
+
+## Phase 7 — Python AI service skeleton
+
+### 2026-08-24 — FastAPI skeleton + /health
+- Built: `ai-service/` (venv, FastAPI + uvicorn + anthropic + python-dotenv, `.env`/`.env.example`/`.gitignore`); `main.py` with `/health` route, verified live (`200 OK`).
