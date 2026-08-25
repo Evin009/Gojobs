@@ -1,3 +1,6 @@
+# Direct Postgres access to the same Supabase DB the Go backend uses (not via
+# the REST API). Saves tailored/base resumes as new rows in `resumes`.
+
 import psycopg
 import os
 

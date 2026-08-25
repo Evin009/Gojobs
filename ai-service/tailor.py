@@ -1,9 +1,11 @@
+# Sends a resume + job description to Claude and gets back a tailored .tex.
+# The system prompt constrains edits to bullet-point wording only — no
+# structural changes, no invented experience.
+
 import anthropic
 
-client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
+client = anthropic.Anthropic()
 
-# constrains Claude to bullet-only edits so the resume's LaTeX structure/formatting
-# never breaks — only wording inside existing \item lines can change
 TAILOR_SYSTEM_PROMPT = """You are editing a LaTeX resume to better match a job description.
 
 Rules:
@@ -14,7 +16,6 @@ Rules:
 
 
 def tailor_resume(resume_tex: str, job_description: str) -> str:
-    """Send a resume + job description to Claude, return the tailored .tex text."""
     response = client.messages.create(
         model="claude-opus-5",
         max_tokens=4096,
@@ -25,7 +26,6 @@ def tailor_resume(resume_tex: str, job_description: str) -> str:
         }],
     )
 
-    # response.content is a list of blocks (text, thinking, ...) — grab the text one
     text = next((block.text for block in response.content if block.type == "text"), "")
 
     return text
