@@ -118,3 +118,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-24 — LaTeX compile step + resume versioning design
 - Built: installed `tectonic` (self-contained LaTeX engine, no full TeX Live needed); `ai-service/latex.py` (`compile_latex`) — writes `.tex` to a temp dir, runs tectonic via `subprocess`, reads back PDF bytes. Verified live against `fixtures/sample_resume.tex` — valid PDF confirmed (`%PDF` header, correct size). No Claude/credits needed for this part.
 - Decision: confirmed `.tex` upload is a hard requirement (no reliable PDF/DOCX → LaTeX conversion) — documented in plan.md. Also clarified: every job gets its own tailored resume saved as a new `resumes` row (never overwritten), linked to its application via `resume_id`.
+
+### 2026-08-24 — Claude tailoring call + full pipeline wired
+- Built: `ai-service/tailor.py` (`tailor_resume`) — system prompt constrains Claude to bullet-only edits, no structural changes, no invented content; `POST /tailor-resume` in `main.py` chains `tailor_resume` → `compile_latex`, returns raw PDF bytes (`Response`, not JSON).
+- Status: full pipeline wired and imports cleanly; server starts and `/health` still passes. The Claude call itself remains unverified pending account credits (same blocker as `/ask`).
