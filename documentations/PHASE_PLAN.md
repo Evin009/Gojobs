@@ -46,8 +46,9 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Reuse Claude-call pattern for cover letters
 
 ## Phase 10 — Style memory (vector DB)
-- [ ] Chroma + LangChain set up
-- [ ] Embed + retrieve past writing samples
+- [x] Chroma set up — LangChain skipped for now, not needed for plain embed/retrieve (no agent/tool-calling here)
+- [x] Embed + retrieve past writing samples — verified live
+- [ ] Wire retrieval into `/cover-letter` (pull relevant samples into the prompt)
 
 ## Phase 11 — Extension skeleton
 - [ ] Manifest V3 setup

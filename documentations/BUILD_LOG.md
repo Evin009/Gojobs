@@ -134,3 +134,9 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-25 — Cover letter endpoint
 - Built: `ai-service/cover_letter.py` (`generate_cover_letter`) + `POST /cover-letter` — same Claude-call pattern as `tailor_resume`, new prompt/output (plain-text letter, not LaTeX). Server starts clean; Claude call itself pending credits, same as Phase 7/8.
+
+## Phase 10 — Style memory (vector DB)
+
+### 2026-08-25 — Chroma embedding + retrieval, verified live (no credits needed)
+- Built: `ai-service/style_memory.py` (`add_sample`, `query_samples`) — `chromadb.PersistentClient` + collection; embedding happens automatically on `.add()` (local model, no API key). Verified live: leadership samples correctly ranked above an unrelated "chocolate cake" sample — real semantic similarity, not keyword matching.
+- Decision: style-matching is optional, degrades gracefully if no samples exist (noted in plan.md). `chroma_data/` gitignored, matches `venv/` pattern.
