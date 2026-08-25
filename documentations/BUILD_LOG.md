@@ -122,3 +122,6 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-24 — Claude tailoring call + full pipeline wired
 - Built: `ai-service/tailor.py` (`tailor_resume`) — system prompt constrains Claude to bullet-only edits, no structural changes, no invented content; `POST /tailor-resume` in `main.py` chains `tailor_resume` → `compile_latex`, returns raw PDF bytes (`Response`, not JSON).
 - Status: full pipeline wired and imports cleanly; server starts and `/health` still passes. The Claude call itself remains unverified pending account credits (same blocker as `/ask`).
+
+### 2026-08-24 — resumes table created
+- Built: `backend/migrations/003_create_resume.sql` — `resumes` table (`content` text, nullable `job_id` FK to `jobs.id` since the base resume isn't tied to a job, `created_at`), RLS enabled. Verified live via `\d resumes`.
