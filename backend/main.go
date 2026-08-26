@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
+	"github.com/Evin009/Gojobs/backend/internal/github"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 )
 
@@ -41,8 +42,11 @@ func healthHandler2(w http.ResponseWriter, r *http.Request) {
 }
 
 // expected JSON body shape for POST /repos
+// The extension sends the repo identity, not a feed URL — where a tracker
+// publishes its jobs is backend knowledge, and the client shouldn't guess it.
 type addRepoRequest struct {
-	URL string `json:"url"`
+	Owner string `json:"owner"`
+	Repo  string `json:"repo"`
 }
 
 // /repos — GET lists monitored repos, POST adds one.
@@ -79,7 +83,10 @@ func listReposHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(urls)
 }
 
-// handle JSON request comming from JS func containing thw github url to store in a struct and then save to db
+// POST /repos — takes {owner, repo} from the extension, finds a feed that
+// actually works, and only then saves it. Rejecting here is the whole point:
+// storing an unreadable feed would "succeed" and then silently never produce
+// a single job.
 func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 		var req addRepoRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -87,7 +94,19 @@ func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if err := db.AddMonitoredRepo(req.URL); err != nil {
+		if req.Owner == "" || req.Repo == "" {
+			http.Error(w, "owner and repo are required", http.StatusBadRequest)
+			return
+		}
+
+		feedURL, err := github.ResolveFeedURL(req.Owner, req.Repo)
+		if err != nil {
+			// 422: the request was well-formed, we just can't monitor this repo
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
+
+		if err := db.AddMonitoredRepo(feedURL); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

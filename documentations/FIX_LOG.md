@@ -108,3 +108,20 @@ Template for new entries:
 - **Done:** `listReposHandler` substitutes `[]string{}` when the query returns nil.
 - **Verified:** endpoint returns a JSON array.
 - **Why it mattered:** combined with fail-open, the failure would have been silent — the panel would just keep appearing forever with no error anywhere.
+
+---
+
+### 2026-08-26 — Repo saved as "Monitoring" but produced zero jobs, forever
+
+- **Issue:** added `speedyapply/2027-SWE-College-Jobs`, got a "Monitoring" confirmation and a database row. It would never have returned a single job.
+- **Cause:** the extension *guessed* the feed URL (`dev/.github/scripts/listings.json`) and nothing checked the guess. That repo uses branch `main`, not `dev` — and publishes markdown tables, not JSON, so it had no `listings.json` anywhere.
+- **Why it was bad:** not just wrong, but wrong *invisibly while reporting success*. The monitor would 404 every 30 minutes into a log nobody reads.
+- **Fix:** stop guessing on the client; resolve and validate on the backend before saving. Also teach the fetcher to read markdown, since plenty of real trackers publish that way.
+- **Done:**
+  - `ParseMarkdownListings` reads markdown job tables into the same `Listing` type the JSON feed produces, so nothing downstream changes.
+  - `FetchListings` picks a parser by file extension, and now treats a non-200 response as an error — previously a 404 HTML page decoded to zero listings and looked like "no jobs today".
+  - `ResolveFeedURL` tries known conventions in order and only accepts one that fetches **and** parses to at least one job.
+  - `POST /repos` now takes `{owner, repo}` instead of a feed URL and returns **422** when no readable feed exists; the extension shows "No job feed found in this repo" rather than a false success.
+- **Verified:** markdown repo → 201 and resolved to `main/README.md` (169 jobs); `facebook/react` → 422 rejected; all three stored feeds return 200; the bad row was deleted and re-added correctly.
+- **Design note:** feed conventions are backend knowledge now. The extension sends repo identity only — it never constructs a raw.githubusercontent.com URL.
+- **Known limit:** a repo with several markdown job files (USA vs international) only gets the first one that resolves.

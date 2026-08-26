@@ -17,22 +17,23 @@ function getRepoFromURL() {
   return { owner: match[1], repo: match[2] };
 }
 
-// Most tracker repos publish listings at this conventional path
-function guessFeedURL(owner, repo) {
-  return `https://raw.githubusercontent.com/${owner}/${repo}/dev/.github/scripts/listings.json`;
-}
-
 // Deliberately fails OPEN: if the backend is down or the check errors, we
 // report "not monitored" so the panel still shows. Re-adding a repo is a no-op
 // (ON CONFLICT DO NOTHING), whereas wrongly hiding the panel would silently
 // leave the user thinking a repo is watched when it isn't.
-async function isMonitored(feedURL) {
+//
+// Stored feed URLs always contain /owner/repo/ by construction, so we match on
+// that rather than reconstructing the feed URL — where a repo publishes its
+// jobs is the backend's business, not ours.
+async function isMonitored(owner, repo) {
   try {
     const response = await fetch(`${BACKEND_URL}/repos`);
     if (!response.ok) return false;
 
     const urls = await response.json();
-    return Array.isArray(urls) && urls.includes(feedURL);
+    if (!Array.isArray(urls)) return false;
+
+    return urls.some((url) => url.includes(`/${owner}/${repo}/`));
   } catch {
     return false;
   }
@@ -330,8 +331,16 @@ function mountPanel(owner, repo) {
       const response = await fetch(`${BACKEND_URL}/repos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: guessFeedURL(owner, repo) }),
+        body: JSON.stringify({ owner, repo }),
       });
+
+      // 422 = request was fine, but this repo publishes no readable job feed.
+      // Distinct from a network failure, so say so instead of "retry".
+      if (response.status === 422) {
+        action.className = "action failed";
+        action.textContent = "No job feed found in this repo";
+        return;
+      }
 
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
@@ -350,7 +359,7 @@ async function init() {
   const repoInfo = getRepoFromURL();
   if (!repoInfo || document.getElementById("gojobs-root")) return;
 
-  const monitored = await isMonitored(guessFeedURL(repoInfo.owner, repoInfo.repo));
+  const monitored = await isMonitored(repoInfo.owner, repoInfo.repo);
 
   // guard again — the await gives another injection a chance to mount first
   if (document.getElementById("gojobs-root")) return;

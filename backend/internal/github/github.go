@@ -3,6 +3,7 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -20,8 +21,10 @@ type Listing struct {
 	IsVisible   bool     `json:"is_visible"`
 }
 
-// FetchListings hits a repo's JSON listings feed. Root is a plain array,
-// unlike Greenhouse's wrapped {"jobs": [...]}.
+// FetchListings pulls a repo's job feed. Trackers publish in one of two shapes,
+// picked here by file extension:
+//   .json — a plain array of listings (not wrapped like Greenhouse's {"jobs": [...]})
+//   .md   — a markdown table, parsed by ParseMarkdownListings
 func FetchListings(url string) ([]Listing, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -29,12 +32,57 @@ func FetchListings(url string) ([]Listing, error) {
 	}
 	defer resp.Body.Close()
 
+	// a missing feed returns an HTML 404 page, which would otherwise decode
+	// into zero listings and look like "this repo just has no jobs today"
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("feed returned HTTP %d: %s", resp.StatusCode, url)
+	}
+
+	if strings.HasSuffix(strings.ToLower(url), ".md") {
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return ParseMarkdownListings(string(body)), nil
+	}
+
 	var listings []Listing
 	if err := json.NewDecoder(resp.Body).Decode(&listings); err != nil {
 		return nil, err
 	}
 
 	return listings, nil
+}
+
+// Trackers don't agree on where they publish jobs, so ResolveFeedURL tries the
+// known conventions in order. Ordered most-specific first: a repo with a JSON
+// feed should use it rather than falling through to its README.
+var feedCandidates = []string{
+	"dev/.github/scripts/listings.json",
+	"main/.github/scripts/listings.json",
+	"main/README.md",
+	"master/README.md",
+}
+
+// ResolveFeedURL finds a feed for owner/repo that actually fetches AND parses
+// into at least one job. Returns an error if none of the conventions work —
+// that's what stops unusable repos from being saved and then failing silently.
+func ResolveFeedURL(owner, repo string) (string, error) {
+	for _, path := range feedCandidates {
+		url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", owner, repo, path)
+
+		listings, err := FetchListings(url)
+		if err != nil {
+			continue // wrong branch or path — try the next convention
+		}
+		if len(listings) == 0 {
+			continue // fetched, but nothing job-shaped in it
+		}
+
+		return url, nil
+	}
+
+	return "", fmt.Errorf("no readable job feed found for %s/%s", owner, repo)
 }
 
 // FilterByKeywords keeps active, visible listings whose title whole-word-matches

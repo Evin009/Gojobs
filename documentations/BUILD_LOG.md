@@ -172,3 +172,9 @@ Format per entry (1-2 lines max, no more):
 - Decision: the check **fails open** (backend down → show the panel). Re-adding is idempotent via `ON CONFLICT DO NOTHING`, so a redundant panel is harmless, while wrongly hiding it would silently imply a repo is watched when it isn't.
 - Gotcha handled: a nil Go slice encodes as JSON `null`, not `[]`, which would break `Array.isArray()` on the JS side — empty slice substituted before encoding.
 - Verified live: monitored repo → `true`, unseen repo → `false`, backend down → `false` (panel shows). Bad method → 405, preflight still 200.
+
+### 2026-08-26 — Markdown tracker support + backend feed resolution
+- Built: `internal/github/markdown.go` — parses markdown job tables into the same `Listing` type as the JSON feed; `ResolveFeedURL` tries known conventions and only accepts one that fetches *and* parses. `POST /repos` now takes `{owner, repo}` and 422s when no feed exists.
+- Built: **first Go tests in the project** — `markdown_test.go` (3 tests), added `go test ./...` to CI. Verified against the live file: 297 real listings parsed correctly.
+- Decision: feed conventions moved from the extension to the backend — a client shouldn't need to know where a tracker publishes its jobs, and centralizing it means validation happens in one place.
+- Full detail in FIX_LOG.md — this started as a real silent-failure bug.

@@ -83,11 +83,12 @@ flowchart TD
     ASK -->|already monitored| BADGE["passive 'Monitoring' badge<br/>auto-fades"]
     ASK -->|no, or check failed| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
     UI --> CLICK["User clicks 'Monitor this repo'"]
-    CLICK --> GUESS["guessFeedURL()<br/>build raw.githubusercontent.com/.../listings.json"]
-    GUESS --> POST["fetch POST /repos"]
+    CLICK --> POST["fetch POST /repos<br/>sends {owner, repo} only"]
     POST --> CORS["withCORS middleware<br/>answers OPTIONS preflight"]
-    CORS --> H["addRepoHandler<br/>decode JSON body"]
-    H --> DB[("monitored_repos table")]
+    CORS --> H["addRepoHandler"]
+    H --> RES["ResolveFeedURL()<br/>try known feed conventions in order"]
+    RES -->|"none parse"| REJ["422 — 'No job feed found'"]
+    RES -->|"first that works"| DB[("monitored_repos table")]
     DB --> LOOP["picked up by checkGitHub()<br/>on the next 30-min cycle"]
 ```
 
@@ -95,7 +96,9 @@ flowchart TD
 - Before mounting, it asks the backend whether the repo is already watched. Already monitored → a passive badge that fades on its own; otherwise → the full prompt.
 - That check **fails open**: if the backend is unreachable, it reports "not monitored" and shows the panel. The two errors aren't symmetric — a redundant panel is a minor annoyance and clicking again is a no-op (`ON CONFLICT DO NOTHING`), while wrongly hiding it would leave the user believing a repo is watched when nothing is watching it.
 - UI lives in a **Shadow DOM**: GitHub's stylesheet can't leak into our panel, and ours can't leak into GitHub's page.
-- Clicking guesses the repo's feed URL by convention (`.../dev/.github/scripts/listings.json`) — correct for SimplifyJobs-style trackers, harmless if wrong (the Go fetch just errors and skips).
+- The extension sends **only the repo identity**. The backend resolves where that tracker publishes jobs, trying known conventions (`dev`/`main` branch, `listings.json` or `README.md`) and accepting the first that fetches *and* parses into at least one job.
+- Two feed formats are supported: JSON arrays (SimplifyJobs-style) and **markdown job tables**, both parsed into the same `Listing` type so nothing downstream cares which was used.
+- If no convention works, the repo is **rejected with 422** rather than saved. Previously an unresolvable repo saved happily and then silently produced nothing forever.
 - The browser first sends an automatic `OPTIONS` **preflight** asking permission; `withCORS` answers it. Without that, the browser blocks the real POST before it's ever sent — this was a real failure hit during testing.
 - Once the row lands in `monitored_repos`, **flow 1 picks it up automatically** on its next 30-minute cycle — no restart, no code change. That's why the repo list was made DB-backed instead of hardcoded.
 - `owner`/`repo` come from the URL (untrusted), so they're set via `textContent`, never interpolated into `innerHTML` — same injection principle as parameterized SQL.
