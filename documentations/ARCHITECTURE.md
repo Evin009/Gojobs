@@ -50,7 +50,7 @@ flowchart TD
 
 ---
 
-## 3. Cover letter generation with RAG — retrieval built, prompt-wiring not started
+## 3. Cover letter generation with RAG — wired, Claude call pending credits
 
 ```mermaid
 flowchart TD
@@ -59,12 +59,13 @@ flowchart TD
     JD["New job description"] --> QS["query_samples()<br/>embed JD temporarily, not stored"]
     CHROMA --> QS
     QS --> REL["2-3 relevant past sentences<br/>(plain text)"]
-    REL -.not yet wired.-> PROMPT["Combined prompt:<br/>past samples + JD + resume"]
-    PROMPT -.not yet wired.-> CL["Claude generates cover letter"]
+    REL --> PROMPT["style_block + resume + JD"]
+    PROMPT --> CL["Claude generates cover letter"]
 ```
 
 - Past writing samples are **embedded once and stored permanently** in ChromaDB, tagged `type: "cover_letter"` so retrieval never mixes them with resume bullets.
 - A new job description is embedded too, but only **temporarily** — just to run one search, never saved.
 - That search returns the 2-3 most relevant past sentences as plain text — semantic similarity, not keyword matching.
-- **Not yet built:** gluing that retrieved text into the actual Claude prompt alongside the job description, and calling `generate_cover_letter` with it. Right now `query_samples` and `generate_cover_letter` exist as separate, unconnected pieces.
-- Style-matching is **optional by design** — if no samples exist yet, retrieval returns nothing and Claude falls back to a solid, professional letter with no style-matching attempted.
+- Retrieved text gets folded into the Claude prompt as a `style_block`, ahead of the resume and job description.
+- Style-matching is **optional by design** — if no samples exist yet, `query_samples` returns a clean empty list (confirmed live, no error), `style_block` stays empty, and Claude falls back to a solid, professional letter with no style-matching attempted.
+- **Status:** fully wired end to end. The Claude call itself is unverified pending account credits, same as the other two Claude-calling flows.

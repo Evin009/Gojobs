@@ -143,3 +143,6 @@ Format per entry (1-2 lines max, no more):
 
 ### 2026-08-25 — Metadata filtering (sample type)
 - Built: `add_sample`/`query_samples` gained `sample_type` (`"resume_bullet"`/`"cover_letter"`) + `created_at` metadata, retrieval filters by `where={"type": ...}`. Verified live: two topically-similar but different-type samples correctly stayed isolated per query — no cross-type contamination.
+
+### 2026-08-25 — RAG wired into cover letter generation, Phase 10 complete
+- Built: `generate_cover_letter` now calls `query_samples` first, prepends matched past samples as a `style_block` in the Claude prompt. Confirmed live that `query_samples` returns a clean empty list (not an error) when no samples exist — graceful degradation works with zero extra error-handling code. `documentations/ARCHITECTURE.md` added with mermaid diagrams for all 3 major flows (monitoring, resume tailoring, RAG cover letter).
