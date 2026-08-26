@@ -51,8 +51,9 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Wire retrieval into `/cover-letter` (pull relevant samples into the prompt)
 
 ## Phase 11 — Extension skeleton
-- [ ] Manifest V3 setup
+- [x] Manifest V3 setup
 - [ ] Detect job application page, read form fields
+- [x] Backend `POST /repos` endpoint for the extension to call
 - [ ] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos`
 
 ## Phase 12 — AI-judgment autofill

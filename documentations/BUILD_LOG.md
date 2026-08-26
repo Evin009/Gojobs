@@ -152,3 +152,9 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-25 — CI pipeline (GitHub Actions)
 - Built: `.github/workflows/ci.yml` — two parallel jobs, `go build`/`go vet` for the backend, dependency install + import smoke-check for ai-service. Verified locally (both pass) before relying on CI to run them. CD (auto-deploy) intentionally deferred — no hosting chosen yet (see plan.md).
 - Confirmed live on GitHub Actions — both jobs pass; fixed a Go module cache-path warning (`cache-dependency-path: backend/go.sum`, monorepo subfolder issue).
+
+## Phase 11 — Extension skeleton
+
+### 2026-08-25 — POST /repos endpoint
+- Built: `main.go` gained `addRepoHandler` (`POST /repos`) — decodes `{"url": "..."}"` from the request body, calls `db.AddMonitoredRepo`. First Go handler reading a request body (reused the same `json.NewDecoder` pattern from `FetchGreenhouseJobs`, applied to `r.Body` instead of `resp.Body`). Verified live via curl, row confirmed in `monitored_repos`, test row cleaned up.
+- This is the endpoint the extension's future "monitor this repo?" popup will call.
