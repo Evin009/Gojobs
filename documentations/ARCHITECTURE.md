@@ -79,7 +79,9 @@ flowchart TD
     V["User visits github.com/OWNER/REPO"] --> CS["github_monitor.js<br/>auto-injected per manifest.json"]
     CS --> CHK{"URL shaped<br/>/owner/repo?"}
     CHK -->|no| STOP["do nothing"]
-    CHK -->|yes| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
+    CHK -->|yes| ASK["isMonitored()<br/>GET /repos, is this feed URL listed?"]
+    ASK -->|already monitored| BADGE["passive 'Monitoring' badge<br/>auto-fades"]
+    ASK -->|no, or check failed| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
     UI --> CLICK["User clicks 'Monitor this repo'"]
     CLICK --> GUESS["guessFeedURL()<br/>build raw.githubusercontent.com/.../listings.json"]
     GUESS --> POST["fetch POST /repos"]
@@ -90,6 +92,8 @@ flowchart TD
 ```
 
 - The content script runs on **every** github.com page, but only mounts UI when the URL is exactly `/owner/repo` — not on settings, orgs, or the homepage.
+- Before mounting, it asks the backend whether the repo is already watched. Already monitored → a passive badge that fades on its own; otherwise → the full prompt.
+- That check **fails open**: if the backend is unreachable, it reports "not monitored" and shows the panel. The two errors aren't symmetric — a redundant panel is a minor annoyance and clicking again is a no-op (`ON CONFLICT DO NOTHING`), while wrongly hiding it would leave the user believing a repo is watched when nothing is watching it.
 - UI lives in a **Shadow DOM**: GitHub's stylesheet can't leak into our panel, and ours can't leak into GitHub's page.
 - Clicking guesses the repo's feed URL by convention (`.../dev/.github/scripts/listings.json`) — correct for SimplifyJobs-style trackers, harmless if wrong (the Go fetch just errors and skips).
 - The browser first sends an automatic `OPTIONS` **preflight** asking permission; `withCORS` answers it. Without that, the browser blocks the real POST before it's ever sent — this was a real failure hit during testing.

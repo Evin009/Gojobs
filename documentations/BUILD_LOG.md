@@ -165,3 +165,10 @@ Format per entry (1-2 lines max, no more):
 - Security: `owner`/`repo` come from the URL, so they're written with `textContent` rather than interpolated into `innerHTML` — same injection principle as parameterized SQL. Also noted: `Allow-Origin: *` is fine for local dev but should be narrowed before this is ever exposed publicly.
 - Verified live in Chrome: clicked the panel on `vanshb03/Summer2027-Internships`, row confirmed in `monitored_repos`, and the guessed feed URL returns `200` — so the 30-min monitor loop will get real data from it.
 - Known gap: GitHub is an SPA, so the script doesn't re-run on client-side navigation between repos.
+
+### 2026-08-26 — Don't re-prompt on already-monitored repos
+- Built: `GET /repos` (reuses existing `db.GetMonitoredRepos`, no new DB code) + `reposHandler` branching on method; extension now calls `isMonitored()` before mounting and shows a passive auto-fading badge instead of the full prompt.
+- Decision: method is branched inside one handler rather than registering Go 1.22+ `"GET /repos"` / `"POST /repos"` patterns — an OPTIONS preflight would match neither and 405 before `withCORS` could answer, silently re-breaking CORS.
+- Decision: the check **fails open** (backend down → show the panel). Re-adding is idempotent via `ON CONFLICT DO NOTHING`, so a redundant panel is harmless, while wrongly hiding it would silently imply a repo is watched when it isn't.
+- Gotcha handled: a nil Go slice encodes as JSON `null`, not `[]`, which would break `Array.isArray()` on the JS side — empty slice substituted before encoding.
+- Verified live: monitored repo → `true`, unseen repo → `false`, backend down → `false` (panel shows). Bad method → 405, preflight still 200.

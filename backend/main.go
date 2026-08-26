@@ -45,6 +45,40 @@ type addRepoRequest struct {
 	URL string `json:"url"`
 }
 
+// /repos — GET lists monitored repos, POST adds one.
+// Method is branched here rather than registered as separate "GET /repos" /
+// "POST /repos" patterns, because an OPTIONS preflight would match neither and
+// get a 405 before withCORS could answer it.
+func reposHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		listReposHandler(w, r)
+	case http.MethodPost:
+		addRepoHandler(w, r)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// GET /repos — returns every monitored feed URL as a JSON array, so the
+// extension can tell whether the repo it's on is already being watched.
+func listReposHandler(w http.ResponseWriter, r *http.Request) {
+	urls, err := db.GetMonitoredRepos()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// a nil slice encodes as JSON `null`, which would break the caller's
+	// array handling — send an empty array instead
+	if urls == nil {
+		urls = []string{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(urls)
+}
+
 // handle JSON request comming from JS func containing thw github url to store in a struct and then save to db
 func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 		var req addRepoRequest
@@ -69,7 +103,7 @@ func main() {
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
-	http.HandleFunc("/repos", withCORS(addRepoHandler))
+	http.HandleFunc("/repos", withCORS(reposHandler))
 
 	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 

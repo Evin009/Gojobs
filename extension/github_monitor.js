@@ -1,6 +1,9 @@
-// Runs on every github.com page (per manifest.json). Detects a repo page
-// (github.com/OWNER/REPO), mounts a floating panel in the top-right, and on
-// click POSTs a guessed listings-feed URL to our backend's /repos endpoint.
+// Runs on every github.com page (per manifest.json). On a repo page
+// (github.com/OWNER/REPO) it first asks the backend whether that repo is
+// already monitored:
+//   already monitored -> passive "Monitoring" badge, auto-fades
+//   not monitored     -> full panel with a "Monitor this repo" action
+//   backend unreachable -> shows the panel anyway (see isMonitored)
 //
 // UI is rendered inside a Shadow DOM so GitHub's stylesheet can't leak in and
 // ours can't leak out.
@@ -19,35 +22,25 @@ function guessFeedURL(owner, repo) {
   return `https://raw.githubusercontent.com/${owner}/${repo}/dev/.github/scripts/listings.json`;
 }
 
-const PANEL_STYLES = `
+// Deliberately fails OPEN: if the backend is down or the check errors, we
+// report "not monitored" so the panel still shows. Re-adding a repo is a no-op
+// (ON CONFLICT DO NOTHING), whereas wrongly hiding the panel would silently
+// leave the user thinking a repo is watched when it isn't.
+async function isMonitored(feedURL) {
+  try {
+    const response = await fetch(`${BACKEND_URL}/repos`);
+    if (!response.ok) return false;
+
+    const urls = await response.json();
+    return Array.isArray(urls) && urls.includes(feedURL);
+  } catch {
+    return false;
+  }
+}
+
+const STYLES = `
   :host {
     all: initial;
-  }
-
-  * {
-    box-sizing: border-box;
-    margin: 0;
-  }
-
-  .panel {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    width: 320px;
-    padding: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-
-    font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI Variable Text",
-      "Segoe UI", system-ui, sans-serif;
-    color: var(--fg);
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow:
-      0 20px 40px -16px rgba(9, 9, 11, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
     --bg: #ffffff;
     --fg: #18181b;
@@ -57,14 +50,14 @@ const PANEL_STYLES = `
     --btn-bg: #18181b;
     --btn-fg: #fafafa;
     --hairline: rgba(9, 9, 11, 0.07);
-
-    opacity: 0;
-    transform: translateX(12px);
-    animation: enter 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --shadow: 0 20px 40px -16px rgba(9, 9, 11, 0.18),
+              inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --danger: #b91c1c;
+    --danger-border: rgba(185, 28, 28, 0.3);
   }
 
   @media (prefers-color-scheme: dark) {
-    .panel {
+    :host {
       --bg: #18181b;
       --fg: #fafafa;
       --muted: #a1a1aa;
@@ -73,13 +66,36 @@ const PANEL_STYLES = `
       --btn-bg: #fafafa;
       --btn-fg: #18181b;
       --hairline: rgba(255, 255, 255, 0.08);
-      box-shadow:
-        0 20px 40px -16px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      --danger: #f87171;
+      --danger-border: rgba(248, 113, 113, 0.3);
     }
   }
 
-  .panel.leaving {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+  }
+
+  .surface {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+
+    font-family: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI Variable Text",
+      "Segoe UI", system-ui, sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+
+    opacity: 0;
+    transform: translateX(12px);
+    animation: enter 420ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .surface.leaving {
     animation: leave 320ms cubic-bezier(0.4, 0, 1, 1) forwards;
   }
 
@@ -90,6 +106,31 @@ const PANEL_STYLES = `
   @keyframes leave {
     to { opacity: 0; transform: translateX(12px); }
   }
+
+  /* full panel — repo not yet monitored */
+  .panel {
+    width: 320px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    border-radius: 16px;
+  }
+
+  /* compact passive badge — repo already monitored */
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+  }
+
+  .badge .label { color: var(--accent); }
+  .badge .repo-inline { color: var(--muted); font-weight: 450; }
 
   .head {
     display: flex;
@@ -173,17 +214,14 @@ const PANEL_STYLES = `
   }
 
   .action.failed {
-    color: #b91c1c;
+    color: var(--danger);
     background: transparent;
-    border: 1px solid rgba(185, 28, 28, 0.3);
+    border: 1px solid var(--danger-border);
     cursor: pointer;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .action.failed { color: #f87171; border-color: rgba(248, 113, 113, 0.3); }
-  }
-
   .dot {
+    flex-shrink: 0;
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -210,23 +248,55 @@ const PANEL_STYLES = `
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .panel, .dot, .spinner { animation: none; opacity: 1; transform: none; }
+    .surface, .dot, .spinner { animation: none; opacity: 1; transform: none; }
   }
 `;
 
-function mountPanel(owner, repo) {
+// Creates the shadow host and returns the surface plus a dismiss helper,
+// so the panel and the badge share one mounting path.
+function createShell(surfaceClass) {
   const host = document.createElement("div");
   host.id = "gojobs-root";
   const shadow = host.attachShadow({ mode: "open" });
 
   const style = document.createElement("style");
-  style.textContent = PANEL_STYLES;
+  style.textContent = STYLES;
 
-  const panel = document.createElement("div");
-  panel.className = "panel";
+  const surface = document.createElement("div");
+  surface.className = `surface ${surfaceClass}`;
+
+  shadow.append(style, surface);
+
+  function dismiss() {
+    surface.classList.add("leaving");
+    surface.addEventListener("animationend", () => host.remove(), { once: true });
+  }
+
+  return { host, surface, dismiss };
+}
+
+// Passive confirmation for a repo that's already being watched
+function mountBadge(repo) {
+  const { host, surface, dismiss } = createShell("badge");
+
+  surface.innerHTML = `
+    <span class="dot"></span>
+    <span class="label">Monitoring</span>
+    <span class="repo-inline"></span>
+  `;
+  surface.querySelector(".repo-inline").textContent = repo;
+
+  document.body.appendChild(host);
+  setTimeout(dismiss, 2600);
+}
+
+// Full prompt for a repo that isn't monitored yet
+function mountPanel(owner, repo) {
+  const { host, surface, dismiss } = createShell("panel");
+
   // owner/repo come from the URL — untrusted. They are set via textContent
   // below, never interpolated into innerHTML, so they can't inject markup.
-  panel.innerHTML = `
+  surface.innerHTML = `
     <div class="head">
       <div>
         <p class="eyebrow">Gojobs</p>
@@ -243,21 +313,13 @@ function mountPanel(owner, repo) {
     <button class="action">Monitor this repo</button>
   `;
 
-  panel.querySelector(".owner").textContent = `${owner}/`;
-  panel.querySelector(".name").textContent = repo;
+  surface.querySelector(".owner").textContent = `${owner}/`;
+  surface.querySelector(".name").textContent = repo;
 
-  shadow.append(style, panel);
   document.body.appendChild(host);
 
-  const action = shadow.querySelector(".action");
-  const closeBtn = shadow.querySelector(".close");
-
-  function dismiss() {
-    panel.classList.add("leaving");
-    panel.addEventListener("animationend", () => host.remove(), { once: true });
-  }
-
-  closeBtn.addEventListener("click", dismiss);
+  const action = surface.querySelector(".action");
+  surface.querySelector(".close").addEventListener("click", dismiss);
 
   action.addEventListener("click", async () => {
     action.disabled = true;
@@ -284,7 +346,20 @@ function mountPanel(owner, repo) {
   });
 }
 
-const repoInfo = getRepoFromURL();
-if (repoInfo && !document.getElementById("gojobs-root")) {
-  mountPanel(repoInfo.owner, repoInfo.repo);
+async function init() {
+  const repoInfo = getRepoFromURL();
+  if (!repoInfo || document.getElementById("gojobs-root")) return;
+
+  const monitored = await isMonitored(guessFeedURL(repoInfo.owner, repoInfo.repo));
+
+  // guard again — the await gives another injection a chance to mount first
+  if (document.getElementById("gojobs-root")) return;
+
+  if (monitored) {
+    mountBadge(repoInfo.repo);
+  } else {
+    mountPanel(repoInfo.owner, repoInfo.repo);
+  }
 }
+
+init();
