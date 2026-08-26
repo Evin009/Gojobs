@@ -14,7 +14,8 @@ Quick reference so this is never forgotten mid-session. Full detail lives in `ag
 ## After each task closes
 1. Update `documentations/BUILD_LOG.md` — 1-2 lines: what got built + key decision + why.
 2. Check off the item in `documentations/PHASE_PLAN.md`.
-3. Run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`.
+3. If a real bug was fixed, add an entry to `documentations/FIX_LOG.md` (issue / cause / fix / done / verified).
+4. Run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`.
 
 ## Reference files
 - `workflow/agent.md` — full mentor contract, task order, security checklist.
@@ -22,4 +23,6 @@ Quick reference so this is never forgotten mid-session. Full detail lives in `ag
 - `documentations/roadmap.md` — 13-phase build order, full detail.
 - `documentations/PHASE_PLAN.md` — per-phase checklist, done vs pending.
 - `documentations/BUILD_LOG.md` — running log of what's been built.
+- `documentations/FIX_LOG.md` — bugs found and fixed (issue / cause / fix / verified).
+- `documentations/ARCHITECTURE.md` — diagrams + data flow for each major system.
 - `workflow/AUTOMATIONS.md` — commit/push script details.

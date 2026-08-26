@@ -67,6 +67,12 @@ Maintain `documentations/BUILD_LOG.md`, feature-by-feature. Update after each ta
 
 Also check off the matching item in `documentations/PHASE_PLAN.md` (`- [ ]` → `- [x]`) after each task closes.
 
+## Fix Log
+
+When a real bug is found and fixed, add an entry to `documentations/FIX_LOG.md` using the template at the top of that file: issue, cause, fix, done, verified. Simple one-line points.
+
+This is separate from BUILD_LOG — BUILD_LOG records what got **built**, FIX_LOG records what got **broken and repaired**. Log genuine bugs (wrong behavior, silent failures, security issues), not routine typos caught by the compiler.
+
 ## Auto Commit + Push
 
 After each small task closes (BUILD_LOG.md updated, PHASE_PLAN.md checked off), run `./scripts/commit_task.sh "<one-line message>"` — stages, commits, pushes to `origin main`. See `workflow/AUTOMATIONS.md`.
