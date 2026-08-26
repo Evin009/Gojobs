@@ -54,7 +54,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Manifest V3 setup
 - [ ] Detect job application page, read form fields
 - [x] Backend `POST /repos` endpoint for the extension to call
-- [ ] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos`
+- [x] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos` — verified live in Chrome
+- [ ] Re-run the panel on GitHub SPA navigation (currently needs a full page load)
 
 ## Phase 12 — AI-judgment autofill
 - [ ] Classify field types

@@ -158,3 +158,10 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-25 — POST /repos endpoint
 - Built: `main.go` gained `addRepoHandler` (`POST /repos`) — decodes `{"url": "..."}"` from the request body, calls `db.AddMonitoredRepo`. First Go handler reading a request body (reused the same `json.NewDecoder` pattern from `FetchGreenhouseJobs`, applied to `r.Body` instead of `resp.Body`). Verified live via curl, row confirmed in `monitored_repos`, test row cleaned up.
 - This is the endpoint the extension's future "monitor this repo?" popup will call.
+
+### 2026-08-26 — "Monitor this repo?" panel working end to end
+- Built: `extension/github_monitor.js` — detects `/owner/repo` pages, mounts a floating panel (Shadow DOM for style isolation), POSTs the guessed feed URL to `/repos`. Full state cycle: idle → loading → success (auto-dismiss) → retryable error. Dark mode + `prefers-reduced-motion` handled.
+- Built: `withCORS` middleware in `main.go`. Browsers send an `OPTIONS` preflight before cross-origin POSTs; without a reply the real request is never sent — this was a live failure during testing, not a theoretical one.
+- Security: `owner`/`repo` come from the URL, so they're written with `textContent` rather than interpolated into `innerHTML` — same injection principle as parameterized SQL. Also noted: `Allow-Origin: *` is fine for local dev but should be narrowed before this is ever exposed publicly.
+- Verified live in Chrome: clicked the panel on `vanshb03/Summer2027-Internships`, row confirmed in `monitored_repos`, and the guessed feed URL returns `200` — so the 30-min monitor loop will get real data from it.
+- Known gap: GitHub is an SPA, so the script doesn't re-run on client-side navigation between repos.

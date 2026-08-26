@@ -11,6 +11,25 @@ import (
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 )
 
+// withCORS wraps a handler to allow the extension (running on other origins,
+// e.g. https://github.com) to call it. Browsers send an OPTIONS "preflight"
+// request first to check permission before the real request — we answer
+// that directly and never pass it to the wrapped handler.
+func withCORS(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next(w, r)
+	}
+}
+
 // GET /health — liveness check, always returns "ok"
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "ok")
@@ -50,7 +69,7 @@ func main() {
 
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
-	http.HandleFunc("/repos", addRepoHandler)
+	http.HandleFunc("/repos", withCORS(addRepoHandler))
 
 	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 

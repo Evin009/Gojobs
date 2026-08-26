@@ -69,3 +69,30 @@ flowchart TD
 - Retrieved text gets folded into the Claude prompt as a `style_block`, ahead of the resume and job description.
 - Style-matching is **optional by design** — if no samples exist yet, `query_samples` returns a clean empty list (confirmed live, no error), `style_block` stays empty, and Claude falls back to a solid, professional letter with no style-matching attempted.
 - **Status:** fully wired end to end. The Claude call itself is unverified pending account credits, same as the other two Claude-calling flows.
+
+---
+
+## 4. Browser extension — "Monitor this repo?" — fully working
+
+```mermaid
+flowchart TD
+    V["User visits github.com/OWNER/REPO"] --> CS["github_monitor.js<br/>auto-injected per manifest.json"]
+    CS --> CHK{"URL shaped<br/>/owner/repo?"}
+    CHK -->|no| STOP["do nothing"]
+    CHK -->|yes| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
+    UI --> CLICK["User clicks 'Monitor this repo'"]
+    CLICK --> GUESS["guessFeedURL()<br/>build raw.githubusercontent.com/.../listings.json"]
+    GUESS --> POST["fetch POST /repos"]
+    POST --> CORS["withCORS middleware<br/>answers OPTIONS preflight"]
+    CORS --> H["addRepoHandler<br/>decode JSON body"]
+    H --> DB[("monitored_repos table")]
+    DB --> LOOP["picked up by checkGitHub()<br/>on the next 30-min cycle"]
+```
+
+- The content script runs on **every** github.com page, but only mounts UI when the URL is exactly `/owner/repo` — not on settings, orgs, or the homepage.
+- UI lives in a **Shadow DOM**: GitHub's stylesheet can't leak into our panel, and ours can't leak into GitHub's page.
+- Clicking guesses the repo's feed URL by convention (`.../dev/.github/scripts/listings.json`) — correct for SimplifyJobs-style trackers, harmless if wrong (the Go fetch just errors and skips).
+- The browser first sends an automatic `OPTIONS` **preflight** asking permission; `withCORS` answers it. Without that, the browser blocks the real POST before it's ever sent — this was a real failure hit during testing.
+- Once the row lands in `monitored_repos`, **flow 1 picks it up automatically** on its next 30-minute cycle — no restart, no code change. That's why the repo list was made DB-backed instead of hardcoded.
+- `owner`/`repo` come from the URL (untrusted), so they're set via `textContent`, never interpolated into `innerHTML` — same injection principle as parameterized SQL.
+- **Known gap:** GitHub is a single-page app, so the script doesn't re-run when navigating between repos without a full page load.
