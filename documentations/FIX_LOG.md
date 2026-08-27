@@ -148,6 +148,18 @@ Template for new entries:
   - `repo_checks` table (migration 004), unique on `(owner, repo)`; `feed_url IS NULL` means "checked, not a job repo".
   - `GET /repos/check?owner=&repo=` returns `{monitorable, monitored}`; `POST /repos` reuses the same cache so clicking doesn't re-resolve.
   - Extension calls it before rendering and shows nothing at all when `monitorable` is false.
-- **Verified:** job repo + monitored → `{true,true}` (badge); job repo unmonitored → `{true,false}` (panel); `facebook/react` and `torvalds/linux` → `{false,false}` (nothing). Cache made a repeat check **1.10s → 0.09s**.
+- **Verified:** job repo + monitored → `{true,true}` (badge); job repo unmonitored → `{true,false}` (panel); `facebook/react` and `torvalds/linux` → `{false,false}` (nothing).
+- **Measured (corrected):** cache hit is a steady ~0.09s; a miss runs 0.18–0.43s and varies with network. So roughly **2–5x faster, and far more consistent** — an earlier note claiming 1.10s → 0.09s was a cold-start outlier, not the typical case.
 - **Design note:** the two flags fail in opposite directions on purpose. `monitorable` defaults false so an unreachable backend means silence rather than prompting on every repo; `monitored` defaults false because re-showing the panel is harmless while wrongly hiding it is not.
-- **Known limit:** the cache never expires, so a repo that later adds a job feed stays marked unmonitorable until its row is cleared.
+- ~~**Known limit:** the cache never expires~~ — fixed below.
+
+---
+
+### 2026-08-27 — Cached "not a job repo" answers never expired
+
+- **Issue:** once a repo was checked, that answer was kept forever. A repo that added a job feed later would stay marked "not a tracker" permanently.
+- **Cause:** the cache lookup matched on `owner`/`repo` only, with no age condition — any row, however old, counted as a valid answer.
+- **Fix:** treat rows older than 7 days as if they don't exist.
+- **Done:** one line of SQL in `GetRepoCheck` — added `AND checked_at > now() - interval '7days'`. No Go changes: a stale row simply returns no rows, which is already the "never checked" path, so it re-resolves and overwrites via the existing upsert.
+- **Verified:** aged a row 30 days artificially, re-requested it, and confirmed `checked_at` jumped from 04:07 → 04:23 — proof the stale row was ignored and refreshed rather than reused.
+- **Gotcha hit while writing it:** `now` without parentheses fails with `column "now" does not exist` — Postgres reads it as a column name, not a function call. (`interval '7days'` without a space is fine, though — Postgres accepts it.)

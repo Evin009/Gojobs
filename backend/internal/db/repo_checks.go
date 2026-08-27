@@ -19,7 +19,7 @@ func GetRepoCheck(owner, repo string) (feedURL string, found bool, err error) {
 	var url *string
 
 	err = pool.QueryRow(context.Background(),
-		"SELECT feed_url FROM repo_checks WHERE owner = $1 AND repo = $2",
+		"SELECT feed_url FROM repo_checks WHERE owner = $1 AND repo = $2 AND checked_at > now() - interval '7days'",
 		owner, repo,
 	).Scan(&url)
 
