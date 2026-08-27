@@ -17,25 +17,30 @@ function getRepoFromURL() {
   return { owner: match[1], repo: match[2] };
 }
 
-// Deliberately fails OPEN: if the backend is down or the check errors, we
-// report "not monitored" so the panel still shows. Re-adding a repo is a no-op
-// (ON CONFLICT DO NOTHING), whereas wrongly hiding the panel would silently
-// leave the user thinking a repo is watched when it isn't.
+// Asks the backend two things at once:
+//   monitorable — does this repo publish job listings we can actually read?
+//   monitored   — is it already being watched?
 //
-// Stored feed URLs always contain /owner/repo/ by construction, so we match on
-// that rather than reconstructing the feed URL — where a repo publishes its
-// jobs is the backend's business, not ours.
-async function isMonitored(owner, repo) {
+// The two failure directions aren't symmetric, so they fail differently:
+//   monitorable defaults FALSE  — if we can't confirm it's a job repo, stay
+//     quiet rather than prompting on every ordinary repo you browse.
+//   monitored defaults FALSE    — showing the panel again is harmless (re-adding
+//     is a no-op), while wrongly hiding it would imply a repo is watched when
+//     nothing is watching it.
+async function checkRepo(owner, repo) {
   try {
-    const response = await fetch(`${BACKEND_URL}/repos`);
-    if (!response.ok) return false;
+    const response = await fetch(
+      `${BACKEND_URL}/repos/check?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`
+    );
+    if (!response.ok) return { monitorable: false, monitored: false };
 
-    const urls = await response.json();
-    if (!Array.isArray(urls)) return false;
-
-    return urls.some((url) => url.includes(`/${owner}/${repo}/`));
+    const data = await response.json();
+    return {
+      monitorable: data.monitorable === true,
+      monitored: data.monitored === true,
+    };
   } catch {
-    return false;
+    return { monitorable: false, monitored: false };
   }
 }
 
@@ -355,14 +360,35 @@ function mountPanel(owner, repo) {
   });
 }
 
-async function init() {
+function removeExistingUI() {
+  const existing = document.getElementById("gojobs-root");
+  if (existing) existing.remove();
+}
+
+// Runs on first load and again whenever the URL changes. Bails early if the
+// path hasn't actually changed, so it's safe to call as often as we like.
+let currentPath = null;
+
+async function handleLocation() {
+  if (window.location.pathname === currentPath) return;
+  currentPath = window.location.pathname;
+
+  // clear any panel left over from the repo we just navigated away from
+  removeExistingUI();
+
   const repoInfo = getRepoFromURL();
-  if (!repoInfo || document.getElementById("gojobs-root")) return;
+  if (!repoInfo) return;
 
-  const monitored = await isMonitored(repoInfo.owner, repoInfo.repo);
+  const pathWhenChecked = currentPath;
+  const { monitorable, monitored } = await checkRepo(repoInfo.owner, repoInfo.repo);
 
-  // guard again — the await gives another injection a chance to mount first
+  // the user may have navigated again while that request was in flight —
+  // don't mount a panel for a repo they've already left
+  if (currentPath !== pathWhenChecked) return;
   if (document.getElementById("gojobs-root")) return;
+
+  // ordinary repos publish no job listings — show nothing at all
+  if (!monitorable) return;
 
   if (monitored) {
     mountBadge(repoInfo.repo);
@@ -371,4 +397,10 @@ async function init() {
   }
 }
 
-init();
+// GitHub is a single-page app: clicking a link swaps the content and rewrites
+// the URL without ever loading a page, so a content script only runs once, on
+// the first real load. Polling the path catches those in-page navigations;
+// popstate just makes back/forward feel instant instead of waiting for a tick.
+handleLocation();
+setInterval(handleLocation, 800);
+window.addEventListener("popstate", handleLocation);

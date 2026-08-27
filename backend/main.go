@@ -83,6 +83,54 @@ func listReposHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(urls)
 }
 
+// GET /repos/check?owner=X&repo=Y — tells the extension two things before it
+// renders anything: is this repo monitorable at all, and is it already watched.
+//
+// Resolution is expensive (several fetches, and markdown feeds mean downloading
+// a whole README), so results are cached in repo_checks — including negatives,
+// which is what keeps ordinary repos cheap to skip on every page view.
+func checkRepoHandler(w http.ResponseWriter, r *http.Request) {
+	owner := r.URL.Query().Get("owner")
+	repo := r.URL.Query().Get("repo")
+
+	if owner == "" || repo == "" {
+		http.Error(w, "owner and repo are required", http.StatusBadRequest)
+		return
+	}
+
+	feedURL, cached, err := db.GetRepoCheck(owner, repo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !cached {
+		// first time we've seen this repo — resolve once, then remember the
+		// answer either way so we never pay for this lookup again
+		resolved, resolveErr := github.ResolveFeedURL(owner, repo)
+		if resolveErr != nil {
+			resolved = "" // no feed; cached as a negative
+		}
+
+		if err := db.SaveRepoCheck(owner, repo, resolved); err != nil {
+			log.Println("failed to cache repo check:", err)
+		}
+		feedURL = resolved
+	}
+
+	monitored, err := db.IsRepoMonitored(owner, repo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]bool{
+		"monitorable": feedURL != "",
+		"monitored":   monitored,
+	})
+}
+
 // POST /repos — takes {owner, repo} from the extension, finds a feed that
 // actually works, and only then saves it. Rejecting here is the whole point:
 // storing an unreadable feed would "succeed" and then silently never produce
@@ -99,10 +147,27 @@ func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		feedURL, err := github.ResolveFeedURL(req.Owner, req.Repo)
+		// reuse the cached resolution when the extension already checked this
+		// repo on page load, so a click doesn't repeat the whole lookup
+		feedURL, cached, err := db.GetRepoCheck(req.Owner, req.Repo)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if !cached {
+			feedURL, err = github.ResolveFeedURL(req.Owner, req.Repo)
+			if err != nil {
+				feedURL = ""
+			}
+			if saveErr := db.SaveRepoCheck(req.Owner, req.Repo, feedURL); saveErr != nil {
+				log.Println("failed to cache repo check:", saveErr)
+			}
+		}
+
+		if feedURL == "" {
 			// 422: the request was well-formed, we just can't monitor this repo
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			http.Error(w, "no readable job feed found for this repo", http.StatusUnprocessableEntity)
 			return
 		}
 
@@ -123,6 +188,7 @@ func main() {
 	http.HandleFunc("/health", healthHandler)
 	http.HandleFunc("/ping", healthHandler2)
 	http.HandleFunc("/repos", withCORS(reposHandler))
+	http.HandleFunc("/repos/check", withCORS(checkRepoHandler))
 
 	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 

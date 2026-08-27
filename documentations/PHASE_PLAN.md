@@ -56,7 +56,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Backend `POST /repos` endpoint for the extension to call
 - [x] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos` — verified live in Chrome
 - [x] Skip the prompt on already-monitored repos (`GET /repos` check, passive badge instead)
-- [ ] Re-run the panel on GitHub SPA navigation (currently needs a full page load)
+- [x] Re-run the panel on GitHub SPA navigation
+- [x] Only prompt on repos that actually publish job listings (cached `GET /repos/check`)
 
 ## Phase 12 — AI-judgment autofill
 - [ ] Classify field types

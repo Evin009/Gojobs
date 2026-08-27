@@ -79,9 +79,11 @@ flowchart TD
     V["User visits github.com/OWNER/REPO"] --> CS["github_monitor.js<br/>auto-injected per manifest.json"]
     CS --> CHK{"URL shaped<br/>/owner/repo?"}
     CHK -->|no| STOP["do nothing"]
-    CHK -->|yes| ASK["isMonitored()<br/>GET /repos, is this feed URL listed?"]
+    CHK -->|yes| ASK["GET /repos/check<br/>monitorable? monitored?"]
+    ASK --> CACHE[("repo_checks cache<br/>resolves once, remembers")]
+    ASK -->|"not a job repo"| STOP
     ASK -->|already monitored| BADGE["passive 'Monitoring' badge<br/>auto-fades"]
-    ASK -->|no, or check failed| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
+    ASK -->|"job repo, not watched"| UI["Panel mounts in Shadow DOM<br/>top-right, isolated styles"]
     UI --> CLICK["User clicks 'Monitor this repo'"]
     CLICK --> POST["fetch POST /repos<br/>sends {owner, repo} only"]
     POST --> CORS["withCORS middleware<br/>answers OPTIONS preflight"]
@@ -93,6 +95,8 @@ flowchart TD
 ```
 
 - The content script runs on **every** github.com page, but only mounts UI when the URL is exactly `/owner/repo` — not on settings, orgs, or the homepage.
+- GitHub is a single-page app, so the script watches for URL changes rather than relying on page loads — otherwise clicking between repos would never trigger it.
+- Before rendering anything it asks whether the repo is **monitorable** at all. Ordinary repos get no panel. That answer is cached in `repo_checks` (negatives included), because resolving costs several fetches and a full README download — far too expensive to repeat on every repo page you browse.
 - Before mounting, it asks the backend whether the repo is already watched. Already monitored → a passive badge that fades on its own; otherwise → the full prompt.
 - That check **fails open**: if the backend is unreachable, it reports "not monitored" and shows the panel. The two errors aren't symmetric — a redundant panel is a minor annoyance and clicking again is a no-op (`ON CONFLICT DO NOTHING`), while wrongly hiding it would leave the user believing a repo is watched when nothing is watching it.
 - UI lives in a **Shadow DOM**: GitHub's stylesheet can't leak into our panel, and ours can't leak into GitHub's page.

@@ -178,3 +178,8 @@ Format per entry (1-2 lines max, no more):
 - Built: **first Go tests in the project** — `markdown_test.go` (3 tests), added `go test ./...` to CI. Verified against the live file: 297 real listings parsed correctly.
 - Decision: feed conventions moved from the extension to the backend — a client shouldn't need to know where a tracker publishes its jobs, and centralizing it means validation happens in one place.
 - Full detail in FIX_LOG.md — this started as a real silent-failure bug.
+
+### 2026-08-27 — SPA navigation + only prompt on real job repos
+- Built: extension now re-checks on URL change (GitHub is an SPA, so page-load-only meant no panel when clicking between repos); `repo_checks` cache table + `GET /repos/check` so the panel only appears on repos that actually publish job listings.
+- Decision: cache negatives too — that's the case that has to be cheap, since most repos you browse aren't trackers. Repeat check went 1.10s → 0.09s.
+- Both were real bugs; full detail in FIX_LOG.md.

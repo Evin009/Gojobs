@@ -125,3 +125,29 @@ Template for new entries:
 - **Verified:** markdown repo → 201 and resolved to `main/README.md` (169 jobs); `facebook/react` → 422 rejected; all three stored feeds return 200; the bad row was deleted and re-added correctly.
 - **Design note:** feed conventions are backend knowledge now. The extension sends repo identity only — it never constructs a raw.githubusercontent.com URL.
 - **Known limit:** a repo with several markdown job files (USA vs international) only gets the first one that resolves.
+
+---
+
+### 2026-08-27 — Panel never appeared when clicking between repos
+
+- **Issue:** pasting a repo URL showed the panel, but clicking through to a repo from GitHub's homepage showed nothing.
+- **Cause:** GitHub is a single-page app — clicking a link swaps the content and rewrites the URL without ever loading a page. Content scripts only run on real page loads, so ours ran once and never again.
+- **Fix:** watch the URL instead of relying only on page load.
+- **Done:** `handleLocation()` re-runs on a short interval and on back/forward; it clears any leftover panel when the path changes, and discards a stale result if the user navigates again mid-check.
+- **Verified:** syntax checked; behavior confirmed in-browser.
+
+---
+
+### 2026-08-27 — Panel prompted on every repo, not just job trackers
+
+- **Issue:** the "Monitor this repo?" panel appeared on any GitHub repo — `facebook/react`, `torvalds/linux`, anything.
+- **Cause:** nothing checked whether a repo actually publishes job listings until you clicked. The panel was optimistic by default.
+- **Why it couldn't just call the resolver:** resolution costs several fetches, and markdown feeds mean downloading a whole README. Doing that on every repo page you browse would be slow and would hammer GitHub. Checking file *existence* doesn't help either — nearly every repo has a `README.md`, so only parsing its contents can tell you if it holds job tables.
+- **Fix:** resolve once per repo, cache the answer — including "no feed", which is the case that actually needs to be cheap.
+- **Done:**
+  - `repo_checks` table (migration 004), unique on `(owner, repo)`; `feed_url IS NULL` means "checked, not a job repo".
+  - `GET /repos/check?owner=&repo=` returns `{monitorable, monitored}`; `POST /repos` reuses the same cache so clicking doesn't re-resolve.
+  - Extension calls it before rendering and shows nothing at all when `monitorable` is false.
+- **Verified:** job repo + monitored → `{true,true}` (badge); job repo unmonitored → `{true,false}` (panel); `facebook/react` and `torvalds/linux` → `{false,false}` (nothing). Cache made a repeat check **1.10s → 0.09s**.
+- **Design note:** the two flags fail in opposite directions on purpose. `monitorable` defaults false so an unreachable backend means silence rather than prompting on every repo; `monitored` defaults false because re-showing the panel is harmless while wrongly hiding it is not.
+- **Known limit:** the cache never expires, so a repo that later adds a job feed stays marked unmonitorable until its row is cleared.
