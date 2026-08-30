@@ -183,3 +183,8 @@ Format per entry (1-2 lines max, no more):
 - Built: extension now re-checks on URL change (GitHub is an SPA, so page-load-only meant no panel when clicking between repos); `repo_checks` cache table + `GET /repos/check` so the panel only appears on repos that actually publish job listings.
 - Decision: cache negatives too — that's the case that has to be cheap, since most repos you browse aren't trackers. Repeat check went 1.10s → 0.09s.
 - Both were real bugs; full detail in FIX_LOG.md.
+
+### 2026-08-28 — Form field scanner
+- Built: `extension/form_scanner.js` — `scanFields()` returns `{id, type, label}` per fillable field; `getFieldLabel` tries `aria-label`, `<label for>`, then `placeholder`, since real forms use different ones per field.
+- Verified live on a real GitLab/Greenhouse application: found first_name, email, phone, resume, cover_letter plus all custom questions; unlabelled widget internals and recaptcha filtered out.
+- Noted for Phase 12: DOM `type` lies — GitLab's custom dropdowns report as `type: "text"`, so classification can't trust it alone.

@@ -52,7 +52,8 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 
 ## Phase 11 — Extension skeleton
 - [x] Manifest V3 setup
-- [ ] Detect job application page, read form fields
+- [x] Read form fields (`scanFields`, verified on a real Greenhouse form)
+- [ ] Detect that a page IS a job application
 - [x] Backend `POST /repos` endpoint for the extension to call
 - [x] "Monitor this repo?" popup on GitHub repo pages, calls backend to add to `monitored_repos` — verified live in Chrome
 - [x] Skip the prompt on already-monitored repos (`GET /repos` check, passive badge instead)
