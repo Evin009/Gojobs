@@ -192,3 +192,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-31 — Concurrency benchmark
 - Built: `backend/cmd/benchmark` — fetches 10 real Greenhouse boards sequentially vs concurrently. Measured **21.9x faster** (3.17s → 0.14s, same 2,912 jobs).
 - Note: gains are that large because the work is network-bound waiting, not CPU — ten requests waiting in parallel instead of queuing.
+
+### 2026-08-31 — Application page detection, Phase 11 complete
+- Built: `isApplicationPage()` — true only when the page has both a file input (resume) and an email field. Either alone is too common; together they're specific to job applications.
+- Verified live: `true` on a real Greenhouse application, `false` on github.com.

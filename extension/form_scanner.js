@@ -28,3 +28,15 @@ function scanFields() {
 
   return fields.filter((f) => f.label); // only add label field drop other
 }
+
+// check if its actually an application by looking for email and file type for resume uploads
+function isApplicationPage() {
+  const field_list = scanFields();
+
+  const hasFile = field_list.some((item) => item.type == "file");
+  const hasEmail = field_list.some((item) =>
+    item.label.toLowerCase().includes("email"),
+  );
+
+  return hasEmail && hasFile;
+}
