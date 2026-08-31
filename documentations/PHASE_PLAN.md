@@ -61,7 +61,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Only prompt on repos that actually publish job listings (cached `GET /repos/check`)
 
 ## Phase 12 — AI-judgment autofill
-- [ ] Classify field types
+- [x] Classify field types (`classify.js`, verified on a real form)
 - [ ] Deterministic fill + AI-generated answers
 
 ## Phase 13 — Tracker board

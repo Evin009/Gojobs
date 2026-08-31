@@ -196,3 +196,7 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-31 — Application page detection, Phase 11 complete
 - Built: `isApplicationPage()` — true only when the page has both a file input (resume) and an email field. Either alone is too common; together they're specific to job applications.
 - Verified live: `true` on a real Greenhouse application, `false` on github.com.
+
+### 2026-08-31 — Field classification
+- Built: `extension/classify.js` — sorts each field into `profile` (stored fact), `file` (upload), or `question` (needs Claude). Avoids paying an LLM to recall the user's own email.
+- Verified live on GitLab's form: 20 fields, correct buckets.

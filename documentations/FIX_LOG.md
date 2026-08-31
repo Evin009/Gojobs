@@ -163,3 +163,14 @@ Template for new entries:
 - **Done:** one line of SQL in `GetRepoCheck` — added `AND checked_at > now() - interval '7days'`. No Go changes: a stale row simply returns no rows, which is already the "never checked" path, so it re-resolves and overwrites via the existing upsert.
 - **Verified:** aged a row 30 days artificially, re-requested it, and confirmed `checked_at` jumped from 04:07 → 04:23 — proof the stale row was ignored and refreshed rather than reused.
 - **Gotcha hit while writing it:** `now` without parentheses fails with `column "now" does not exist` — Postgres reads it as a column name, not a function call. (`interval '7days'` without a space is fine, though — Postgres accepts it.)
+
+---
+
+### 2026-08-31 — Visa question misread as a location field
+
+- **Issue:** "Will you now or in the future require sponsorship for a visa to remain in your current location?" was classified as a `location` profile field — meaning autofill would have typed the user's city into a yes/no legal question.
+- **Cause:** profile matching used substring search, and the word "location" appears inside that long question. Same bug shape as "intern" matching "Internal Audit" back in Phase 2.
+- **Fix:** treat any label over 40 characters as a question before pattern matching runs. Real profile fields are short ("Email", "Phone", "LinkedIn Profile"); long text is always a question.
+- **Done:** length guard added in `classifyField`, placed *before* the pattern loop — order matters, since after the loop it would never be reached.
+- **Verified:** that question and two other country-phrased ones now classify as `question`; short fields still match correctly.
+- **Also:** `scanFields` now skips `search`/`submit`/`button` inputs — a phone-widget search box was being scanned as a real field.

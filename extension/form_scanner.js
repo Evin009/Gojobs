@@ -17,7 +17,8 @@ function getFieldLabel(el) {
 // Returns an array of { id, type, label } for every fillable field on the page.
 function scanFields() {
   const els = [...document.querySelectorAll("input, select, textarea")];
-  const visible = els.filter((el) => el.type != "hidden"); // filter and keep elements which has type != hidden
+  const skip = ["hidden", "search", "submit", "button"];
+  const visible = els.filter((el) => !skip.includes(el.type)); // filter and remove elements which has type in skip
 
   const fields = visible.map((el) => ({
     // map elements to id, type and label and retrun a list
