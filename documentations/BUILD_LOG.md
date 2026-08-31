@@ -188,3 +188,7 @@ Format per entry (1-2 lines max, no more):
 - Built: `extension/form_scanner.js` — `scanFields()` returns `{id, type, label}` per fillable field; `getFieldLabel` tries `aria-label`, `<label for>`, then `placeholder`, since real forms use different ones per field.
 - Verified live on a real GitLab/Greenhouse application: found first_name, email, phone, resume, cover_letter plus all custom questions; unlabelled widget internals and recaptcha filtered out.
 - Noted for Phase 12: DOM `type` lies — GitLab's custom dropdowns report as `type: "text"`, so classification can't trust it alone.
+
+### 2026-08-31 — Concurrency benchmark
+- Built: `backend/cmd/benchmark` — fetches 10 real Greenhouse boards sequentially vs concurrently. Measured **21.9x faster** (3.17s → 0.14s, same 2,912 jobs).
+- Note: gains are that large because the work is network-bound waiting, not CPU — ten requests waiting in parallel instead of queuing.
