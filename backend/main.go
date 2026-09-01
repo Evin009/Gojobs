@@ -180,6 +180,24 @@ func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 
+
+func profileHandler(w http.ResponseWriter, r *http.Request){
+	profile, err := db.GetProfile()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if profile == nil {
+		profile = make(map[string]string)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(profile)
+
+}
+
+
 // entry point — connects DB, registers routes, starts the background monitor loop and HTTP server
 func main() {
 	db.Connect()
@@ -189,6 +207,7 @@ func main() {
 	http.HandleFunc("/ping", healthHandler2)
 	http.HandleFunc("/repos", withCORS(reposHandler))
 	http.HandleFunc("/repos/check", withCORS(checkRepoHandler))
+	http.HandleFunc("/profile", withCORS(profileHandler))
 
 	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 

@@ -200,3 +200,8 @@ Format per entry (1-2 lines max, no more):
 ### 2026-08-31 — Field classification
 - Built: `extension/classify.js` — sorts each field into `profile` (stored fact), `file` (upload), or `question` (needs Claude). Avoids paying an LLM to recall the user's own email.
 - Verified live on GitLab's form: 20 fields, correct buckets.
+
+### 2026-09-01 — Profile storage + endpoint
+- Built: `profile` table (migration 005, key-value so new facts need no migration), `db.GetProfile()` returning a `map[string]string`, and `GET /profile`. Keys match `PROFILE_PATTERNS` in `classify.js` — that's the link between a classified field and its value.
+- Decision: DB, not extension storage — the Python AI service needs the same profile and can't read browser storage.
+- Security: `/profile` returns PII with no auth and `Allow-Origin: *`. Acceptable locally; this is the endpoint that makes auth a hard requirement before hosting.
