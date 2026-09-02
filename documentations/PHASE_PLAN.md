@@ -68,9 +68,9 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [ ] AI maps a form's wording -> a stored declaration key — built, answers unverified (credits)
 - [ ] AI writes answers for open-ended questions — built, answers unverified (credits)
 - [x] Wire `autofill.js` to the question bucket — all three branches verified against stubs
-- [ ] Fill dropdowns, radios and checkboxes — `fillField` only types, so most declarations don't fill
-- [ ] Match a stored value to a near-miss option (`Yes` vs `Yes, I am authorized`)
-- [ ] Find radios by `name` — they share one and have no `id`
+- [x] Fill dropdowns, radios and checkboxes — `fillField` routes by element type
+- [x] Match a stored value to a near-miss option — `looksLike`, both directions, word-boundary safe
+- [x] Find radios by `name` — `findElement` falls back from `id`
 - [ ] Attach resume / cover letter — moved to Phase 13
 
 ## Phase 13 — Scored resume tailoring + attachment

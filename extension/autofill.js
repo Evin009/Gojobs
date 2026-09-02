@@ -28,19 +28,6 @@ async function routeQuestion(question, keys) {
   }
 }
 
-// TODO (you): given one field classified as "question", decide what to put in
-// it and return that string ("" means leave it blank).
-//
-//   1. route = await routeQuestion(field.label, Object.keys(profile))
-//   2. if route is a key we actually hold  -> return profile[route]
-//   3. if route === "GENERATE"             -> ask the service worker:
-//        chrome.runtime.sendMessage({ type: "answerQuestion",
-//                                     question: field.label, profile })
-//      and return its .answer
-//   4. anything else (SKIP, unknown key)   -> return ""
-//
-// Step 2 matters: route can name a key that isn't in profile. Filling from a
-// missing key would write "undefined" onto a real application.
 async function resolveQuestion(field, profile) {
   const route = await routeQuestion(field.label, Object.keys(profile));
 
@@ -59,9 +46,54 @@ async function resolveQuestion(field, profile) {
   return "";
 }
 
+// scanFields stores `el.id || el.name`, so a field may be keyed by either.
+// Radio groups are the reason: every option shares one `name` and usually
+// carries no `id` at all.
+function findElement(field) {
+  return (
+    document.getElementById(field.id) ||
+    document.querySelector(`[name="${field.id}"]`)
+  );
+}
+
+// TODO (you): true if an option means the same thing as our stored value.
+// The form rarely offers our exact string — we store "Yes", it offers
+// "Yes, I am authorized to work in the US". Lowercase both, trim, and decide
+// what counts as a match. Careful: "Yes" is a prefix of "Yes" *and* of
+// "Yes, ..." — but it's also inside "Yesterday". Think about which direction
+// the containment should go.
+function looksLike(optionText, value) {
+  return false;
+}
+
+// TODO (you): pick the matching <option> and select it.
+//   1. [...el.options] gives you the list; each has .text and .value
+//   2. find the first where looksLike(...) holds, on either .text or .value
+//   3. no match -> return false, leave the field alone
+//   4. match -> el.value = option.value, then dispatch "change" (NOT "input" —
+//      selects report a change, and React listens for that one)
+function fillSelect(el, value) {
+  return false;
+}
+
+// TODO (you): click the right radio in the group.
+//   1. document.querySelectorAll(`input[name="${el.name}"]`) is the group
+//   2. each radio's visible text is its <label for=...>, not its .value
+//   3. matching one -> radio.click(), which fires the events the page expects
+//      (setting .checked directly does not)
+function fillRadio(el, value) {
+  return false;
+}
+
 function fillField(field, value) {
-  const el = document.getElementById(field.id);
+  const el = findElement(field);
   if (!el || !value) return false;
+
+  // TODO (you): route to the right filler.
+  //   el.tagName === "SELECT"  -> fillSelect
+  //   el.type === "radio"      -> fillRadio
+  //   el.type === "checkbox"   -> el.checked = truthy value, dispatch "change"
+  //   otherwise                -> the text path below, unchanged
 
   el.value = value;
   el.dispatchEvent(new Event("input", { bubbles: true }));

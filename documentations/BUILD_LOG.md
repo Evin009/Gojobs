@@ -234,3 +234,9 @@ Format per entry (1-2 lines max, no more):
 - Stubs: `ROUTE_STUB=1` / `ANSWER_STUB=1` answer without calling Claude. They exist to separate two failure sources — with them on, any bug is in our own plumbing, because the reply is known in advance.
 - Stub bug worth keeping: the first version matched on the key's first word, so "want to **work** at this company" returned `work_authorization`. A stub that answers wrongly is worse than none — you debug the extension over a fake bug. Now matches distinctive phrases.
 - Verified live on a real form: 61 fields routed, all three branches taken, questions filled from stub text.
+
+### 2026-09-02 — Filling every field type, not just text boxes
+- Built: `fillField` now routes by element type — `fillSelect`, `fillRadio`, `fillCheckbox`, text as before. Most declarations are dropdowns on real forms, so setting `el.value` was a silent no-op on exactly the fields the declaration bucket was built for.
+- `looksLike`: forms rarely offer our exact string ("Yes" vs "Yes, I am authorized to work in the US"). Containment runs both directions, since either side can be longer, and stops at a word boundary — a plain `includes` would match "Yes" against "Yesterday".
+- Events: selects and checkboxes get `change`, not `input` — that's what they report and what React listens for. Radios get `.click()`, which fires the real events and unchecks the previous choice for free; setting `.checked` does neither.
+- No match means leave the field alone. A wrong pick on a legal declaration is worse than an empty field.
