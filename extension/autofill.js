@@ -25,6 +25,8 @@ async function routeQuestion(question, keys) {
   }
 }
 
+// What to type into one question field, or "" to leave it blank. The truthy
+// check rejects a key we don't hold and lets GENERATE/SKIP fall through.
 async function resolveQuestion(field, profile) {
   const route = await routeQuestion(field.label, Object.keys(profile));
 
@@ -59,6 +61,8 @@ function startsWithWord(longer, shorter) {
   return next === undefined || !/[a-z0-9]/.test(next);
 }
 
+// True if a form option means the same as our stored value — "Yes" matches
+// "Yes, I am authorized". Either side can be the longer one.
 function looksLike(optionText, value) {
   const option = (optionText || "").trim().toLowerCase();
   const stored = (value || "").trim().toLowerCase();
@@ -92,7 +96,8 @@ function fillRadio(el, value) {
   const match = group.find((radio) => {
     const label = document.querySelector(`label[for="${radio.id}"]`);
     return (
-      looksLike(label?.textContent || "", value) || looksLike(radio.value, value)
+      looksLike(label?.textContent || "", value) ||
+      looksLike(radio.value, value)
     );
   });
   if (!match) return false;
@@ -102,14 +107,23 @@ function fillRadio(el, value) {
 }
 
 // Any non-empty string is truthy, so "No" would tick the box without these.
-const NEGATIVE = ["no", "false", "0", "none", "decline", "decline to self identify"];
+const NEGATIVE = [
+  "no",
+  "false",
+  "0",
+  "none",
+  "decline",
+  "decline to self identify",
+];
 
+// Ticks unless the stored value is one of the negatives above.
 function fillCheckbox(el, value) {
   el.checked = !NEGATIVE.includes(String(value).trim().toLowerCase());
   el.dispatchEvent(new Event("change", { bubbles: true }));
   return true;
 }
 
+// Routes a field to the filler its element type needs.
 function fillField(field, value) {
   const el = findElement(field);
   if (!el || !value) return false;
