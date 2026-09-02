@@ -29,8 +29,12 @@ async function autofill(onProgress) {
   const profile = await fetchProfile();
   const fields = classifyFields(scanFields());
 
+  // Declarations (work authorization, EEO) fill from stored answers exactly
+  // like profile facts — the user gave those once, nothing is inferred here.
   const targets = fields.filter(
-    (f) => f.kind === "profile" && profile[f.profileKey]
+    (f) =>
+      (f.kind === "profile" || f.kind === "declaration") &&
+      profile[f.profileKey],
   );
 
   let filled = 0;
@@ -356,7 +360,7 @@ window.addEventListener("message", async (event) => {
   if (!isApplicationPage()) return;
 
   const filled = await autofill((p) =>
-    window.top.postMessage({ source: MSG, type: "progress", ...p }, "*")
+    window.top.postMessage({ source: MSG, type: "progress", ...p }, "*"),
   );
 
   window.top.postMessage({ source: MSG, type: "filled", count: filled }, "*");

@@ -216,3 +216,8 @@ Format per entry (1-2 lines max, no more):
 - Built: Dynamic-Island-style notch pinned to the top of the browser window — collapsed by default, expands on hover, cross-fades through loading → progress → done, then stays put as the page's entry point.
 - Progress reports per field: `autofill(onProgress)` streams each field name up to the top frame, with a deliberate ~260ms pause so the user can see what changed on their own application.
 - Cross-frame: the form lives in Greenhouse's embedded frame but the notch must sit on the window, so they talk over `postMessage`. Only a "go" signal and a count cross frames — profile data never leaves the frame that fills it.
+
+### 2026-09-02 — Declaration bucket
+- Built: `DECLARATION_PATTERNS` + `declaration` kind in `classify.js`; autofill fills them from stored answers alongside profile facts. Seeded work auth, visa, and EEO values in the `profile` table.
+- Decision: AI never answers these. The user gives them once; matching only recognises which stored key a form's wording means. They carry legal weight and EEO ones are voluntary self-identification — an inferred answer would be wrong even when plausible.
+- Ordering detail: declaration matching runs *before* the 40-char question guard, since these are usually long sentences ("Will you now or in the future require sponsorship...").

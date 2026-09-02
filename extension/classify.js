@@ -19,6 +19,23 @@ const PROFILE_PATTERNS = {
   location: ["city", "country", "location"],
 };
 
+// Standard declarations every application asks in slightly different words.
+// The user answers these once at onboarding; matching here is only about
+// recognising which one a form means — never about deciding the answer.
+const DECLARATION_PATTERNS = {
+  work_authorization: [
+    "legally authorized",
+    "authorized to work",
+    "work authorization",
+    "right to work",
+  ],
+  visa_sponsorship: ["sponsorship", "visa", "h-1b", "require sponsorship"],
+  gender: ["gender"],
+  ethnicity: ["hispanic", "latino", "ethnicity", "race"],
+  veteran_status: ["veteran", "protected veteran"],
+  disability_status: ["disability", "disabled"],
+};
+
 // Returns { ...field, kind, profileKey } for one scanned field.
 //   kind       -> "profile" | "file" | "question"
 //   profileKey -> which stored fact to use, only when kind is "profile"
@@ -26,6 +43,13 @@ function classifyField(field) {
   if (field.type === "file") return { ...field, kind: "file" };
 
   const label = (field.label || "").toLowerCase();
+
+  for (const [key, patterns] of Object.entries(DECLARATION_PATTERNS)) {
+    if (patterns.some((p) => label.includes(p))) {
+      return { ...field, kind: "declaration", profileKey: key };
+    }
+  }
+
   if (label.length > 40) return { ...field, kind: "question" };
 
   for (const [key, patterns] of Object.entries(PROFILE_PATTERNS)) {
