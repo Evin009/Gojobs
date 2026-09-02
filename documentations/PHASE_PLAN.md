@@ -67,7 +67,7 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] New `declaration` bucket in `classify.js` — verified on a real form
 - [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating) — `route_question.py` + `POST /route` wired and reaching the API; answers unverified (see credits section)
 - [ ] AI-generated answers for genuinely open-ended questions only — `answer.py` + `POST /answer` + the `answerQuestion` relay in `background.js` are built; nothing in `autofill.js` calls them yet
-- [ ] Wire `autofill.js` to the question bucket: field -> `/route` -> stored key (fill) | `GENERATE` (-> `/answer`) | `SKIP` (leave blank)
+- [x] Wire `autofill.js` to the question bucket: field -> `/route` -> stored key (fill) | `GENERATE` (-> `/answer`) | `SKIP` (leave blank) — verified live on a real form against `ROUTE_STUB`/`ANSWER_STUB`; all three branches exercised
 - [ ] Attach resume / cover letter to file inputs — not started. `classify.js` tags them `kind: "file"` and autofill ignores them. Note: a file input can't be set by assigning a path (browser security); needs a `File` built in memory and handed over via `DataTransfer`. Also depends on `/tailor-resume` producing a real PDF, which needs credits.
 
 ## Phase 13 — Tracker board

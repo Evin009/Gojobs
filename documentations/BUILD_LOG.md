@@ -227,3 +227,10 @@ Format per entry (1-2 lines max, no more):
 - Design: keyword patterns in `classify.js` stay the fast path; `/route` only runs when they miss. Obvious fields stay free and instant, Claude handles odd phrasings.
 - Guard: the endpoint rejects any reply that isn't in the `keys` it sent, falling back to `SKIP`. A hallucinated key would otherwise become a profile lookup that silently returns nothing.
 - Status: request reaches Anthropic and gets a clean `400` on credit balance — plumbing proven, judgment unverified. Checklist for that pass added to PHASE_PLAN.md.
+
+### 2026-09-02 — Question fields wired end to end
+- Built: `resolveQuestion` in `autofill.js` — routes a question, fills from the profile if it names a key we hold, calls `/answer` on `GENERATE`, leaves the field alone otherwise. `autofill()` now admits `question` fields, taking their value from that instead of a stored key.
+- Guard: the truthy check on `profile[route]` does triple duty — it rejects a key we don't hold, and lets `GENERATE`/`SKIP` fall through, since neither is ever a real key. Every failure path returns `""`, so a broken worker leaves a blank field rather than a guess.
+- Stubs: `ROUTE_STUB=1` / `ANSWER_STUB=1` answer without calling Claude. They exist to separate two failure sources — with them on, any bug is in our own plumbing, because the reply is known in advance.
+- Stub bug worth keeping: the first version matched on the key's first word, so "want to **work** at this company" returned `work_authorization`. A stub that answers wrongly is worse than none — you debug the extension over a fake bug. Now matches distinctive phrases.
+- Verified live on a real form: 61 fields routed, all three branches taken, questions filled from stub text.

@@ -21,6 +21,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // keeps the channel open for the async reply
   }
 
+  // Asks which stored answer a question means. Falls back to SKIP on any
+  // failure — leaving a field blank is always safe, guessing on someone's
+  // real application is not.
+  if (message.type === "routeQuestion") {
+    fetch(`${AI}/route`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: message.question,
+        keys: message.keys || [],
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : { route: "SKIP" }))
+      .then((data) => sendResponse(data))
+      .catch(() => sendResponse({ route: "SKIP" }));
+
+    return true;
+  }
+
   if (message.type === "answerQuestion") {
     fetch(`${AI}/answer`, {
       method: "POST",

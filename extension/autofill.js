@@ -13,6 +13,52 @@ async function fetchProfile() {
   }
 }
 
+// Asks the backend what an unmatched question actually wants. Returns a stored
+// profile key, or "GENERATE" (needs writing), or "SKIP" (leave it alone).
+async function routeQuestion(question, keys) {
+  try {
+    const reply = await chrome.runtime.sendMessage({
+      type: "routeQuestion",
+      question,
+      keys,
+    });
+    return reply?.route || "SKIP";
+  } catch {
+    return "SKIP";
+  }
+}
+
+// TODO (you): given one field classified as "question", decide what to put in
+// it and return that string ("" means leave it blank).
+//
+//   1. route = await routeQuestion(field.label, Object.keys(profile))
+//   2. if route is a key we actually hold  -> return profile[route]
+//   3. if route === "GENERATE"             -> ask the service worker:
+//        chrome.runtime.sendMessage({ type: "answerQuestion",
+//                                     question: field.label, profile })
+//      and return its .answer
+//   4. anything else (SKIP, unknown key)   -> return ""
+//
+// Step 2 matters: route can name a key that isn't in profile. Filling from a
+// missing key would write "undefined" onto a real application.
+async function resolveQuestion(field, profile) {
+  const route = await routeQuestion(field.label, Object.keys(profile));
+
+  if (profile[route]) return profile[route];
+
+  if (route === "GENERATE") {
+    const response = await chrome.runtime.sendMessage({
+      type: "answerQuestion",
+      question: field.label,
+      profile,
+    });
+
+    return response.answer;
+  }
+
+  return "";
+}
+
 function fillField(field, value) {
   const el = document.getElementById(field.id);
   if (!el || !value) return false;
@@ -33,8 +79,9 @@ async function autofill(onProgress) {
   // like profile facts — the user gave those once, nothing is inferred here.
   const targets = fields.filter(
     (f) =>
-      (f.kind === "profile" || f.kind === "declaration") &&
-      profile[f.profileKey],
+      ((f.kind === "profile" || f.kind === "declaration") &&
+        profile[f.profileKey]) ||
+      f.kind === "question",
   );
 
   let filled = 0;
@@ -45,7 +92,12 @@ async function autofill(onProgress) {
       onProgress({ label: field.label, index: i, total: targets.length });
     }
 
-    if (fillField(field, profile[field.profileKey])) filled++;
+    const value =
+      field.kind === "question"
+        ? await resolveQuestion(field, profile)
+        : profile[field.profileKey];
+
+    if (fillField(field, value)) filled++;
     await new Promise((r) => setTimeout(r, 260));
   }
 
