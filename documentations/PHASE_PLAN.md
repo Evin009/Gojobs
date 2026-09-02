@@ -62,7 +62,11 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 
 ## Phase 12 — AI-judgment autofill
 - [x] Classify field types (`classify.js`, verified on a real form)
-- [ ] Deterministic fill + AI-generated answers
+- [x] Deterministic fill for profile fields (name/email/phone/LinkedIn)
+- [ ] Store declarations (work auth, visa, EEO) as profile facts, collected once
+- [ ] New `declaration` bucket in `classify.js`
+- [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating)
+- [ ] AI-generated answers for genuinely open-ended questions only
 
 ## Phase 13 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply

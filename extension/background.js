@@ -8,7 +8,8 @@
 //
 // So content scripts send a message here, and this replies with the data.
 
-const BACKEND = "http://localhost:8080";
+const BACKEND = "http://localhost:8080";   // Go: profile, repos
+const AI = "http://localhost:8000";        // Python: Claude-backed answers
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "getProfile") {
@@ -18,5 +19,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch(() => sendResponse({}));
 
     return true; // keeps the channel open for the async reply
+  }
+
+  if (message.type === "answerQuestion") {
+    fetch(`${AI}/answer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: message.question,
+        resume_text: message.resume || "",
+        profile: message.profile || {},
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : { answer: "" }))
+      .then((data) => sendResponse(data))
+      .catch(() => sendResponse({ answer: "" }));
+
+    return true;
   }
 });

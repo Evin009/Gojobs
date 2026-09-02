@@ -11,6 +11,7 @@ from tailor import tailor_resume
 from latex import compile_latex
 from db import save_resume
 from cover_letter import generate_cover_letter
+from answer import answer_question
 
 load_dotenv()
 
@@ -63,3 +64,25 @@ class CoverLetterRequest(BaseModel):
 def cover_letter_endpoint(request: CoverLetterRequest):
     letter = generate_cover_letter(request.resume_text, request.job_description)
     return {"cover_letter": letter}
+
+
+# One application question at a time. The extension calls this per question
+# field it finds, rather than sending the whole form — keeps each answer
+# grounded in just its own question.
+class AnswerRequest(BaseModel):
+    question: str
+    resume_text: str = ""
+    profile: dict = {}
+
+
+@app.post("/answer")
+def answer_endpoint(request: AnswerRequest):
+    text = answer_question(request.question, request.resume_text, request.profile)
+
+    # the prompt returns UNKNOWN when the context can't support an answer;
+    # surface that as empty so the extension leaves the field blank rather
+    # than typing a guess onto a real application
+    if text.strip().upper() == "UNKNOWN":
+        return {"answer": ""}
+
+    return {"answer": text}

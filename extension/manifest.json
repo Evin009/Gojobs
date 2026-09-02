@@ -5,7 +5,8 @@
   "description": "Monitors job boards and repos, autofills applications.",
   "permissions": [],
   "host_permissions": [
-    "http://localhost:8080/*"
+    "http://localhost:8080/*",
+    "http://localhost:8000/*"
   ],
   "content_scripts": [
     {

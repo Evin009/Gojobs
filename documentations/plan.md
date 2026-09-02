@@ -11,7 +11,10 @@ System that monitors job boards/repos for new postings matching your criteria, a
 4. **Resume tailoring (LaTeX)** — take user's raw `.tex` resume, AI rewrites/inserts keywords into bullet content only, structure/commands untouched, recompiled to PDF. Every job gets its own tailored version — each is saved as a new row (not overwritten), linked to the specific application it was used for, so past applications always show exactly which resume version was sent.
 5. **Cover letter generation** — AI writes cover letter in user's own voice when style samples exist; falls back to a solid, professional AI-generated letter otherwise. **Optional touch, not a requirement** — user chooses whether they want style-matching at all.
 6. **Style memory** — vector store of past resumes/cover letters/essays, retrieved per task for consistent tone. No hard dependency on samples existing — the resume text itself is always a free, implicit style signal even before any dedicated samples are uploaded.
-7. **Full autofill w/ AI judgment** — detects all form field types (text/dropdown/radio/checkbox/essay); deterministic fill for known fields, AI-generated answers for open-ended/judgment fields.
+7. **Full autofill** — detects all form field types (text/dropdown/radio/checkbox/essay) and fills each according to what it is:
+   - **profile** — name, email, phone, LinkedIn: filled straight from stored facts.
+   - **declaration** — work authorization, visa sponsorship, EEO/demographic questions. The user answers these **once at onboarding**; they don't change per application. Forms word them differently, so AI's only job here is **mapping** a form's phrasing onto the key the user already answered — never generating the answer itself. These carry legal weight and are voluntary self-identification; an inferred answer would be wrong even if plausible.
+   - **question** — genuinely open-ended prompts ("Why this company?"). The only bucket where AI writes anything.
 8. **Tracker board** — kanban (Applied / OA / Interview / Offer / Rejected), auto-updated on each application.
 
 ## Architecture
@@ -71,6 +74,12 @@ Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, trig
 - **Why:** extension needs a live synchronous API anyway (login, add-repo, tracker CRUD) — that means an always-on server either way, so monitoring should live in the same process rather than a second deployment target. Serverless functions also cap execution time, risky once monitoring covers many users' companies/repos in one run.
 - **Multi-tenant note:** hosting choice doesn't solve multi-user support by itself — that needs per-user companies/keywords/Slack webhook (application-level change). `monitored_repos` already being DB-backed instead of hardcoded is a head start on that pattern.
 - Not started — revisit when ready to actually deploy.
+
+## Declarations vs. generated answers
+
+A hard line, worth keeping: **the user owns every answer that is a fact or a legal statement about them.** AI is allowed to recognise that "Are you legally authorized to work in the US?" and "Do you have US work authorization?" mean the same stored key — it is never allowed to decide what the answer is.
+
+Collected once, reused on every application: `work_authorization`, `visa_sponsorship`, `gender`, `veteran_status`, `disability_status`, `ethnicity`. Stored in the same key-value `profile` table.
 
 ## Onboarding (future — review later)
 - **Idea:** a short onboarding flow (few quick prompts, e.g. "write 2-3 sentences about why you want this kind of role") to bootstrap real user data day one — a starter writing sample, and groundwork for later phases where the autofill agent needs user-specific data to answer open-ended application questions (Phase 12).
