@@ -1,9 +1,7 @@
-// Fills the profile fields on an application form from stored data.
-// Only handles kind === "profile" for now; questions need Claude, and file
-// inputs can't be set by script for security reasons.
+// Fills an application form from stored data, asking Claude only for the
+// open-ended questions. File inputs can't be set by script, so they're skipped.
 
-// Asks the service worker for the stored facts. The content script can't call
-// localhost directly — see background.js for why.
+// Content scripts can't call localhost — the worker does it. See background.js.
 async function fetchProfile() {
   try {
     const profile = await chrome.runtime.sendMessage({ type: "getProfile" });
@@ -13,8 +11,7 @@ async function fetchProfile() {
   }
 }
 
-// Asks the backend what an unmatched question actually wants. Returns a stored
-// profile key, or "GENERATE" (needs writing), or "SKIP" (leave it alone).
+// Returns a stored profile key, "GENERATE" (needs writing), or "SKIP".
 async function routeQuestion(question, keys) {
   try {
     const reply = await chrome.runtime.sendMessage({
@@ -46,9 +43,7 @@ async function resolveQuestion(field, profile) {
   return "";
 }
 
-// scanFields stores `el.id || el.name`, so a field may be keyed by either.
-// Radio groups are the reason: every option shares one `name` and usually
-// carries no `id` at all.
+// Keyed by id or name — radio groups share one `name` and often have no id.
 function findElement(field) {
   return (
     document.getElementById(field.id) ||
@@ -56,13 +51,7 @@ function findElement(field) {
   );
 }
 
-// True if an option means the same thing as our stored value. Forms rarely
-// offer our exact string — we store "Yes", the option reads "Yes, I am
-// authorized to work in the US".
-//
-// Containment has to run both directions, since either side can be the longer
-// one, and it has to stop at a word boundary: a plain `includes` would match
-// "Yes" against "Yesterday" and tick the wrong box on a real application.
+// Stops at a word boundary so "Yes" doesn't match "Yesterday".
 function startsWithWord(longer, shorter) {
   if (!longer.startsWith(shorter)) return false;
 
@@ -82,12 +71,8 @@ function looksLike(optionText, value) {
   );
 }
 
-// Selects match on either the visible text or the underlying value — forms
-// disagree about which one carries the meaning. No match means leave it alone:
-// a wrong pick on a legal declaration is worse than an empty field.
-//
-// "change", not "input": that's the event a select reports, and what React
-// listens for.
+// "change", not "input" — that's what a select reports and React listens for.
+// No match leaves the field alone; a wrong pick on a declaration is worse.
 function fillSelect(el, value) {
   const option = [...el.options].find(
     (o) => looksLike(o.text, value) || looksLike(o.value, value),
@@ -99,11 +84,8 @@ function fillSelect(el, value) {
   return true;
 }
 
-// A radio's meaning lives in its <label>, not its value — the value is often
-// an opaque id. So match the label first, fall back to the value.
-//
-// .click() rather than .checked = true: clicking fires the events the page
-// expects, and also unchecks the group's previous selection for free.
+// Meaning lives in the <label>; the value is often an opaque id.
+// .click() fires the real events and unchecks the previous choice.
 function fillRadio(el, value) {
   const group = [...document.querySelectorAll(`input[name="${el.name}"]`)];
 
@@ -119,8 +101,7 @@ function fillRadio(el, value) {
   return true;
 }
 
-// Any non-empty string is truthy, so "No" would tick a checkbox. These are the
-// stored values that mean "leave it unticked".
+// Any non-empty string is truthy, so "No" would tick the box without these.
 const NEGATIVE = ["no", "false", "0", "none", "decline", "decline to self identify"];
 
 function fillCheckbox(el, value) {
@@ -142,17 +123,8 @@ function fillField(field, value) {
   return true;
 }
 
-// The form usually lives in an embedded frame (Greenhouse), but the notch has
-// to sit at the top of the *browser window* — so the two run in different
-// frames and talk over postMessage:
-//
-//   child frame : "I found an application"     -> top
-//   top frame   : shows notch, replies "run"   -> that exact frame
-//   child frame : streams progress, then done  -> top
-//
-// The top frame replies to event.source rather than hunting through the frame
-// tree: that's a direct handle to whichever frame announced itself, however
-// deeply nested it is.
+// Form sits in an embedded frame, notch belongs on the window — they talk over
+// postMessage. Top replies to event.source, a direct handle to that frame.
 const MSG = "gojobs";
 
 // ---------------------------------------------------------------- top frame
@@ -377,9 +349,8 @@ function mountAutofillNotch(onRun) {
       `${((index + 1) / total) * 100}%`;
   }
 
-  // The notch stays put after filling — it's the entry point for this page, and
-  // hovering it later still reports what was filled. Holding it expanded for a
-  // moment first means the result is seen even if the pointer has moved away.
+  // Stays put after filling — it's the page's entry point. Holds expanded a
+  // moment so the result is seen even if the pointer moved away.
   function showResult(filled) {
     notch.dataset.state = "done";
     doneLabel.textContent = `Filled ${filled} ${filled === 1 ? "field" : "fields"}`;
@@ -391,8 +362,7 @@ function mountAutofillNotch(onRun) {
     const state = notch.dataset.state;
     if (state !== "idle" && state !== "done") return;
 
-    // hold the loading state briefly so the change reads as deliberate,
-    // then hand over to the progress bar
+    // brief loading state so the change reads as deliberate
     progressLayer.querySelector(".fill").style.width = "0%";
     notch.dataset.state = "loading";
     setTimeout(onRun, 1400);
