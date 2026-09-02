@@ -4,16 +4,12 @@
 
 const BACKEND = "http://localhost:8080";
 
-// Fetches stored facts: { email: "...", phone: "...", ... }
+// Asks the service worker for the stored facts. The content script can't call
+// localhost directly — see background.js for why.
 async function fetchProfile() {
   try {
-    const response = await fetch(`${BACKEND}/profile`);
-    if (!response.ok) {
-      return {};
-    }
-
-    const data = await response.json();
-    return data;
+    const profile = await chrome.runtime.sendMessage({ type: "getProfile" });
+    return profile || {};
   } catch {
     return {};
   }
@@ -31,6 +27,10 @@ function fillField(field, value) {
 async function autofill() {
   const profile = await fetchProfile();
   const fields = classifyFields(scanFields());
+
+  // TEMP DEBUG
+  console.log("[Gojobs] profile:", profile);
+  console.log("[Gojobs] profile fields:", fields.filter((f) => f.kind === "profile"));
 
   let filled = 0;
   for (const field of fields) {

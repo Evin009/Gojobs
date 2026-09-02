@@ -4,18 +4,32 @@
   "version": "0.1.0",
   "description": "Monitors job boards and repos, autofills applications.",
   "permissions": [],
-  "host_permissions": ["http://localhost:8080/*"],
+  "host_permissions": [
+    "http://localhost:8080/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
-      "js": ["github_monitor.js"]
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "github_monitor.js"
+      ]
     },
     {
       "matches": [
-        "https://job-boards.greenhouse.io/*",
-        "https://boards.greenhouse.io/*"
+        "https://*/*"
       ],
-      "js": ["form_scanner.js", "classify.js", "autofill.js"]
+      "js": [
+        "form_scanner.js",
+        "classify.js",
+        "autofill.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
     }
-  ]
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
 }

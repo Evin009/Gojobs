@@ -174,3 +174,20 @@ Template for new entries:
 - **Done:** length guard added in `classifyField`, placed *before* the pattern loop — order matters, since after the loop it would never be reached.
 - **Verified:** that question and two other country-phrased ones now classify as `question`; short fields still match correctly.
 - **Also:** `scanFields` now skips `search`/`submit`/`button` inputs — a phone-widget search box was being scanned as a real field.
+
+---
+
+### 2026-09-02 — Autofill worked on one job board, silently did nothing on others
+
+- **Issue:** autofill filled a GitLab application fine, but on Stripe's it logged `filled 0 fields` with no visible error.
+- **Cause:** three separate problems stacked, each hiding the next.
+  1. The manifest only matched `*.greenhouse.io`. Stripe hosts the same form on its own domain, so the script never ran.
+  2. The form lives in an embedded frame. `document.querySelectorAll` only sees the current document, so even when the script ran it found zero fields.
+  3. Chrome blocks a public site from calling `localhost` (Private Network Access). The fetch failed, the profile came back empty, and every field was skipped for having no value.
+- **Fix:**
+  1. Match all sites and let `isApplicationPage()` decide — it already returns false on non-application pages.
+  2. `"all_frames": true`, so the script runs inside embedded frames too.
+  3. Move the fetch into a **background service worker**. It runs under the extension's own origin with declared `host_permissions`, so the loopback restriction doesn't apply; the content script asks it via `chrome.runtime.sendMessage`.
+- **Tried and rejected:** the server-side opt-in header `Access-Control-Allow-Private-Network: true`. Verified it was sent correctly, and Chrome still blocked the request — that opt-in no longer lifts the restriction for content scripts. The service worker is the supported route.
+- **Verified:** live on Stripe's application — profile fields fill, no CORS error.
+- **Debugging note worth keeping:** an early `64 inputs` reading contradicted a later `0`. Cause was DevTools' console frame selector pointing at a different frame — on a page with iframes, always confirm that dropdown says `top` before trusting a DOM measurement.
