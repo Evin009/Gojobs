@@ -9,6 +9,14 @@ System that monitors job boards/repos for new postings matching your criteria, a
 2. **Job monitoring — GitHub repos** — watch tracker repos (e.g. "Summer2026-Internships") via their JSON listings feed; repo list is dynamic (stored in DB), not hardcoded — user adds repos via the extension's "monitor this repo?" popup shown when they visit a GitHub repo page (Phase 11+).
 3. **Slack notification** — alert user the moment a new matching posting is found from either source.
 4. **Resume tailoring (LaTeX)** — take user's raw `.tex` resume, AI rewrites/inserts keywords into bullet content only, structure/commands untouched, recompiled to PDF. Every job gets its own tailored version — each is saved as a new row (not overwritten), linked to the specific application it was used for, so past applications always show exactly which resume version was sent.
+
+   **Score before rewriting.** Tailoring is gated, not automatic:
+   1. Capture the job description from the application page.
+   2. Score the existing resume against it, out of 100, using a stored rubric of ~80 guidelines.
+   3. Score high enough -> send the resume as-is. No rewrite, no Claude call, no risk of degrading something that already worked.
+   4. Score too low -> rewrite only the bullets the rubric flagged, leaving LaTeX structure untouched, then recompile.
+
+   Why gate it: a rewrite costs a call and can make a good resume worse. Scoring is the cheaper question, and its output names *which* guidelines failed — so the rewrite prompt fixes specific weaknesses instead of rewriting blind.
 5. **Cover letter generation** — AI writes cover letter in user's own voice when style samples exist; falls back to a solid, professional AI-generated letter otherwise. **Optional touch, not a requirement** — user chooses whether they want style-matching at all.
 6. **Style memory** — vector store of past resumes/cover letters/essays, retrieved per task for consistent tone. No hard dependency on samples existing — the resume text itself is always a free, implicit style signal even before any dedicated samples are uploaded.
 7. **Full autofill** — detects all form field types (text/dropdown/radio/checkbox/essay) and fills each according to what it is:
@@ -53,6 +61,8 @@ Extension (JS/TS, Manifest V3) handles on-page form field detection + fill, trig
 - `monitored_repos` — url, added_at (dynamic GitHub repo list, user-added via extension popup)
 - `applications` — tracker: job_id, resume_id (which tailored version was actually used), status, date_applied
 - `writing_samples` — raw text used to seed vector DB
+- `resume_guidelines` — the scoring rubric, one row per guideline (text + weight + category). A table, not a prompt string: they change often, and scores need to name which ones failed.
+- `resume_scores` — score + failed guideline ids per (resume, job) pair, so a rewrite decision is auditable after the fact
 
 ## Tech Stack
 | Layer | Tech |

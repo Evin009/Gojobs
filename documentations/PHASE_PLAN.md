@@ -68,9 +68,25 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating) — `route_question.py` + `POST /route` wired and reaching the API; answers unverified (see credits section)
 - [ ] AI-generated answers for genuinely open-ended questions only — `answer.py` + `POST /answer` + the `answerQuestion` relay in `background.js` are built; nothing in `autofill.js` calls them yet
 - [x] Wire `autofill.js` to the question bucket: field -> `/route` -> stored key (fill) | `GENERATE` (-> `/answer`) | `SKIP` (leave blank) — verified live on a real form against `ROUTE_STUB`/`ANSWER_STUB`; all three branches exercised
-- [ ] Attach resume / cover letter to file inputs — not started. `classify.js` tags them `kind: "file"` and autofill ignores them. Note: a file input can't be set by assigning a path (browser security); needs a `File` built in memory and handed over via `DataTransfer`. Also depends on `/tailor-resume` producing a real PDF, which needs credits.
+- [ ] Attach resume / cover letter to file inputs — moved to Phase 13, where the PDF it attaches actually gets produced
 
-## Phase 13 — Tracker board
+## Phase 13 — Scored resume tailoring + attachment
+
+The chain this phase completes: read the job description -> score the current
+resume against it -> rewrite only if it falls short -> compile -> attach to the
+form. Steps for tailoring and compiling already exist (Phase 8); what's new is
+the scoring gate in front of them and the attachment at the end.
+
+- [ ] Capture the job description from the application page (extension) — nothing does this today; the extension doesn't know which job it's filling
+- [ ] `resume_guidelines` table + seed the ~80 guidelines (rubric as data, not a prompt string, so it can change without a deploy)
+- [ ] `POST /score-resume` — resume + job description in; score out of 100 and the ids of failed guidelines out
+- [ ] Gate: score above threshold -> send the stored resume untouched, skip tailoring entirely
+- [ ] Below threshold -> feed the failed guidelines into `tailor_resume` so it fixes named weaknesses, not blind rewriting
+- [ ] Persist score + failures in `resume_scores` — a rewrite decision should be reviewable later
+- [ ] Attach the PDF to the form's file input — a file input can't be set from a path (browser security); build a `File` in memory, wrap it in a `DataTransfer`, assign to `input.files`
+- [ ] Threshold value picked from real scores, not guessed
+
+## Phase 14 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply
 
 ## Blocked on Anthropic credits — verify these together in one pass
@@ -107,8 +123,11 @@ once credits are added.
 - [ ] `max_tokens=20` is enough for the longest key
 - [ ] The hallucinated-key guard in `/route` fires — force it by sending a `keys` list missing the obvious match, expect `SKIP`
 
-**Phase 12 — file attachment**
+**Phase 13 — scoring + attachment**
 - [ ] `/tailor-resume` returns a PDF good enough to actually send
+- [ ] `/score-resume` gives stable scores — the same resume and job twice shouldn't swing wildly
+- [ ] A strong resume scores above threshold and is sent untouched (the gate actually fires)
+- [ ] A weak one scores below, and the rewrite addresses the guidelines that failed
 - [ ] The generated resume attaches to a real form's file input and survives submit
 
 **End to end, in the browser**
