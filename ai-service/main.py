@@ -7,13 +7,16 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import anthropic
 
+# must run before the imports below: each of those modules builds an
+# anthropic.Anthropic() at import time, which reads ANTHROPIC_API_KEY then
+load_dotenv()
+
 from tailor import tailor_resume
 from latex import compile_latex
 from db import save_resume
 from cover_letter import generate_cover_letter
 from answer import answer_question
-
-load_dotenv()
+from route_question import route_question
 
 app = FastAPI()
 client = anthropic.Anthropic()
@@ -86,3 +89,18 @@ def answer_endpoint(request: AnswerRequest):
         return {"answer": ""}
 
     return {"answer": text}
+
+
+class RouteRequest(BaseModel):
+    question: str
+    keys: list[str] = []
+
+@app.post('/route')
+def route_ques_endpoint(request: RouteRequest):
+    text = route_question(request.question, request.keys)
+    
+    if text not in request.keys and text not in ("GENERATE", "SKIP"):
+        text = "SKIP"
+        
+        
+    return {"route": text}

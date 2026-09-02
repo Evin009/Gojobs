@@ -15,15 +15,6 @@ Rules:
 - Return only the answer text, no preamble, no quotes, no commentary."""
 
 
- # TODO: same pattern as generate_cover_letter in cover_letter.py
-    #   1. client.messages.create(...) with model "claude-opus-5", max_tokens=512,
-    #      system=ANSWER_SYSTEM_PROMPT
-    #   2. the user message should include the question, the resume, and the
-    #      profile facts (f-string is fine)
-    #   3. pull the text out of response.content, same next(...) line as before
-    #   4. return it
-# 
-
 def answer_question(question: str, resume: str, profile: dict) -> str:
     response = client.messages.create(
         model="claude-opus-5",

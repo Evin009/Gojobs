@@ -191,3 +191,25 @@ Template for new entries:
 - **Tried and rejected:** the server-side opt-in header `Access-Control-Allow-Private-Network: true`. Verified it was sent correctly, and Chrome still blocked the request — that opt-in no longer lifts the restriction for content scripts. The service worker is the supported route.
 - **Verified:** live on Stripe's application — profile fields fill, no CORS error.
 - **Debugging note worth keeping:** an early `64 inputs` reading contradicted a later `0`. Cause was DevTools' console frame selector pointing at a different frame — on a page with iframes, always confirm that dropdown says `top` before trusting a DOM measurement.
+
+---
+
+### 2026-09-02 — AI service hung on startup, never bound its port
+
+- **Issue:** `uvicorn main:app` sat there for ten minutes without printing a line or answering `/health`. No error, no crash — the process was alive the whole time.
+- **Cause:** the venv lived in iCloud Drive. Every package file read round-trips through the sync daemon. Measured: the same 20 `anthropic` source files took **17.0s** cold and **0.02s** warm, at ~0.01s of CPU — pure I/O blocking. `anthropic` is hundreds of files, so the import alone ran into minutes.
+- **Telltale:** the process had 1.3s of CPU after ten minutes of wall clock. Near-zero CPU on a "hung" process means it is waiting on I/O, not looping.
+- **Fix:** venv moved out of iCloud to `~/.venvs/gojobs` (local disk). Source stays in iCloud — it's small and worth syncing; the 10k-file dependency tree is neither.
+- **Done:** rebuilt with `/opt/homebrew/bin/python3.13` — the first attempt used `/usr/bin/python3`, which is 3.9, and `pip` rejected the pinned versions. Match the interpreter the project was built with.
+- **Verified:** `import anthropic` now 2.9s cold; server boots in ~10s and `/health` returns 200.
+
+---
+
+### 2026-09-02 — Every Claude endpoint came up without an API key
+
+- **Issue:** `/route` returned 500 with `Could not resolve authentication method`, though `ANTHROPIC_API_KEY` was present in `.env`.
+- **Cause:** `load_dotenv()` ran *after* the local imports in `main.py`. Each of `tailor`, `cover_letter`, `answer`, `route_question` builds `anthropic.Anthropic()` at module level, and the client reads the env var at construction — so all four were built keyless before the `.env` was ever loaded.
+- **Fix:** moved `load_dotenv()` above the local imports, with a comment saying why the order matters.
+- **Done:** import order is load-bearing here; a formatter that sorts imports to the top would silently reintroduce this.
+- **Verified:** the key now resolves — Anthropic returns a billing `400` instead of an auth `TypeError`, which is the correct failure for an account with no credits.
+- **Scope:** this was breaking `/answer`, `/tailor-resume` and `/cover-letter` too, not just the new endpoint.

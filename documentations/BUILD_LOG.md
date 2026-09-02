@@ -221,3 +221,9 @@ Format per entry (1-2 lines max, no more):
 - Built: `DECLARATION_PATTERNS` + `declaration` kind in `classify.js`; autofill fills them from stored answers alongside profile facts. Seeded work auth, visa, and EEO values in the `profile` table.
 - Decision: AI never answers these. The user gives them once; matching only recognises which stored key a form's wording means. They carry legal weight and EEO ones are voluntary self-identification — an inferred answer would be wrong even when plausible.
 - Ordering detail: declaration matching runs *before* the 40-char question guard, since these are usually long sentences ("Will you now or in the future require sponsorship...").
+
+### 2026-09-02 — Question routing endpoint
+- Built: `ai-service/route_question.py` (`route_question`) + `POST /route` — Claude picks which stored key a form's wording means, or says `GENERATE` (needs writing) / `SKIP` (leave alone).
+- Design: keyword patterns in `classify.js` stay the fast path; `/route` only runs when they miss. Obvious fields stay free and instant, Claude handles odd phrasings.
+- Guard: the endpoint rejects any reply that isn't in the `keys` it sent, falling back to `SKIP`. A hallucinated key would otherwise become a profile lookup that silently returns nothing.
+- Status: request reaches Anthropic and gets a clean `400` on credit balance — plumbing proven, judgment unverified. Checklist for that pass added to PHASE_PLAN.md.

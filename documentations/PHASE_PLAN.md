@@ -65,8 +65,53 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Deterministic fill for profile fields (name/email/phone/LinkedIn)
 - [x] Store declarations as profile facts (seeded manually; onboarding UI still to build)
 - [x] New `declaration` bucket in `classify.js` — verified on a real form
-- [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating)
-- [ ] AI-generated answers for genuinely open-ended questions only
+- [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating) — `route_question.py` + `POST /route` wired and reaching the API; answers unverified (see credits section)
+- [ ] AI-generated answers for genuinely open-ended questions only — `answer.py` + `POST /answer` + the `answerQuestion` relay in `background.js` are built; nothing in `autofill.js` calls them yet
+- [ ] Wire `autofill.js` to the question bucket: field -> `/route` -> stored key (fill) | `GENERATE` (-> `/answer`) | `SKIP` (leave blank)
+- [ ] Attach resume / cover letter to file inputs — not started. `classify.js` tags them `kind: "file"` and autofill ignores them. Note: a file input can't be set by assigning a path (browser security); needs a `File` built in memory and handed over via `DataTransfer`. Also depends on `/tailor-resume` producing a real PDF, which needs credits.
 
 ## Phase 13 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply
+
+## Blocked on Anthropic credits — verify these together in one pass
+
+Every Claude call in the project is wired and reaches the API (confirmed by a real
+structured `400` about credit balance, which means the key authenticates and the
+request body is valid). None of the *answers* have been seen. Run these together
+once credits are added.
+
+**Phase 7 — `/ask`**
+- [ ] Returns real text for a plain prompt
+- [ ] `claude-opus-5` is a valid model id (used in all five call sites)
+
+**Phase 8 — `/tailor-resume`**
+- [ ] Claude returns `.tex`, not prose or a fenced code block
+- [ ] LaTeX commands/structure untouched — only bullet *content* rewritten
+- [ ] Output still compiles via tectonic (compile step already verified standalone)
+- [ ] Tailored version lands as a new `resumes` row, old one intact
+
+**Phase 9 — `/cover-letter`**
+- [ ] Returns a plain-text letter, no markdown wrapper
+- [ ] Retrieved style samples actually shift the voice (compare with samples removed)
+
+**Phase 12 — `/answer`**
+- [ ] Answer is grounded in the resume/profile passed in, not invented
+- [ ] `UNKNOWN` path fires on a question the context can't support, and the field is left blank
+
+**Phase 12 — `/route`** (the routing prompt, most worth checking)
+- [ ] Reworded declaration maps to the right key ("Will you require sponsorship?" -> `visa_sponsorship`)
+- [ ] Near-miss pairs don't collide — `work_authorization` vs `visa_sponsorship` are opposite answers to similar-sounding questions
+- [ ] Open-ended question returns exactly `GENERATE`
+- [ ] Unmappable question (reference phone number) returns exactly `SKIP`
+- [ ] Reply is one bare word — no trailing period, no explanation (would break key lookup)
+- [ ] `max_tokens=20` is enough for the longest key
+- [ ] The hallucinated-key guard in `/route` fires — force it by sending a `keys` list missing the obvious match, expect `SKIP`
+
+**Phase 12 — file attachment**
+- [ ] `/tailor-resume` returns a PDF good enough to actually send
+- [ ] The generated resume attaches to a real form's file input and survives submit
+
+**End to end, in the browser**
+- [ ] Extension sends an unmatched question field to `/route` and fills from the returned key
+- [ ] A `GENERATE` route reaches `/answer` and writes something usable
+- [ ] A `SKIP` route leaves the field untouched — never a guess on a real application
