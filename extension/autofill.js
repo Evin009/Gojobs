@@ -40,7 +40,7 @@ async function resolveQuestion(field, profile) {
       profile,
     });
 
-    return response.answer;
+    return response?.answer || "";
   }
 
   return "";
@@ -56,84 +56,90 @@ function findElement(field) {
   );
 }
 
-// TODO (you): true if an option means the same thing as our stored value.
-// The form rarely offers our exact string — we store "Yes", it offers
-// "Yes, I am authorized to work in the US". Lowercase both, trim, and decide
-// what counts as a match. Careful: "Yes" is a prefix of "Yes" *and* of
-// "Yes, ..." — but it's also inside "Yesterday". Think about which direction
-// the containment should go.
+// True if an option means the same thing as our stored value. Forms rarely
+// offer our exact string — we store "Yes", the option reads "Yes, I am
+// authorized to work in the US".
+//
+// Containment has to run both directions, since either side can be the longer
+// one, and it has to stop at a word boundary: a plain `includes` would match
+// "Yes" against "Yesterday" and tick the wrong box on a real application.
+function startsWithWord(longer, shorter) {
+  if (!longer.startsWith(shorter)) return false;
+
+  const next = longer[shorter.length];
+  return next === undefined || !/[a-z0-9]/.test(next);
+}
+
 function looksLike(optionText, value) {
-  return false;
+  const option = (optionText || "").trim().toLowerCase();
+  const stored = (value || "").trim().toLowerCase();
+  if (!option || !stored) return false;
+
+  return (
+    option === stored ||
+    startsWithWord(option, stored) ||
+    startsWithWord(stored, option)
+  );
 }
 
-// TODO (you): pick the matching <option> and select it.
-//   1. [...el.options] gives you the list; each has .text and .value
-//   2. find the first where looksLike(...) holds, on either .text or .value
-//   3. no match -> return false, leave the field alone
-//   4. match -> el.value = option.value, then dispatch "change" (NOT "input" —
-//      selects report a change, and React listens for that one)
+// Selects match on either the visible text or the underlying value — forms
+// disagree about which one carries the meaning. No match means leave it alone:
+// a wrong pick on a legal declaration is worse than an empty field.
+//
+// "change", not "input": that's the event a select reports, and what React
+// listens for.
 function fillSelect(el, value) {
-  return false;
+  const option = [...el.options].find(
+    (o) => looksLike(o.text, value) || looksLike(o.value, value),
+  );
+  if (!option) return false;
+
+  el.value = option.value;
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
 }
 
-// TODO (you): click the right radio in the group.
-//   1. document.querySelectorAll(`input[name="${el.name}"]`) is the group
-//   2. each radio's visible text is its <label for=...>, not its .value
-//   3. matching one -> radio.click(), which fires the events the page expects
-//      (setting .checked directly does not)
+// A radio's meaning lives in its <label>, not its value — the value is often
+// an opaque id. So match the label first, fall back to the value.
+//
+// .click() rather than .checked = true: clicking fires the events the page
+// expects, and also unchecks the group's previous selection for free.
 function fillRadio(el, value) {
-  return false;
+  const group = [...document.querySelectorAll(`input[name="${el.name}"]`)];
+
+  const match = group.find((radio) => {
+    const label = document.querySelector(`label[for="${radio.id}"]`);
+    return (
+      looksLike(label?.textContent || "", value) || looksLike(radio.value, value)
+    );
+  });
+  if (!match) return false;
+
+  match.click();
+  return true;
+}
+
+// Any non-empty string is truthy, so "No" would tick a checkbox. These are the
+// stored values that mean "leave it unticked".
+const NEGATIVE = ["no", "false", "0", "none", "decline", "decline to self identify"];
+
+function fillCheckbox(el, value) {
+  el.checked = !NEGATIVE.includes(String(value).trim().toLowerCase());
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
 }
 
 function fillField(field, value) {
   const el = findElement(field);
   if (!el || !value) return false;
 
-  // TODO (you): route to the right filler.
-  //   el.tagName === "SELECT"  -> fillSelect
-  //   el.type === "radio"      -> fillRadio
-  //   el.type === "checkbox"   -> el.checked = truthy value, dispatch "change"
-  //   otherwise                -> the text path below, unchanged
+  if (el.tagName === "SELECT") return fillSelect(el, value);
+  if (el.type === "radio") return fillRadio(el, value);
+  if (el.type === "checkbox") return fillCheckbox(el, value);
 
   el.value = value;
   el.dispatchEvent(new Event("input", { bubbles: true }));
   return true;
-}
-
-// Fills each profile field in turn, reporting progress so the UI can show what
-// it's working on. The small delay per field is deliberate — instant filling
-// gives the user no chance to see what changed on their own application.
-async function autofill(onProgress) {
-  const profile = await fetchProfile();
-  const fields = classifyFields(scanFields());
-
-  // Declarations (work authorization, EEO) fill from stored answers exactly
-  // like profile facts — the user gave those once, nothing is inferred here.
-  const targets = fields.filter(
-    (f) =>
-      ((f.kind === "profile" || f.kind === "declaration") &&
-        profile[f.profileKey]) ||
-      f.kind === "question",
-  );
-
-  let filled = 0;
-  for (let i = 0; i < targets.length; i++) {
-    const field = targets[i];
-
-    if (onProgress) {
-      onProgress({ label: field.label, index: i, total: targets.length });
-    }
-
-    const value =
-      field.kind === "question"
-        ? await resolveQuestion(field, profile)
-        : profile[field.profileKey];
-
-    if (fillField(field, value)) filled++;
-    await new Promise((r) => setTimeout(r, 260));
-  }
-
-  return filled;
 }
 
 // The form usually lives in an embedded frame (Greenhouse), but the notch has
