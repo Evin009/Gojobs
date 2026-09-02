@@ -65,72 +65,72 @@ Tracks what's done vs pending per phase. Full detail in `roadmap.md`, decisions/
 - [x] Deterministic fill for profile fields (name/email/phone/LinkedIn)
 - [x] Store declarations as profile facts (seeded manually; onboarding UI still to build)
 - [x] New `declaration` bucket in `classify.js` — verified on a real form
-- [ ] AI maps a form's wording -> a stored declaration key (matching only, never generating) — `route_question.py` + `POST /route` wired and reaching the API; answers unverified (see credits section)
-- [ ] AI-generated answers for genuinely open-ended questions only — `answer.py` + `POST /answer` + the `answerQuestion` relay in `background.js` are built; nothing in `autofill.js` calls them yet
-- [x] Wire `autofill.js` to the question bucket: field -> `/route` -> stored key (fill) | `GENERATE` (-> `/answer`) | `SKIP` (leave blank) — verified live on a real form against `ROUTE_STUB`/`ANSWER_STUB`; all three branches exercised
-- [ ] Attach resume / cover letter to file inputs — moved to Phase 13, where the PDF it attaches actually gets produced
+- [ ] AI maps a form's wording -> a stored declaration key — built, answers unverified (credits)
+- [ ] AI writes answers for open-ended questions — built, answers unverified (credits)
+- [x] Wire `autofill.js` to the question bucket — all three branches verified against stubs
+- [ ] Fill dropdowns, radios and checkboxes — `fillField` only types, so most declarations don't fill
+- [ ] Match a stored value to a near-miss option (`Yes` vs `Yes, I am authorized`)
+- [ ] Find radios by `name` — they share one and have no `id`
+- [ ] Attach resume / cover letter — moved to Phase 13
 
 ## Phase 13 — Scored resume tailoring + attachment
 
-The chain this phase completes: read the job description -> score the current
-resume against it -> rewrite only if it falls short -> compile -> attach to the
-form. Steps for tailoring and compiling already exist (Phase 8); what's new is
-the scoring gate in front of them and the attachment at the end.
+Read the job description -> score the resume -> rewrite only if it falls short
+-> compile -> attach. Tailoring and compiling exist (Phase 8); the gate and the
+attachment are new. Full reasoning in plan.md.
 
-- [ ] Capture the job description from the application page (extension) — nothing does this today; the extension doesn't know which job it's filling
-- [ ] `resume_guidelines` table + seed the ~80 guidelines (rubric as data, not a prompt string, so it can change without a deploy)
-- [ ] `POST /score-resume` — resume + job description in; score out of 100 and the ids of failed guidelines out
-- [ ] Gate: score above threshold -> send the stored resume untouched, skip tailoring entirely
-- [ ] Below threshold -> feed the failed guidelines into `tailor_resume` so it fixes named weaknesses, not blind rewriting
-- [ ] Persist score + failures in `resume_scores` — a rewrite decision should be reviewable later
-- [ ] Attach the PDF to the form's file input — a file input can't be set from a path (browser security); build a `File` in memory, wrap it in a `DataTransfer`, assign to `input.files`
-- [ ] Threshold value picked from real scores, not guessed
+- [ ] Capture the job description from the application page
+- [ ] `resume_guidelines` table + seed the ~80 guidelines (rubric as data, not a prompt)
+- [ ] `POST /score-resume` — score out of 100 + which guidelines failed
+- [ ] Above threshold -> send the resume untouched, no rewrite
+- [ ] Below -> rewrite only the flagged bullets
+- [ ] Persist score + failures in `resume_scores`
+- [ ] Attach the PDF via `DataTransfer` — a file input can't be set from a path
+- [ ] Pick the threshold from real scores, not a guess
 
 ## Phase 14 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply
 
 ## Blocked on Anthropic credits — verify these together in one pass
 
-Every Claude call in the project is wired and reaches the API (confirmed by a real
-structured `400` about credit balance, which means the key authenticates and the
-request body is valid). None of the *answers* have been seen. Run these together
-once credits are added.
+Every Claude call reaches the API (confirmed by a real `400` on credit balance).
+None of the answers have been seen. Run these in one pass once credits land.
 
 **Phase 7 — `/ask`**
 - [ ] Returns real text for a plain prompt
-- [ ] `claude-opus-5` is a valid model id (used in all five call sites)
+- [ ] `claude-opus-5` is a valid model id (all five call sites)
 
 **Phase 8 — `/tailor-resume`**
 - [ ] Claude returns `.tex`, not prose or a fenced code block
-- [ ] LaTeX commands/structure untouched — only bullet *content* rewritten
-- [ ] Output still compiles via tectonic (compile step already verified standalone)
-- [ ] Tailored version lands as a new `resumes` row, old one intact
+- [ ] LaTeX structure untouched — only bullet content rewritten
+- [ ] Output still compiles via tectonic
+- [ ] Lands as a new `resumes` row, old one intact
 
 **Phase 9 — `/cover-letter`**
 - [ ] Returns a plain-text letter, no markdown wrapper
-- [ ] Retrieved style samples actually shift the voice (compare with samples removed)
+- [ ] Retrieved style samples actually shift the voice
 
 **Phase 12 — `/answer`**
-- [ ] Answer is grounded in the resume/profile passed in, not invented
-- [ ] `UNKNOWN` path fires on a question the context can't support, and the field is left blank
+- [ ] Answer is grounded in the resume/profile, not invented
+- [ ] `UNKNOWN` fires when context can't support an answer; field left blank
 
 **Phase 12 — `/route`** (the routing prompt, most worth checking)
-- [ ] Reworded declaration maps to the right key ("Will you require sponsorship?" -> `visa_sponsorship`)
-- [ ] Near-miss pairs don't collide — `work_authorization` vs `visa_sponsorship` are opposite answers to similar-sounding questions
+- [ ] Reworded declaration maps to the right key
+- [ ] `work_authorization` vs `visa_sponsorship` don't collide — opposite answers, similar wording
 - [ ] Open-ended question returns exactly `GENERATE`
 - [ ] Unmappable question (reference phone number) returns exactly `SKIP`
-- [ ] Reply is one bare word — no trailing period, no explanation (would break key lookup)
+- [ ] Reply is one bare word — punctuation would break key lookup
 - [ ] `max_tokens=20` is enough for the longest key
-- [ ] The hallucinated-key guard in `/route` fires — force it by sending a `keys` list missing the obvious match, expect `SKIP`
+- [ ] Hallucinated-key guard fires — send a `keys` list missing the match, expect `SKIP`
 
 **Phase 13 — scoring + attachment**
 - [ ] `/tailor-resume` returns a PDF good enough to actually send
-- [ ] `/score-resume` gives stable scores — the same resume and job twice shouldn't swing wildly
-- [ ] A strong resume scores above threshold and is sent untouched (the gate actually fires)
-- [ ] A weak one scores below, and the rewrite addresses the guidelines that failed
+- [ ] `/score-resume` gives stable scores across repeat runs
+- [ ] A strong resume clears the threshold and is sent untouched
+- [ ] A weak one fails, and the rewrite addresses what failed
 - [ ] The generated resume attaches to a real form's file input and survives submit
 
 **End to end, in the browser**
-- [ ] Extension sends an unmatched question field to `/route` and fills from the returned key
-- [ ] A `GENERATE` route reaches `/answer` and writes something usable
-- [ ] A `SKIP` route leaves the field untouched — never a guess on a real application
+- [ ] Unmatched question routes and fills from the returned key
+- [ ] `GENERATE` reaches `/answer` and writes something usable
+- [ ] `SKIP` leaves the field untouched
