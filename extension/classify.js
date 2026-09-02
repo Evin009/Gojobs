@@ -25,7 +25,7 @@ const PROFILE_PATTERNS = {
 function classifyField(field) {
   if (field.type === "file") return { ...field, kind: "file" };
 
-  const label = field.label.toLowerCase();
+  const label = (field.label || "").toLowerCase();
   if (label.length > 40) return { ...field, kind: "question" };
 
   for (const [key, patterns] of Object.entries(PROFILE_PATTERNS)) {

@@ -205,3 +205,9 @@ Format per entry (1-2 lines max, no more):
 - Built: `profile` table (migration 005, key-value so new facts need no migration), `db.GetProfile()` returning a `map[string]string`, and `GET /profile`. Keys match `PROFILE_PATTERNS` in `classify.js` — that's the link between a classified field and its value.
 - Decision: DB, not extension storage — the Python AI service needs the same profile and can't read browser storage.
 - Security: `/profile` returns PII with no auth and `Allow-Origin: *`. Acceptable locally; this is the endpoint that makes auth a hard requirement before hosting.
+
+### 2026-09-01 — Profile autofill working end to end
+- Built: `extension/autofill.js` — fetches `/profile`, fills every field classified `profile`. Manifest now injects the scanner/classifier/autofill on Greenhouse pages, with `host_permissions` for localhost (MV3 requires it for content-script fetches).
+- Key detail: setting `el.value` alone isn't enough — React-based forms ignore it. Must dispatch an `input` event so the page registers the change, or the form submits empty.
+- Verified live on a real GitLab application: First Name and Email filled from stored profile data.
+- Note: auto-runs on page load for now. Becomes a button — silently editing someone's form is the wrong default.
