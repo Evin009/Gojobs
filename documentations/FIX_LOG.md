@@ -234,3 +234,14 @@ Template for new entries:
 - **Fix:** `base: "./"` in `vite.config.ts`, making asset paths relative to the page.
 - **Done:** any extension page built by a bundler needs this — the page is never served from the origin root.
 - **Verified:** built HTML now references `./popup.js` and `./popup.css`.
+
+---
+
+### 2026-09-03 — Injecting the UI broke the host page's React
+
+- **Issue:** pages logged `Minified React error #418` and the Gojobs UI never appeared.
+- **Cause:** #418 is a hydration mismatch — thrown by the *site's* React, not ours. We injected our host element into the DOM at `document_idle`, before the page hydrated, so its React found a node its server never rendered. A `MutationObserver` on `documentElement` made it worse by re-running the check on every render the page performed.
+- **Fix:** mount after the `load` event plus one animation frame, into `document.body`. Hydration is finished by then and an extra node is harmless.
+- **Done:** the observer is gone; SPA navigation is handled on `popstate` instead, which fires on navigation rather than on every render.
+- **Verified:** bundle rebuilds clean; no injection happens before load.
+- **Worth keeping:** anything a content script adds to the DOM is invisible to the page's server render. Inject after load, or expect to break any hydrating site.
