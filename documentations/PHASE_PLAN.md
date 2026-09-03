@@ -79,7 +79,7 @@ Read the job description -> score the resume -> rewrite only if it falls short
 -> compile -> attach. Tailoring and compiling exist (Phase 8); the gate and the
 attachment are new. Full reasoning in plan.md.
 
-- [ ] Capture the job description from the application page
+- [x] Capture the job description from the application page — `getJobDescription`, verified live
 - [ ] `resume_guidelines` table + seed the ~80 guidelines (rubric as data, not a prompt)
 - [ ] `POST /score-resume` — score out of 100 + which guidelines failed
 - [ ] Above threshold -> send the resume untouched, no rewrite

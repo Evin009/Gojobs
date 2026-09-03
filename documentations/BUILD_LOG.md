@@ -240,3 +240,10 @@ Format per entry (1-2 lines max, no more):
 - `looksLike`: forms rarely offer our exact string ("Yes" vs "Yes, I am authorized to work in the US"). Containment runs both directions, since either side can be longer, and stops at a word boundary — a plain `includes` would match "Yes" against "Yesterday".
 - Events: selects and checkboxes get `change`, not `input` — that's what they report and what React listens for. Radios get `.click()`, which fires the real events and unchecks the previous choice for free; setting `.checked` does neither.
 - No match means leave the field alone. A wrong pick on a legal declaration is worse than an empty field.
+
+### 2026-09-02 — Phase 13, task 1: job description capture
+- Built: `getJobDescription` in `form_scanner.js` — known containers first, falling back to `biggestTextBlock`. Same "reliable sources, then a general one" shape as `getFieldLabel`.
+- Decision: 200-char floor on both paths. A job description is always long, so the threshold keeps out headings and buttons without needing per-board rules.
+- Fallback skips nav/header/footer — long blocks, never the job.
+- Verified live on a real job page.
+- Note for the scoring step: scraped page text is attacker-controlled. It must reach Claude as data, never as instructions.
