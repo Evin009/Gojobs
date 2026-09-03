@@ -82,9 +82,9 @@ attachment are new. Full reasoning in plan.md.
 - [x] Capture the job description from the application page — `getJobDescription`, verified live
 - [x] `resume_guidelines` table + seed the ~80 guidelines — 78 rows across 10 categories, applied and verified
 - [x] `POST /score-resume` — score out of 100 + which guidelines failed (verified against `SCORE_STUB`)
-- [ ] Above threshold -> send the resume untouched, no rewrite
-- [ ] Below -> rewrite only the flagged bullets
-- [ ] Persist score + failures in `resume_scores`
+- [x] Above threshold -> send the resume untouched, no rewrite
+- [x] Below -> rewrite only the flagged bullets
+- [x] Persist score + failures in `resume_scores`
 - [ ] Attach the PDF via `DataTransfer` — a file input can't be set from a path
 - [ ] Pick the threshold from real scores, not a guess
 

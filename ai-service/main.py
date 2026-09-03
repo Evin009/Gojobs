@@ -17,8 +17,8 @@ from db import save_resume
 from cover_letter import generate_cover_letter
 from answer import answer_question
 from route_question import route_question
-from score import score_resume
-from db import save_score
+from score import score_resume, clears_threshold, SCORE_THRESHOLD
+from db import save_score, get_guideline_texts
 
 app = FastAPI()
 client = anthropic.Anthropic()
@@ -127,3 +127,49 @@ def score_resume_endpoint(request: ScoreRequest):
         )
 
     return result
+
+
+# The gate: score first, rewrite only if the resume falls short. Returns the
+# PDF either way, so the caller doesn't need to know which path ran.
+class PrepareRequest(BaseModel):
+    resume_text: str
+    job_description: str
+    resume_id: str | None = None
+    job_id: str | None = None
+
+
+@app.post("/prepare-resume")
+def prepare_resume_endpoint(request: PrepareRequest):
+    result = score_resume(request.resume_text, request.job_description)
+
+    if request.resume_id:
+        save_score(
+            request.resume_id, request.job_id, result["score"], result["failed"]
+        )
+
+    if clears_threshold(result["score"]):
+        # already a good fit — no rewrite, no Claude call, nothing to degrade
+        tex = request.resume_text
+        tailored = False
+    else:
+        tex = tailor_resume(
+            request.resume_text,
+            request.job_description,
+            get_guideline_texts(result["failed"]),
+        )
+        save_resume(tex, request.job_id)
+        tailored = True
+
+    pdf_bytes = compile_latex(tex)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        # the decision travels in headers so the caller can see what happened
+        # without a second request
+        headers={
+            "X-Resume-Score": str(result["score"]),
+            "X-Resume-Threshold": str(SCORE_THRESHOLD),
+            "X-Resume-Tailored": str(tailored).lower(),
+        },
+    )

@@ -43,3 +43,18 @@ def save_score(resume_id: str, job_id: str | None, score: int, failed_ids: list[
             score_id = cur.fetchone()[0]
         conn.commit()
     return str(score_id)
+
+
+def get_guideline_texts(ids: list[str]) -> list[str]:
+    """Guideline text for the ids a score marked as failed."""
+    if not ids:
+        return []
+
+    with psycopg.connect(os.getenv("DATABASE_URL")) as conn:
+        rows = conn.execute(
+            "SELECT guideline FROM resume_guidelines WHERE id = ANY(%s) "
+            "ORDER BY weight DESC",
+            (ids,),
+        ).fetchall()
+
+    return [r[0] for r in rows]

@@ -261,3 +261,14 @@ Format per entry (1-2 lines max, no more):
 - Guidelines are numbered in the prompt and mapped back to ids in code, so the model never sees an id and can't invent one. Out-of-range numbers are dropped.
 - Unparseable reply scores 0 rather than defaulting high — a resume we couldn't check should fall through to tailoring, not be sent as-is.
 - `SCORE_STUB=1` answers without Claude. Verified: 64/100 on a deliberately weak resume, failed ids resolve to real rows.
+
+### 2026-09-02 — Phase 13: Above threshold -> send the resume untouched, no rewrite
+- `POST /prepare-resume` scores first and returns the stored resume unchanged when it clears `SCORE_THRESHOLD` (75, env-overridable). No Claude call, nothing to degrade.
+
+### 2026-09-02 — Phase 13: Below -> rewrite only the flagged bullets
+- `tailor_resume` now takes the failed guidelines and names them in a `<failing_guidelines>` block, so the rewrite fixes real weaknesses instead of rephrasing lines that already passed.
+- Resume and job description moved into delimited tags with an explicit data-not-instructions rule — the description is scraped from a page anyone can publish.
+
+### 2026-09-02 — Phase 13: Persist score + failures in `resume_scores`
+- `save_score` records score and failed ids per (resume, job) when a `resume_id` is passed, so a rewrite decision stays reviewable.
+- Verified both gate paths on a real `.tex`: score 64 -> tailored at threshold 75, untouched at 50, valid PDF from each.

@@ -85,3 +85,12 @@ def _parse(text: str) -> dict:
         return {"score": 0, "failed": []}
 
     return {"score": max(0, min(100, score)), "failed": failed}
+
+
+# Above this, the resume goes out untouched. Placeholder until real scores
+# exist to calibrate against — see PHASE_PLAN.
+SCORE_THRESHOLD = int(os.getenv("SCORE_THRESHOLD", "75"))
+
+
+def clears_threshold(score: int) -> bool:
+    return score >= SCORE_THRESHOLD
