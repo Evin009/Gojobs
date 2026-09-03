@@ -351,7 +351,7 @@ function mountAutofillNotch(onRun) {
     .fill {
       height: 100%;
       width: 0%;
-      background: #4ade80;
+      background: #c8ff3d;
       border-radius: 999px;
       transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -371,10 +371,93 @@ function mountAutofillNotch(onRun) {
       transform: translateY(-100%);
     }
 
+    /* settings, pinned to the notch's top-right. Only reachable once the
+       notch is open, so it never competes with the main click target. */
+    .gear {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 20px; height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: rgba(250, 250, 250, 0.45);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 240ms ease, color 160ms ease, background 160ms ease;
+      z-index: 2;
+    }
+    .zone:hover .notch[data-state="idle"] .gear,
+    .zone:hover .notch[data-state="done"] .gear,
+    .notch.hold .gear { opacity: 1; pointer-events: auto; }
+
+    .gear:hover { color: #fafafa; background: rgba(250, 250, 250, 0.08); }
+    .gear svg { width: 13px; height: 13px; }
+
+    /* the notch stops being a button once the form is filled — refilling a
+       submitted application is never what anyone wants */
+    .notch[data-locked="true"] { cursor: default; }
+    .notch[data-locked="true"] .layer-idle { display: none; }
+
+    /* tour: one bubble under the notch, pointing at what to do */
+    .tour {
+      position: absolute;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      width: 268px;
+      padding: 13px 15px;
+
+      font-family: ui-sans-serif, -apple-system, system-ui, sans-serif;
+      color: #fafafa;
+      background: #09090b;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 13px;
+      box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.7);
+
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 320ms ease, transform 380ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tour.is-shown {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .tour-step {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: #c8ff3d;
+      margin-bottom: 7px;
+    }
+    .tour-body {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: rgba(250, 250, 250, 0.82);
+    }
+    .tour-next {
+      margin-top: 11px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #09090b;
+      background: #c8ff3d;
+      border: 0;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    .tour-next:hover { background: #9fd420; }
+
     .dot {
       flex-shrink: 0;
       width: 7px; height: 7px; border-radius: 50%;
-      background: #4ade80;
+      background: #c8ff3d;
       animation: breathe 2s ease-in-out infinite;
     }
     @keyframes breathe {
@@ -402,6 +485,13 @@ function mountAutofillNotch(onRun) {
   zone.className = "zone";
   zone.innerHTML = `
     <div class="notch" data-state="idle" role="button" tabindex="0">
+      <button class="gear" title="Gojobs settings" aria-label="Gojobs settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3.2"></circle>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-2.87 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.87-1.2l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 3.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.87 1.2l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 20.4 9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 2z"></path>
+        </svg>
+      </button>
       <div class="layer layer-idle">
         <span class="dot"></span>
         <span class="label">Autofill application</span>
@@ -421,10 +511,15 @@ function mountAutofillNotch(onRun) {
     </div>
   `;
 
+  const tour = document.createElement("div");
+  tour.className = "tour";
+  zone.appendChild(tour);
+
   shadow.append(style, zone);
   document.body.appendChild(host);
 
   const notch = zone.querySelector(".notch");
+  const gear = zone.querySelector(".gear");
   const progressLayer = zone.querySelector(".layer-progress");
   const doneLabel = zone.querySelector(".done-label");
 
@@ -443,22 +538,77 @@ function mountAutofillNotch(onRun) {
 
   // Stays put after filling — it's the page's entry point. Holds expanded a
   // moment so the result is seen even if the pointer moved away.
+  //
+  // Locks afterwards: a filled form should never be refilled by a stray click,
+  // and a second pass would overwrite anything the user edited by hand.
   function showResult(filled) {
     notch.dataset.state = "done";
+    notch.dataset.locked = "true";
     doneLabel.textContent = `Filled ${filled} ${filled === 1 ? "field" : "fields"}`;
     notch.classList.add("hold");
     setTimeout(() => notch.classList.remove("hold"), 2200);
   }
 
   function start() {
-    const state = notch.dataset.state;
-    if (state !== "idle" && state !== "done") return;
+    if (notch.dataset.locked === "true") return;
+    if (notch.dataset.state !== "idle") return;
 
     // brief loading state so the change reads as deliberate
     progressLayer.querySelector(".fill").style.width = "0%";
     notch.dataset.state = "loading";
     setTimeout(onRun, 1400);
   }
+
+  // ------------------------------------------------------------------ tour
+
+  // Shown once, right after setup. Two beats only — where settings live, and
+  // that the notch itself is the button.
+  const TOUR = [
+    {
+      step: "Settings",
+      body: "The gear reopens setup. Change an answer or swap your resume any time.",
+    },
+    {
+      step: "Filling",
+      body: "Click anywhere on the notch to fill this application. It runs field by field so you can watch it.",
+    },
+  ];
+
+  function runTour(onDone) {
+    let index = 0;
+
+    function render() {
+      const beat = TOUR[index];
+
+      tour.innerHTML = `
+        <div class="tour-step">${beat.step}</div>
+        <div class="tour-body">${beat.body}</div>
+        <button class="tour-next">${index === TOUR.length - 1 ? "Got it" : "Next"}</button>
+      `;
+
+      tour.querySelector(".tour-next").addEventListener("click", (e) => {
+        e.stopPropagation(); // the zone's click starts a fill
+        index += 1;
+        if (index < TOUR.length) return render();
+
+        tour.classList.remove("is-shown");
+        notch.classList.remove("hold");
+        onDone?.();
+      });
+    }
+
+    render();
+    // held open so the bubble points at a notch that's actually expanded
+    notch.classList.add("hold");
+    tour.classList.add("is-shown");
+  }
+
+  // ---------------------------------------------------------------- wiring
+
+  gear.addEventListener("click", (e) => {
+    e.stopPropagation(); // otherwise the click also starts a fill
+    chrome.runtime.sendMessage({ type: "openSettings" });
+  });
 
   // the whole expanded area is clickable, not just the text
   zone.addEventListener("click", start);
@@ -469,22 +619,31 @@ function mountAutofillNotch(onRun) {
     }
   });
 
-  return { showProgress, showResult };
+  return { showProgress, showResult, runTour };
 }
 
 function initTopFrame() {
   let notch = null;
   let formFrame = null;
 
+  function mount() {
+    if (notch) return notch;
+
+    notch = mountAutofillNotch(() => {
+      // no form on this page: the notch is present but has nothing to fill
+      formFrame?.postMessage({ source: MSG, type: "run" }, "*");
+    });
+
+    return notch;
+  }
+
   window.addEventListener("message", (event) => {
     const data = event.data;
     if (!data || data.source !== MSG) return;
 
-    if (data.type === "formFound" && !notch) {
+    if (data.type === "formFound") {
       formFrame = event.source; // direct handle to the frame holding the form
-      notch = mountAutofillNotch(() => {
-        formFrame.postMessage({ source: MSG, type: "run" }, "*");
-      });
+      mount();
     }
 
     if (data.type === "progress" && notch) notch.showProgress(data);
@@ -495,6 +654,18 @@ function initTopFrame() {
   if (isApplicationPage()) {
     window.postMessage({ source: MSG, type: "formFound" }, "*");
   }
+
+  // Setup just finished: show the notch here even without a form, so the
+  // handoff from the popup lands somewhere visible, and run the tour once.
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type !== "showNotch") return;
+
+    mount();
+    chrome.storage.local.get("tourDone", ({ tourDone }) => {
+      if (tourDone) return;
+      notch.runTour(() => chrome.storage.local.set({ tourDone: true }));
+    });
+  });
 }
 
 // -------------------------------------------------------------- form frame

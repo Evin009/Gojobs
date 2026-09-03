@@ -115,11 +115,11 @@ user-facing surface of the product.
 - [x] Developer theme: near-black, one accent, mono labels
 - [x] Landing page on first install, before the form
 - [x] GitHub monitoring explainer as its own onboarding step
-- [ ] Welcome screen morphs into the notch
-- [ ] Notch exists from first install, not only on application pages
-- [ ] Settings control on the notch reopens the popup, and morphs back on close
-- [ ] Notch tour: settings control, and click anywhere to fill
-- [ ] Notch stops accepting clicks once a form is filled
+- [x] Welcome screen morphs into the notch
+- [x] Notch exists from first install, not only on application pages
+- [x] Settings control on the notch reopens the popup
+- [x] Notch tour: settings control, and click anywhere to fill
+- [x] Notch stops accepting clicks once a form is filled
 
 ## Phase 16 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply

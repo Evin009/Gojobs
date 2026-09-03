@@ -3,7 +3,9 @@
   "name": "Gojobs",
   "version": "0.1.0",
   "description": "Monitors job boards and repos, autofills applications.",
-  "permissions": [],
+  "permissions": [
+    "storage"
+  ],
   "host_permissions": [
     "http://localhost:8080/*",
     "http://localhost:8000/*"

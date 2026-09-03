@@ -18,6 +18,13 @@ chrome.runtime.onInstalled.addListener((details) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // The notch's gear reopens setup. A content script can't open the popup
+  // itself, so the worker does it.
+  if (message.type === "openSettings") {
+    chrome.runtime.openOptionsPage();
+    return;
+  }
+
   if (message.type === "getProfile") {
     fetch(`${BACKEND}/profile`)
       .then((r) => (r.ok ? r.json() : {}))

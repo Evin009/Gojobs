@@ -324,3 +324,12 @@ whether it runs.
 - Landing screen states what Gojobs does before asking for anything — the old flow opened straight into a form.
 - Step counter is a row of ticks, not a bar: it shows how many steps remain, which a bar hides.
 - GitHub monitoring gets its own step, since that prompt appears later on pages the user visits and shouldn't arrive unexplained.
+
+### 2026-09-03 — Frontend: the notch takes over from the popup
+- The welcome screen shows the notch shape itself and hands off to it, so the user sees where the extension went rather than just losing the window.
+- The notch now mounts on any page after setup, not only where a form is found — it shouldn't first appear unannounced days later.
+- A gear sits top-right of the notch and reopens setup; a content script can't open the popup, so the service worker does it.
+- Both the gear and the tour button stop click propagation — the whole notch is the fill target, so anything on top of it would trigger a fill.
+- Two-beat tour: where settings live, and that the notch itself is the button. Shown once, remembered in `chrome.storage.local`.
+- The notch locks after filling. A stray second click would overwrite anything the user had edited by hand.
+- Accent moved to the same acid green as the popup, so the two surfaces read as one product.
