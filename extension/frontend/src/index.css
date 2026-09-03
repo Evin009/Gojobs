@@ -36,30 +36,32 @@
   pointer-events: auto;
 }
 
-/* panel and notch share a layoutId, so these two rule sets are the start and
-   end of one animation. Keep the visual language identical — only geometry
-   should appear to change. */
+/* Panel and notch share a layoutId, so these two rule sets are the start and
+   end of one animation — the panel sits top-right, the notch top-centre, and
+   Framer animates between the two positions.
+   
+   Never position these with `transform`: Framer writes its own transform to
+   project the layout, so a translate here is overwritten and the element lands
+   in the wrong place. Offsets only. */
 .gojobs-panel {
   position: fixed;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 14px;
+  right: 14px;
   width: 400px;
-  max-height: 92vh;
+  max-height: 90vh;
   overflow-y: auto;
   color: #e8e8ef;
   background: #08080a;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-top: 0;
-  border-radius: 0 0 20px 20px;
+  border-radius: 16px;
   box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75);
 }
 
 .gojobs-notch {
   position: fixed;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  /* centred by offsets, not translate — see above */
+  left: calc(50% - 52px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,6 +73,11 @@
   border-top: 0;
   border-radius: 0 0 20px 20px;
   box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.55);
+}
+
+/* expanded is wider, so the centring offset has to grow with it */
+.gojobs-notch.is-open {
+  left: calc(50% - 200px);
 }
 
 .gojobs-notch.is-locked {

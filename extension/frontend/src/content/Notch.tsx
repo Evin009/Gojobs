@@ -63,7 +63,7 @@ export function Notch({
       onHoverEnd={() => setOpen(false)}
       onClick={start}
       animate={{ width: expanded ? 400 : 104, height: expanded ? 64 : 30 }}
-      className={`gojobs-notch ${locked ? "is-locked" : ""}`}
+      className={`gojobs-notch ${expanded ? "is-open" : ""} ${locked ? "is-locked" : ""}`}
     >
       <motion.button
         className="gojobs-gear"
