@@ -17,6 +17,8 @@ from db import save_resume
 from cover_letter import generate_cover_letter
 from answer import answer_question
 from route_question import route_question
+from score import score_resume
+from db import save_score
 
 app = FastAPI()
 client = anthropic.Anthropic()
@@ -104,3 +106,24 @@ def route_ques_endpoint(request: RouteRequest):
         
         
     return {"route": text}
+
+
+# Scores a resume against the stored rubric before any rewriting happens.
+# resume_id is optional: passing it records the run in resume_scores.
+class ScoreRequest(BaseModel):
+    resume_text: str
+    job_description: str
+    resume_id: str | None = None
+    job_id: str | None = None
+
+
+@app.post("/score-resume")
+def score_resume_endpoint(request: ScoreRequest):
+    result = score_resume(request.resume_text, request.job_description)
+
+    if request.resume_id:
+        save_score(
+            request.resume_id, request.job_id, result["score"], result["failed"]
+        )
+
+    return result
