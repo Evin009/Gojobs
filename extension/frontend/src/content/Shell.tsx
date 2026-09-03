@@ -33,6 +33,11 @@ export function Shell() {
 
   // autofill.js announces a form it can fill — that's what makes this page an
   // application page. The notch appears nowhere else.
+  //
+  // We ask as well as listen: that script runs at document_idle while this
+  // mounts after `load`, so its first announcement goes out before anything is
+  // listening. The ping covers that, the listener covers forms that appear
+  // later.
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.data?.source === MSG && event.data.type === "formFound") {
@@ -41,6 +46,8 @@ export function Shell() {
     }
 
     window.addEventListener("message", onMessage);
+    window.postMessage({ source: MSG, type: "ping" }, "*");
+
     return () => window.removeEventListener("message", onMessage);
   }, []);
 

@@ -222,6 +222,29 @@ async function autofill(onProgress) {
 // never leaves the frame that fills it.
 const MSG = "gojobs";
 
+// Announces this frame's form to whoever is listening. Called on a schedule
+// because a form is rarely there when the script first runs: React boards
+// render it late, and the UI mounts after `load`, so a single announcement at
+// document_idle is heard by nobody.
+function announce() {
+  if (!isApplicationPage()) return false;
+
+  const target = window.top === window ? window : window.top;
+  target.postMessage({ source: MSG, type: "formFound" }, "*");
+  return true;
+}
+
+// Re-checks for ten seconds, then stops. A page that hasn't produced a form by
+// then isn't going to, and polling forever on every tab is rude.
+let announcing = setInterval(announce, 700);
+setTimeout(() => clearInterval(announcing), 10000);
+
+// The UI asks on mount, which covers the case where it started listening after
+// the form was already found.
+window.addEventListener("message", (event) => {
+  if (event.data?.source === MSG && event.data.type === "ping") announce();
+});
+
 // A nested frame can't hear the top frame's own postMessage, so the top frame
 // forwards "run" down to whichever frame announced a form.
 if (window.top === window) {
@@ -247,9 +270,9 @@ if (window.top === window) {
       }
     }
   });
-} else if (isApplicationPage()) {
-  window.top.postMessage({ source: MSG, type: "formFound" }, "*");
 }
+
+announce();
 
 // Handled wherever the form actually lives, top frame included.
 window.addEventListener("message", async (event) => {

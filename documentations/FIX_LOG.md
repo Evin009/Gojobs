@@ -245,3 +245,14 @@ Template for new entries:
 - **Done:** the observer is gone; SPA navigation is handled on `popstate` instead, which fires on navigation rather than on every render.
 - **Verified:** bundle rebuilds clean; no injection happens before load.
 - **Worth keeping:** anything a content script adds to the DOM is invisible to the page's server render. Inject after load, or expect to break any hydrating site.
+
+---
+
+### 2026-09-03 — Notch never appeared on real application pages
+
+- **Issue:** the notch stayed hidden on pages that clearly held an application form, so the tour never started either.
+- **Cause:** `autofill.js` announces a form once, at `document_idle`. The React UI mounts after `load` — deliberately, to avoid breaking the page's hydration — so it started listening after the only announcement had already gone out. Nothing was listening when it fired.
+- **Fix:** the UI pings on mount and `autofill.js` answers; the announcement also repeats every 700ms for ten seconds, which catches forms React boards render late.
+- **Done:** polling stops after ten seconds — a page with no form by then won't grow one, and polling forever on every tab is rude.
+- **Verified:** bundle rebuilds clean; ping/answer path present in both files.
+- **Worth keeping:** two scripts that mount at different times can't communicate with a single fire-and-forget message. One of them has to ask.
