@@ -14,8 +14,11 @@ const AI = "http://localhost:8000";        // Python: Claude-backed answers
 // The UI lives in the page, so both of these just tell the active tab to open
 // its panel. Nothing to open here — there is no popup document any more.
 function openPanel(tabId) {
-  chrome.tabs.sendMessage(tabId, { type: "openPanel" }).catch(() => {
-    // no content script on this tab (chrome:// page, web store) — nothing to do
+  chrome.tabs.sendMessage(tabId, { type: "openPanel" }).catch((error) => {
+    // Usually means no content script on this tab — a chrome:// page, the Web
+    // Store, or a tab that was already open when the extension last reloaded.
+    // Logged rather than swallowed: a silent no-op here is impossible to debug.
+    console.warn("Gojobs: no UI on this tab —", error.message);
   });
 }
 
