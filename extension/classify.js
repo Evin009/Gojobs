@@ -16,7 +16,13 @@ const PROFILE_PATTERNS = {
   linkedin: ["linkedin"],
   github: ["github"],
   website: ["website", "portfolio"],
-  location: ["city", "country", "location"],
+  // Split, because forms ask for them as separate fields — one "location"
+  // value put a city into a country dropdown, which then matched nothing.
+  // Longest patterns first: "country" must not be caught by "location".
+  country: ["country", "nation"],
+  state: ["state", "province", "region"],
+  city: ["city", "town"],
+  location: ["location", "address"],
 };
 
 // Standard declarations every application asks in slightly different words.

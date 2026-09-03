@@ -27,13 +27,17 @@ export function Onboarding({
   onFinish,
   onClose,
   hint,
+  startAtEnd = false,
 }: {
   onFinish: () => void;
   onClose: () => void;
   // shown while the tour has the user in here, so the panel says why it opened
   hint?: string;
+  // Setup already done: open on the last screen. Reopening settings should be
+  // editing, not walking the whole flow again.
+  startAtEnd?: boolean;
 }) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(startAtEnd ? LAST : 0);
   const [direction, setDirection] = useState(1);
   const [profile, setProfile] = useState<Profile>({});
   const [resume, setResume] = useState({ name: "", text: "" });
@@ -46,7 +50,6 @@ export function Onboarding({
     Promise.all([getProfile(), getBaseResume()]).then(([stored, tex]) => {
       setProfile(stored);
       if (tex) setResume({ name: "resume.tex", text: "" });
-      if (Object.keys(stored).length && tex) setStep(LAST);
     });
   }, []);
 

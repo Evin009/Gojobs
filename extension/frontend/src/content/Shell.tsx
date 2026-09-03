@@ -75,8 +75,13 @@ export function Shell() {
   }, [mode, setupDone, isApplication]);
 
   // The tour teaches the notch, so it waits for a page that has one.
+  //
+  // Marked done the moment it starts, not when it finishes: a user who
+  // abandons it halfway has still seen it, and meeting the same tour on every
+  // subsequent application would be worse than missing its last beat.
   useEffect(() => {
     if (tourPending && isApplication && mode === "notch" && tour === "off") {
+      chrome.storage.local.set({ tourDone: true });
       setTour("welcome");
       setTourPending(false);
     }
@@ -96,10 +101,7 @@ export function Shell() {
   // narrating something that already happened.
   const fillBlocked = tour !== "off" && tour !== "fill" && tour !== "filling";
 
-  const endTour = useCallback(() => {
-    chrome.storage.local.set({ tourDone: true });
-    setTour("off");
-  }, []);
+  const endTour = useCallback(() => setTour("off"), []);
 
   function finishSetup() {
     chrome.storage.local.set({ setupDone: true });
@@ -147,6 +149,7 @@ export function Shell() {
             <Onboarding
               onFinish={finishSetup}
               onClose={closePanel}
+              startAtEnd={setupDone}
               hint={
                 tour === "settings"
                   ? "This is where your answers live. Close it to carry on."

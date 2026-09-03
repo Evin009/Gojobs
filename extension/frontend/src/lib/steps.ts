@@ -15,7 +15,11 @@ export const PROFILE_FIELDS: Field[] = [
   { key: "last_name", label: "Last name" },
   { key: "email", label: "Email", type: "email" },
   { key: "phone", label: "Phone", type: "tel" },
-  { key: "location", label: "Location", placeholder: "City, Country" },
+  // Separate fields, because forms ask for them separately — a single
+  // "location" value ended up in a country dropdown and matched no option.
+  { key: "city", label: "City" },
+  { key: "state", label: "State / Province" },
+  { key: "country", label: "Country" },
   { key: "linkedin", label: "LinkedIn", placeholder: "linkedin.com/in/you" },
   { key: "github", label: "GitHub", placeholder: "github.com/you", optional: true },
   { key: "website", label: "Portfolio", optional: true },

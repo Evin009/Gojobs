@@ -374,3 +374,9 @@ whether it runs.
 - The spotlight stays on the whole notch throughout. Narrowing onto the gear made the surrounding bar go dark mid-beat, which reads as the thing you were just told about disappearing.
 - The settings panel carries a line saying why it opened, so the tour doesn't go silent while the user is inside it.
 - Overlay is absent for exactly two moments — settings open, and the form filling — and returns for the closing curtain.
+
+### 2026-09-03 — Frontend: setup and tour each happen once
+- Reopening settings lands on the final screen. Walking the whole flow again to change one answer was the wrong default, and it made setup feel unfinished.
+- The tour is marked done the moment it starts, not when it ends: a user who abandons it halfway has still seen it, and meeting it again on every later application is worse than missing its last beat.
+- Location split into city, state and country. One combined value was being typed into a country dropdown, where it matched no option and silently filled nothing.
+- Pattern order matters in `classify.js`: `country` is listed before `location`, or a "Country" label would match the looser pattern first.
