@@ -278,3 +278,9 @@ Format per entry (1-2 lines max, no more):
 - `fillFileField` asks the worker for the prepared PDF and attaches it; the worker base64-encodes it in chunks, since a Blob can't cross the message boundary and a whole PDF overflows `String.fromCharCode`.
 - File fields now enter the autofill loop alongside profile, declaration and question fields.
 - Any failure returns false and leaves the input empty — an unattached resume is obvious, a wrong one isn't.
+
+### 2026-09-02 — Phase 15: `POST /profile` (batch upsert) + `GET`/`POST /resume/base`
+- `SaveProfile` upserts the whole onboarding form in one `pgx.Batch` — one round trip instead of one per field, and `ON CONFLICT DO UPDATE` means re-running onboarding edits answers rather than failing.
+- `SaveBaseResume`/`GetBaseResume`: a base resume is the row with no `job_id`; newest wins. Old ones are kept so a past application can still show exactly what was sent.
+- Missing resume returns `""`, not an error — "not uploaded yet" is a normal state for the caller to handle.
+- Verified: profile POST 204, resume POST 201, GET returns the stored `.tex`.

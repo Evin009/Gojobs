@@ -94,7 +94,7 @@ One score can't say both "does this match the job" and "will a parser read it".
 Split them, rewrite against Google's XYZ format, then rescore — repeating until
 both clear or a cap is hit, so a rewrite is checked rather than assumed.
 
-- [ ] Store the user's base `.tex` resume and serve it — nothing to tailor without one
+- [x] Store the user's base `.tex` resume and serve it — `GET`/`POST /resume/base`, verified round-trip
 - [ ] Split scoring into JD match /100 and ATS friendliness /10, both from one call
 - [ ] Rewrite bullets in XYZ form: accomplished X, measured by Y, by doing Z
 - [ ] Loop: score -> rewrite -> rescore, stopping when both clear or after 3 passes
@@ -102,7 +102,18 @@ both clear or a cap is hit, so a rewrite is checked rather than assumed.
 - [ ] Bail out if a rewrite scores worse than what it replaced
 - [ ] One prepared resume cached per job — never re-run the loop for the same posting
 
-## Phase 15 — Tracker board
+## Phase 15 — Onboarding UI
+
+Replaces hand-seeded SQL with data the user actually gives us, and is the first
+user-facing surface of the product.
+
+- [x] `POST /profile` (batch upsert) + `GET`/`POST /resume/base`
+- [ ] Onboarding page: profile facts, declarations, `.tex` resume, optional cover letter
+- [ ] Open it automatically on install
+- [ ] Show whether onboarding is complete, and let the user re-edit answers
+- [ ] Autofill reads only stored data — no seeded rows left
+
+## Phase 16 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply
 
 ## Blocked on Anthropic credits — verify these together in one pass

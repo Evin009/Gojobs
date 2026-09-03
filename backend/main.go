@@ -188,7 +188,86 @@ func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 
 
 
-func profileHandler(w http.ResponseWriter, r *http.Request){
+// /profile — GET returns every stored fact, POST saves the onboarding form.
+// Method is branched here, not registered separately, so OPTIONS preflight
+// still reaches withCORS.
+func profileHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		saveProfileHandler(w, r)
+		return
+	}
+
+	getProfileHandler(w, r)
+}
+
+// POST /profile — takes {key: value} and upserts the lot in one batch.
+func saveProfileHandler(w http.ResponseWriter, r *http.Request) {
+	var facts map[string]string
+
+	if err := json.NewDecoder(r.Body).Decode(&facts); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if len(facts) == 0 {
+		http.Error(w, "no facts to save", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.SaveProfile(facts); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// /resume/base — GET serves the stored .tex, POST replaces it with a new one.
+func baseResumeHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		content, err := db.GetBaseResume()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		// content is "" when nothing is uploaded yet — a normal state the
+		// caller checks, not an error
+		json.NewEncoder(w).Encode(map[string]string{"content": content})
+
+	case http.MethodPost:
+		var req struct {
+			Content string `json:"content"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Content == "" {
+			http.Error(w, "content is required", http.StatusBadRequest)
+			return
+		}
+
+		id, err := db.SaveBaseResume(req.Content)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]string{"id": id})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func getProfileHandler(w http.ResponseWriter, r *http.Request){
 	profile, err := db.GetProfile()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -215,6 +294,7 @@ func main() {
 	http.HandleFunc("/repos", withCORS(reposHandler))
 	http.HandleFunc("/repos/check", withCORS(checkRepoHandler))
 	http.HandleFunc("/profile", withCORS(profileHandler))
+	http.HandleFunc("/resume/base", withCORS(baseResumeHandler))
 
 	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
 
