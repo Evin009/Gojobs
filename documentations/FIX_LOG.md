@@ -224,3 +224,13 @@ Template for new entries:
 - **Done:** later scripted edits assert their anchors and assert the target is absent before writing, so a silent no-op or over-wide slice fails loudly instead of committing.
 - **Verified:** `async function autofill` present, both `kind === "file"` branches in place, syntax clean.
 - **Worth keeping:** a syntax check proves a file parses, not that it still contains what it did before. For a scripted edit, diff the function list before and after.
+
+---
+
+### 2026-09-02 — Popup opened blank
+
+- **Issue:** clicking the toolbar icon showed an empty popup — no error, no content.
+- **Cause:** Vite emitted absolute asset paths (`/popup.js`). Inside an extension those resolve to the extension root, but the build lands in `dist/`, so both the script and stylesheet 404'd silently.
+- **Fix:** `base: "./"` in `vite.config.ts`, making asset paths relative to the page.
+- **Done:** any extension page built by a bundler needs this — the page is never served from the origin root.
+- **Verified:** built HTML now references `./popup.js` and `./popup.css`.

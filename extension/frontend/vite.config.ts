@@ -7,6 +7,9 @@ import { resolve } from "path";
 // the page and need no bundling.
 export default defineConfig({
   plugins: [react()],
+  // relative asset paths: the page is served from dist/, so a leading "/"
+  // would resolve to the extension root and load nothing
+  base: "./",
   build: {
     outDir: resolve(__dirname, "../dist"),
     emptyOutDir: true,
