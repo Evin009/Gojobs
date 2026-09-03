@@ -123,6 +123,40 @@ function fillCheckbox(el, value) {
   return true;
 }
 
+// A file input can't be set from a path — browser security. The only way in
+// is a real File object handed over through a DataTransfer.
+function attachFile(el, bytes, filename) {
+  const file = new File([bytes], filename, { type: "application/pdf" });
+
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  el.files = transfer.files;
+
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
+
+// Asks the backend for the tailored PDF and attaches it. Returns false on any
+// failure — an unattached resume is obvious to the user, a wrong one isn't.
+async function fillFileField(field) {
+  const el = findElement(field);
+  if (!el) return false;
+
+  const reply = await chrome.runtime.sendMessage({
+    type: "prepareResume",
+    resumeText: "",
+    jobDescription: getJobDescription(),
+  });
+  if (!reply?.pdf) return false;
+
+  // base64 back to bytes — the message boundary can't carry a Blob
+  const binary = atob(reply.pdf);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  return attachFile(el, bytes, "resume.pdf");
+}
+
 // Routes a field to the filler its element type needs.
 function fillField(field, value) {
   const el = findElement(field);
@@ -135,6 +169,50 @@ function fillField(field, value) {
   el.value = value;
   el.dispatchEvent(new Event("input", { bubbles: true }));
   return true;
+}
+
+// Fills each field in turn, reporting progress so the UI can show what it's
+// working on. The delay is deliberate — instant filling gives no chance to see
+// what changed on your own application.
+async function autofill(onProgress) {
+  const profile = await fetchProfile();
+  const fields = classifyFields(scanFields());
+
+  // Declarations fill from stored answers exactly like profile facts — the
+  // user gave those once, nothing is inferred here.
+  const targets = fields.filter(
+    (f) =>
+      ((f.kind === "profile" || f.kind === "declaration") &&
+        profile[f.profileKey]) ||
+      f.kind === "question" ||
+      f.kind === "file",
+  );
+
+  let filled = 0;
+  for (let i = 0; i < targets.length; i++) {
+    const field = targets[i];
+
+    if (onProgress) {
+      onProgress({ label: field.label, index: i, total: targets.length });
+    }
+
+    // File inputs take a generated PDF, not a string
+    if (field.kind === "file") {
+      if (await fillFileField(field)) filled++;
+      await new Promise((r) => setTimeout(r, 260));
+      continue;
+    }
+
+    const value =
+      field.kind === "question"
+        ? await resolveQuestion(field, profile)
+        : profile[field.profileKey];
+
+    if (fillField(field, value)) filled++;
+    await new Promise((r) => setTimeout(r, 260));
+  }
+
+  return filled;
 }
 
 // Form sits in an embedded frame, notch belongs on the window — they talk over

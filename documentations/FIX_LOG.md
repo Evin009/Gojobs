@@ -213,3 +213,14 @@ Template for new entries:
 - **Done:** import order is load-bearing here; a formatter that sorts imports to the top would silently reintroduce this.
 - **Verified:** the key now resolves — Anthropic returns a billing `400` instead of an auth `TypeError`, which is the correct failure for an account with no credits.
 - **Scope:** this was breaking `/answer`, `/tailor-resume` and `/cover-letter` too, not just the new endpoint.
+
+---
+
+### 2026-09-02 — `autofill()` vanished from the extension, committed broken
+
+- **Issue:** `autofill.js` called `autofill(...)` but no longer defined it — the extension would have thrown on every run.
+- **Cause:** a scripted repair replaced everything between two text markers, and `autofill()` happened to sit inside that range. The edit "succeeded", passed `node --check` (the call site is still valid syntax), and was committed.
+- **Fix:** restored from `d8b171d`, with the new file-input branch folded in.
+- **Done:** later scripted edits assert their anchors and assert the target is absent before writing, so a silent no-op or over-wide slice fails loudly instead of committing.
+- **Verified:** `async function autofill` present, both `kind === "file"` branches in place, syntax clean.
+- **Worth keeping:** a syntax check proves a file parses, not that it still contains what it did before. For a scripted edit, diff the function list before and after.

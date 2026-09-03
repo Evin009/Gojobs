@@ -40,6 +40,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  // Returns the tailored PDF as a base64 string. A Blob can't cross the
+  // message boundary, so the content script rebuilds the file on its side.
+  if (message.type === "prepareResume") {
+    fetch(`${AI}/prepare-resume`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        resume_text: message.resumeText || "",
+        job_description: message.jobDescription || "",
+      }),
+    })
+      .then(async (r) => {
+        if (!r.ok) return { pdf: "" };
+
+        const buffer = await r.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+
+        // chunked: String.fromCharCode on a whole PDF blows the argument limit
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 8192) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+        }
+
+        return {
+          pdf: btoa(binary),
+          score: r.headers.get("X-Resume-Score"),
+          tailored: r.headers.get("X-Resume-Tailored") === "true",
+        };
+      })
+      .then((data) => sendResponse(data))
+      .catch(() => sendResponse({ pdf: "" }));
+
+    return true;
+  }
+
   if (message.type === "answerQuestion") {
     fetch(`${AI}/answer`, {
       method: "POST",
