@@ -85,7 +85,7 @@ attachment are new. Full reasoning in plan.md.
 - [x] Above threshold -> send the resume untouched, no rewrite
 - [x] Below -> rewrite only the flagged bullets
 - [x] Persist score + failures in `resume_scores`
-- [ ] Attach the PDF via `DataTransfer` — a file input can't be set from a path
+- [x] Attach the PDF via `DataTransfer` — built; untested in a browser
 - [ ] Pick the threshold from real scores, not a guess
 
 ## Phase 14 — Tracker board

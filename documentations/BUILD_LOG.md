@@ -272,3 +272,9 @@ Format per entry (1-2 lines max, no more):
 ### 2026-09-02 — Phase 13: Persist score + failures in `resume_scores`
 - `save_score` records score and failed ids per (resume, job) when a `resume_id` is passed, so a rewrite decision stays reviewable.
 - Verified both gate paths on a real `.tex`: score 64 -> tailored at threshold 75, untouched at 50, valid PDF from each.
+
+### 2026-09-02 — Phase 13: Attach the PDF via `DataTransfer`
+- `attachFile` builds a real `File` in memory and hands it over through a `DataTransfer` — assigning a path is blocked by browser security, so this is the only route in.
+- `fillFileField` asks the worker for the prepared PDF and attaches it; the worker base64-encodes it in chunks, since a Blob can't cross the message boundary and a whole PDF overflows `String.fromCharCode`.
+- File fields now enter the autofill loop alongside profile, declaration and question fields.
+- Any failure returns false and leaves the input empty — an unattached resume is obvious, a wrong one isn't.
