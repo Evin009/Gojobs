@@ -80,7 +80,7 @@ Read the job description -> score the resume -> rewrite only if it falls short
 attachment are new. Full reasoning in plan.md.
 
 - [x] Capture the job description from the application page — `getJobDescription`, verified live
-- [ ] `resume_guidelines` table + seed the ~80 guidelines (rubric as data, not a prompt)
+- [x] `resume_guidelines` table + seed the ~80 guidelines — 78 rows across 10 categories, applied and verified
 - [ ] `POST /score-resume` — score out of 100 + which guidelines failed
 - [ ] Above threshold -> send the resume untouched, no rewrite
 - [ ] Below -> rewrite only the flagged bullets

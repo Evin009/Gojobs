@@ -247,3 +247,10 @@ Format per entry (1-2 lines max, no more):
 - Fallback skips nav/header/footer — long blocks, never the job.
 - Verified live on a real job page.
 - Note for the scoring step: scraped page text is attacker-controlled. It must reach Claude as data, never as instructions.
+
+### 2026-09-02 — Phase 13, task 2: the scoring rubric
+- Built: migrations 006 (`resume_guidelines`, `resume_scores`) and 007 (78 guidelines across impact, relevance, keywords, language, structure, formatting, evidence, correctness, tailoring, ATS).
+- Decision: rubric as rows, not a prompt string. Guidelines change often, and a score has to name which ones failed so the rewrite fixes those specifically rather than rewriting blind.
+- Weights 1-3 (polish / worth fixing / real problem) so a score reflects severity, not just a count.
+- `resume_scores` keeps score + failed guideline ids per (resume, job) — a decision to rewrite, or not, stays reviewable.
+- Verified: both migrations applied, 78 rows across 10 categories.
