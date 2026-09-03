@@ -316,3 +316,11 @@ whether it runs.
 - A settings control sits top-right of the notch and reopens the popup; closing it morphs back to the notch.
 - A short tour points out the settings control and that clicking anywhere on the notch starts filling.
 - Once a form is filled the notch stops accepting clicks — refilling a submitted application is never wanted.
+
+### 2026-09-03 — Frontend: developer theme, landing page, GitHub explainer
+- Palette is near-black with one acid accent, used only on live things — the active tick, the focus ring, the running dot. Colour marks state, not decoration.
+- Mono for labels and chrome, sans for prose: the tool reads as a tool, the writing stays readable.
+- A title bar with a pulsing dot frames the popup as an instrument rather than a web page in a box.
+- Landing screen states what Gojobs does before asking for anything — the old flow opened straight into a form.
+- Step counter is a row of ticks, not a bar: it shows how many steps remain, which a bar hides.
+- GitHub monitoring gets its own step, since that prompt appears later on pages the user visits and shouldn't arrive unexplained.

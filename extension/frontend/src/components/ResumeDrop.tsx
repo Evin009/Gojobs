@@ -40,12 +40,12 @@ export function ResumeDrop({
         setOver(false);
         accept(e.dataTransfer.files[0]);
       }}
-      className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${
+      className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-9 text-center transition-colors ${
         filename
-          ? "border-solid border-zinc-900 dark:border-white"
+          ? "border-solid border-acid/60 bg-acid/[0.04]"
           : over
-            ? "border-zinc-900 dark:border-white"
-            : "border-zinc-200 dark:border-zinc-800"
+            ? "border-acid/60 bg-acid/[0.04]"
+            : "border-ink-700 bg-ink-900/40"
       }`}
     >
       <input
@@ -62,17 +62,17 @@ export function ResumeDrop({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
           transition={{ duration: 0.18 }}
-          className="text-xl text-zinc-400"
+          className={`text-xl ${filename ? "text-acid" : "text-ink-600"}`}
         >
           {filename ? "✓" : "↥"}
         </motion.span>
       </AnimatePresence>
 
-      <span className="text-[13px] font-semibold text-zinc-900 dark:text-white">
-        {filename || "Drop your .tex here"}
+      <span className="font-mono text-[11.5px] text-ink-100">
+        {filename || "drop your .tex here"}
       </span>
-      <span className="text-[11.5px] text-zinc-400">
-        {filename ? "Click to replace" : "or click to choose a file"}
+      <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-600">
+        {filename ? "click to replace" : "or click to choose"}
       </span>
     </motion.label>
   );

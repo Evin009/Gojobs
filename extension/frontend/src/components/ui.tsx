@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 
 import type { Field } from "../lib/steps";
 
-// Shared bits, kept small on purpose — a 384px popup can't carry a design
-// system, and every extra abstraction is one more thing to read.
+// Small on purpose — a 400px popup can't carry a design system, and every
+// extra abstraction is one more thing to read.
 
 export function Button({
   children,
@@ -18,7 +18,7 @@ export function Button({
   disabled?: boolean;
 }) {
   const base =
-    "rounded-lg px-4 py-2 text-[13px] font-semibold transition-colors disabled:opacity-40";
+    "rounded-md px-4 py-2 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors disabled:opacity-35";
 
   return (
     <motion.button
@@ -27,8 +27,8 @@ export function Button({
       disabled={disabled}
       className={
         variant === "primary"
-          ? `${base} bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200`
-          : `${base} text-zinc-500 hover:text-zinc-900 dark:hover:text-white`
+          ? `${base} bg-acid font-semibold text-ink-950 hover:bg-acid-dim`
+          : `${base} text-ink-400 hover:text-ink-100`
       }
     >
       {children}
@@ -46,15 +46,13 @@ export function Input({
   onChange: (value: string) => void;
 }) {
   const shared =
-    "w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-900 outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-100 dark:focus:ring-white/10";
+    "w-full rounded-md border border-ink-700 bg-ink-900 px-2.5 py-2 font-sans text-[12.5px] text-ink-100 outline-none transition placeholder:text-ink-600 focus:border-acid/60 focus:ring-2 focus:ring-acid/10";
 
   return (
     <label className="block space-y-1.5">
-      <span className="text-[11px] font-medium text-zinc-500">
+      <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
         {field.label}
-        {field.optional && (
-          <span className="ml-1 font-normal text-zinc-400">optional</span>
-        )}
+        {field.optional && <span className="ml-1 text-ink-600">opt</span>}
       </span>
 
       {field.options ? (
@@ -64,7 +62,9 @@ export function Input({
           onChange={(e) => onChange(e.target.value)}
         >
           {field.options.map((option) => (
-            <option key={option}>{option}</option>
+            <option key={option} className="bg-ink-900">
+              {option}
+            </option>
           ))}
         </select>
       ) : (
@@ -80,16 +80,22 @@ export function Input({
   );
 }
 
-// Fills left to right as steps complete. Framer animates the width rather than
-// CSS so it shares the same spring as everything else.
-export function Rail({ progress }: { progress: number }) {
+// Step counter as a row of ticks rather than a bar — reads as a sequence you
+// can see the length of, which a bar hides.
+export function Ticks({ total, index }: { total: number; index: number }) {
   return (
-    <div className="h-0.5 w-full bg-zinc-200 dark:bg-zinc-800">
-      <motion.div
-        className="h-full bg-zinc-900 dark:bg-white"
-        animate={{ width: `${progress * 100}%` }}
-        transition={{ type: "spring", stiffness: 180, damping: 26 }}
-      />
+    <div className="flex gap-1">
+      {Array.from({ length: total }, (_, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            width: i === index ? 18 : 6,
+            opacity: i <= index ? 1 : 0.22,
+          }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className={`h-[3px] rounded-full ${i <= index ? "bg-acid" : "bg-ink-600"}`}
+        />
+      ))}
     </div>
   );
 }
@@ -105,17 +111,30 @@ export function Heading({
 }) {
   return (
     <div className="mb-5">
-      <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.09em] text-zinc-400">
+      <p className="mb-2.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-acid">
         {eyebrow}
       </p>
-      <h2 className="text-[19px] font-semibold leading-tight tracking-[-0.02em] text-zinc-900 dark:text-white">
+      <h2 className="font-sans text-[20px] font-medium leading-[1.2] tracking-[-0.02em] text-ink-100">
         {title}
       </h2>
       {lede && (
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-zinc-500">
+        <p className="mt-2 font-sans text-[12.5px] leading-relaxed text-ink-300">
           {lede}
         </p>
       )}
+    </div>
+  );
+}
+
+// The window chrome: a title bar that makes the popup read as a tool rather
+// than a web page in a box.
+export function Chrome({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 border-b border-ink-800 px-4 py-2.5">
+      <div className="h-1.5 w-1.5 animate-sweep rounded-full bg-acid" />
+      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
+        {label}
+      </span>
     </div>
   );
 }
