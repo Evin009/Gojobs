@@ -10,6 +10,16 @@ System that monitors job boards/repos for new postings matching your criteria, a
 3. **Slack notification** — alert user the moment a new matching posting is found from either source.
 4. **Resume tailoring (LaTeX)** — take user's raw `.tex` resume, AI rewrites/inserts keywords into bullet content only, structure/commands untouched, recompiled to PDF. Every job gets its own tailored version — each is saved as a new row (not overwritten), linked to the specific application it was used for, so past applications always show exactly which resume version was sent.
 
+   **Two scores, then a loop.** A resume is judged on two separate axes, because
+   they fail for different reasons: **JD match out of 100** (does this person fit
+   the posting) and **ATS friendliness out of 10** (will a parser read it at all).
+   A resume can ace one and fail the other.
+
+   Rewrites follow Google's XYZ format — *accomplished X, as measured by Y, by
+   doing Z* — and are then **rescored**, up to three passes. One rewrite is an
+   assumption; rescoring makes it a check. A pass that scores worse than what it
+   replaced is discarded.
+
    **Score before rewriting.** Tailoring is gated, not automatic:
    1. Capture the job description from the application page.
    2. Score the existing resume against it, out of 100, using a stored rubric of ~80 guidelines.

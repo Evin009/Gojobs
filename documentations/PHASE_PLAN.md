@@ -86,9 +86,23 @@ attachment are new. Full reasoning in plan.md.
 - [x] Below -> rewrite only the flagged bullets
 - [x] Persist score + failures in `resume_scores`
 - [x] Attach the PDF via `DataTransfer` — built; untested in a browser
-- [ ] Pick the threshold from real scores, not a guess
+- [ ] Pick the thresholds from real scores, not a guess (moved into Phase 14's loop)
 
-## Phase 14 — Tracker board
+## Phase 14 — Two-axis scoring + rewrite loop
+
+One score can't say both "does this match the job" and "will a parser read it".
+Split them, rewrite against Google's XYZ format, then rescore — repeating until
+both clear or a cap is hit, so a rewrite is checked rather than assumed.
+
+- [ ] Store the user's base `.tex` resume and serve it — nothing to tailor without one
+- [ ] Split scoring into JD match /100 and ATS friendliness /10, both from one call
+- [ ] Rewrite bullets in XYZ form: accomplished X, measured by Y, by doing Z
+- [ ] Loop: score -> rewrite -> rescore, stopping when both clear or after 3 passes
+- [ ] Keep every pass in `resume_scores` so the improvement is visible
+- [ ] Bail out if a rewrite scores worse than what it replaced
+- [ ] One prepared resume cached per job — never re-run the loop for the same posting
+
+## Phase 15 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply
 
 ## Blocked on Anthropic credits — verify these together in one pass
