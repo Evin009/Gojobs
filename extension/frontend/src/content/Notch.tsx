@@ -10,11 +10,16 @@ const MSG = "gojobs";
 
 export function NotchContent({
   open,
+  disabled,
   onSettings,
   onFilling,
   onFilled,
 }: {
   open: boolean;
+  // true while the tour is on a beat that hasn't asked for a fill yet. The
+  // notch still looks alive, it just won't run ahead of what the user is
+  // being told.
+  disabled: boolean;
   onSettings: () => void;
   onFilling: () => void;
   onFilled: () => void;
@@ -49,7 +54,7 @@ export function NotchContent({
   const locked = state !== "idle";
 
   function start() {
-    if (locked) return;
+    if (locked || disabled) return;
     setState("loading");
     onFilling();
     // brief pause so the state change reads as deliberate, not as a glitch
@@ -58,7 +63,7 @@ export function NotchContent({
 
   return (
     <div
-      className={`gojobs-notch-body ${locked ? "is-locked" : ""}`}
+      className={`gojobs-notch-body ${locked || disabled ? "is-locked" : ""}`}
       onClick={start}
     >
       <motion.button

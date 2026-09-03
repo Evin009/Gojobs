@@ -26,9 +26,12 @@ const slide = {
 export function Onboarding({
   onFinish,
   onClose,
+  hint,
 }: {
   onFinish: () => void;
   onClose: () => void;
+  // shown while the tour has the user in here, so the panel says why it opened
+  hint?: string;
 }) {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -86,6 +89,18 @@ export function Onboarding({
         label={step === LAST ? "ready" : `setup ${step}/${LAST}`}
         onClose={onClose}
       />
+
+      {hint && (
+        <motion.div
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="border-b border-acid/25 bg-acid/[0.07] px-4 py-2.5"
+        >
+          <p className="font-sans text-[11.5px] leading-snug text-acid">
+            {hint}
+          </p>
+        </motion.div>
+      )}
 
       <div className="px-4 pb-5 pt-5">
         <AnimatePresence mode="wait" custom={direction}>

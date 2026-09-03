@@ -368,3 +368,9 @@ whether it runs.
 - No overlay while settings are open or while the form fills — both are moments where the dim would hide the thing worth looking at.
 - The panel opens from the toolbar icon on any page, application or not; the notch stays exclusive to pages with a real form.
 - Content scripts and host permissions now cover `http://` as well as `https://`, so the panel isn't dead on plain-http pages.
+
+### 2026-09-03 — Frontend: one tour beat at a time
+- The notch refuses to fill until the tour reaches the beat that asks for it. Clicking ahead would leave the tour narrating something that already happened.
+- The spotlight stays on the whole notch throughout. Narrowing onto the gear made the surrounding bar go dark mid-beat, which reads as the thing you were just told about disappearing.
+- The settings panel carries a line saying why it opened, so the tour doesn't go silent while the user is inside it.
+- Overlay is absent for exactly two moments — settings open, and the form filling — and returns for the closing curtain.

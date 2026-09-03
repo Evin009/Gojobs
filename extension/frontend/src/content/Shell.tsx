@@ -87,9 +87,14 @@ export function Shell() {
     if (tour === "hover" && hovered) setTour("gear");
   }, [tour, hovered]);
 
-  // While the gear beat runs, the notch stays open whether or not the pointer
-  // is on it — otherwise the spotlight would point at a gear that vanished.
+  // The gear beat holds the notch open whether or not the pointer is on it, so
+  // the gear the user is being told to click can't disappear under them.
   const notchOpen = hovered || tour === "gear";
+
+  // One beat at a time: until the tour actually asks for a fill, clicking the
+  // notch does nothing. Running ahead of the instructions would leave the tour
+  // narrating something that already happened.
+  const fillBlocked = tour !== "off" && tour !== "fill" && tour !== "filling";
 
   const endTour = useCallback(() => {
     chrome.storage.local.set({ tourDone: true });
@@ -139,10 +144,19 @@ export function Shell() {
           className="gojobs-surface-content"
         >
           {mode === "panel" ? (
-            <Onboarding onFinish={finishSetup} onClose={closePanel} />
+            <Onboarding
+              onFinish={finishSetup}
+              onClose={closePanel}
+              hint={
+                tour === "settings"
+                  ? "This is where your answers live. Close it to carry on."
+                  : undefined
+              }
+            />
           ) : (
             <NotchContent
               open={notchOpen}
+              disabled={fillBlocked}
               onSettings={openPanel}
               onFilling={() => tour === "fill" && setTour("filling")}
               onFilled={() => tour === "filling" && setTour("finale")}

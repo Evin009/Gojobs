@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 
-import { gearBox, notchBox } from "./geometry";
+import { notchBox } from "./geometry";
 
 export type TourStage =
   | "off"
@@ -16,8 +16,8 @@ export type TourStage =
 // click through teaches nothing.
 const BEATS: Record<string, string> = {
   hover: "Hover over the notch",
-  gear: "Click the gear to open settings",
-  fill: "Click anywhere on the notch to fill this form",
+  gear: "Now click the gear to open settings",
+  fill: "Now click anywhere on the notch to fill this form",
 };
 
 const fade = {
@@ -31,11 +31,12 @@ const spring = { type: "spring" as const, stiffness: 220, damping: 28 };
 // The dim is one enormous spread shadow around a transparent box, so the hole
 // moves with the box — no mask, no second element to keep in sync.
 function Spotlight({ stage }: { stage: TourStage }) {
-  // the gear only exists while the notch is expanded, so its beat spotlights
-  // the small square rather than the whole bar
-  const target = stage === "gear" ? gearBox() : notchBox(stage !== "hover");
-  const pad = stage === "gear" ? 6 : 8;
-  const radius = stage === "gear" ? 8 : 20;
+  // Always the whole notch. Narrowing onto the gear made the surrounding bar
+  // go dark mid-beat, which reads as the thing you were just told about
+  // disappearing.
+  const target = notchBox(stage !== "hover");
+  const pad = 8;
+  const radius = 20;
 
   return (
     <motion.div
@@ -143,7 +144,7 @@ export function Tour({
         <Curtain
           key="finale"
           title="Let the fun begin."
-          body="One application down, filled in seconds. The gear is always on the notch when you want to change an answer."
+          body="Form filled, tour done. The gear is always on the notch when you want to change an answer."
           action="Get to work"
           onAction={onDone}
         />
