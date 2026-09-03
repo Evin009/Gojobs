@@ -11,10 +11,12 @@ const MSG = "gojobs";
 export function NotchContent({
   open,
   onSettings,
+  onFilling,
   onFilled,
 }: {
   open: boolean;
   onSettings: () => void;
+  onFilling: () => void;
   onFilled: () => void;
 }) {
   const [state, setState] = useState<State>("idle");
@@ -49,6 +51,7 @@ export function NotchContent({
   function start() {
     if (locked) return;
     setState("loading");
+    onFilling();
     // brief pause so the state change reads as deliberate, not as a glitch
     setTimeout(() => window.postMessage({ source: MSG, type: "run" }, "*"), 900);
   }
@@ -60,7 +63,7 @@ export function NotchContent({
     >
       <motion.button
         className="gojobs-gear"
-        animate={{ opacity: open && state === "idle" ? 1 : 0 }}
+        animate={{ opacity: open && state !== "loading" && state !== "progress" ? 1 : 0 }}
         onClick={(e) => {
           e.stopPropagation(); // the whole notch is the fill target
           onSettings();
@@ -73,9 +76,22 @@ export function NotchContent({
         </svg>
       </motion.button>
 
+      {/* Collapsed, only the bar shows: a field name in a 116px pill is
+          unreadable, and the bar alone still says work is happening. */}
+      {!open && state === "progress" && progress && (
+        <div className="gojobs-track is-bare">
+          <motion.div
+            className="gojobs-fill"
+            animate={{
+              width: `${((progress.index + 1) / progress.total) * 100}%`,
+            }}
+          />
+        </div>
+      )}
+
       <motion.div
         className="gojobs-notch-inner"
-        animate={{ opacity: open || state !== "idle" ? 1 : 0 }}
+        animate={{ opacity: open ? 1 : 0 }}
         transition={{ duration: 0.22 }}
       >
         <AnimatePresence mode="wait">

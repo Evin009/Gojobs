@@ -99,47 +99,85 @@ export function Onboarding({
             transition={{ type: "spring", stiffness: 280, damping: 30 }}
           >
             {step === 0 && (
-              <>
-                <div className="mb-6 mt-2">
-                  <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-acid">
-                    Gojobs
-                  </p>
-                  <h1 className="mt-3 font-sans text-[27px] font-medium leading-[1.1] tracking-[-0.03em]">
-                    Applications,
+              <div className="relative">
+                {/* a slow drift behind the type — the panel reads as running,
+                    not as a static card */}
+                <motion.div
+                  aria-hidden
+                  animate={{ opacity: [0.28, 0.6, 0.28] }}
+                  transition={{ duration: 5.5, repeat: Infinity }}
+                  className="pointer-events-none absolute -left-10 -top-14 h-40 w-40 rounded-full bg-acid/20 blur-[54px]"
+                />
+
+                <div className="relative mb-7 mt-3">
+                  <div className="mb-5 flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 animate-sweep rounded-full bg-acid" />
+                    <span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-ink-400">
+                      Gojobs
+                    </span>
+                  </div>
+
+                  <h1 className="font-sans text-[31px] font-medium leading-[1.06] tracking-[-0.035em]">
+                    Never fill
                     <br />
-                    <span className="text-ink-400">already filled.</span>
+                    the same form
+                    <br />
+                    <span className="text-acid">twice.</span>
                   </h1>
-                  <p className="mt-3 max-w-[32ch] font-sans text-[12.5px] leading-relaxed text-ink-300">
+
+                  <p className="mt-4 max-w-[33ch] font-sans text-[12.5px] leading-relaxed text-ink-300">
                     Answer a handful of questions once. Gojobs reuses them on
-                    every application you open, and writes only what it can't
-                    reuse.
+                    every application you open, retailors your resume to the
+                    posting, and writes only what it can't reuse.
                   </p>
                 </div>
 
-                <div className="mb-6 space-y-1.5 border-l border-ink-800 pl-3">
+                <div className="relative mb-7 grid grid-cols-3 gap-px overflow-hidden rounded-lg bg-ink-800 ring-1 ring-ink-800">
                   {[
-                    "Profile and declarations, stored once",
-                    "Your LaTeX resume, retailored per job",
-                    "Open questions, written in your voice",
-                  ].map((line) => (
-                    <p
-                      key={line}
-                      className="font-mono text-[10.5px] leading-relaxed text-ink-400"
-                    >
-                      {line}
-                    </p>
+                    ["Once", "Profile & declarations"],
+                    ["Per job", "Resume retailored"],
+                    ["Never", "Typed by hand"],
+                  ].map(([big, small]) => (
+                    <div key={small} className="bg-ink-950 px-3 py-3">
+                      <p className="font-mono text-[11px] text-acid">{big}</p>
+                      <p className="mt-1 font-sans text-[10.5px] leading-snug text-ink-400">
+                        {small}
+                      </p>
+                    </div>
                   ))}
                 </div>
 
-                <div className="flex items-center">
-                  <span className="font-mono text-[10px] text-ink-600">
-                    ~2 min
+                <motion.button
+                  onClick={() => go(1)}
+                  whileHover="hover"
+                  whileTap={{ scale: 0.985 }}
+                  className="group relative w-full overflow-hidden rounded-lg bg-acid px-4 py-3 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-950"
+                >
+                  {/* a light sweeps across on hover, so the button answers back */}
+                  <motion.span
+                    aria-hidden
+                    variants={{
+                      hover: { x: ["-120%", "120%"] },
+                    }}
+                    transition={{ duration: 0.75, ease: "easeInOut" }}
+                    className="absolute inset-y-0 w-1/3 bg-white/35 blur-md"
+                    style={{ x: "-120%" }}
+                  />
+                  <span className="relative flex items-center justify-center gap-2">
+                    Let's get going
+                    <motion.span
+                      variants={{ hover: { x: 3 } }}
+                      transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                    >
+                      &rarr;
+                    </motion.span>
                   </span>
-                  <div className="ml-auto">
-                    <Button onClick={() => go(1)}>Begin</Button>
-                  </div>
-                </div>
-              </>
+                </motion.button>
+
+                <p className="mt-3 text-center font-mono text-[9.5px] uppercase tracking-[0.14em] text-ink-600">
+                  About two minutes
+                </p>
+              </div>
             )}
 
             {step === 1 && (
@@ -209,30 +247,38 @@ export function Onboarding({
             )}
 
             {step === LAST && (
-              <div className="py-6 text-center">
+              <div className="py-5 text-center">
                 <motion.div
-                  layoutId="notch"
                   initial={{ scale: 0.6, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 260, damping: 22 }}
-                  className="mx-auto mb-5 flex h-7 w-32 items-center justify-center rounded-full bg-ink-900 ring-1 ring-ink-700"
+                  className="mx-auto mb-5 flex h-7 w-28 items-center justify-center rounded-b-2xl bg-ink-900 ring-1 ring-ink-700"
                 >
                   <div className="h-1.5 w-1.5 animate-sweep rounded-full bg-acid" />
                 </motion.div>
 
                 <h2 className="font-sans text-[20px] font-medium tracking-[-0.02em]">
-                  You're set up.
+                  Everything's stored.
                 </h2>
-                <p className="mx-auto mt-2 max-w-[30ch] font-sans text-[12.5px] leading-relaxed text-ink-300">
-                  That pill lives at the top of your window from now on. Open an
-                  application and click it.
+                <p className="mx-auto mt-2 max-w-[31ch] font-sans text-[12.5px] leading-relaxed text-ink-300">
+                  Now open a job application. That pill appears at the top of
+                  the page, and a short tour will show you how it works.
                 </p>
+
+                <div className="mx-auto mt-5 max-w-[30ch] rounded-lg border border-ink-800 bg-ink-900/50 px-3 py-2.5">
+                  <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
+                    Try
+                  </p>
+                  <p className="mt-1 font-sans text-[11.5px] leading-snug text-ink-300">
+                    Any Greenhouse, Lever or Ashby posting
+                  </p>
+                </div>
 
                 <div className="mt-6 flex justify-center gap-2">
                   <Button variant="ghost" onClick={() => go(1)}>
                     Review
                   </Button>
-                  <Button onClick={onFinish}>Take me there</Button>
+                  <Button onClick={onFinish}>Done</Button>
                 </div>
               </div>
             )}

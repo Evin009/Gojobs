@@ -8,14 +8,17 @@ export type TourStage =
   | "hover"
   | "settings"
   | "fill"
+  | "filling"
+  | "settingsAgain"
   | "finale";
 
 // Each spotlight beat waits for the user to actually do the thing, rather than
 // for a Next button. A tour you click through teaches nothing.
-const BEATS: Record<string, { label: string }> = {
-  hover: { label: "Hover to interact" },
-  settings: { label: "Click the gear to reopen setup" },
-  fill: { label: "Click anywhere to start filling" },
+const BEATS: Record<string, string> = {
+  hover: "Hover to interact",
+  settings: "Click the gear to reopen setup",
+  fill: "Click anywhere to start filling",
+  settingsAgain: "The gear is always here — reopen setup any time",
 };
 
 const fade = {
@@ -24,8 +27,8 @@ const fade = {
   exit: { opacity: 0 },
 };
 
-// The dim is a huge spread shadow around a transparent box — cheaper than an
-// SVG mask and it animates with the hole, so the spotlight can move.
+// The dim is one enormous spread shadow around a transparent box, so the hole
+// moves with the box — no mask, no second element to keep in sync.
 function Spotlight({ open, label }: { open: boolean; label: string }) {
   const box = notchBox(open);
 
@@ -39,16 +42,16 @@ function Spotlight({ open, label }: { open: boolean; label: string }) {
         className="gojobs-spot"
         animate={{
           x: box.x - 6,
-          y: box.y - 6,
+          y: -8,
           width: box.width + 12,
-          height: box.height + 12,
+          height: box.height + 14,
         }}
         transition={{ type: "spring", stiffness: 220, damping: 28 }}
       />
 
       <motion.div
         className="gojobs-tour-tip"
-        animate={{ x: box.x + box.width / 2, y: box.y + box.height + 16 }}
+        animate={{ x: box.x + box.width / 2, y: box.height + 18 }}
         transition={{ type: "spring", stiffness: 220, damping: 28 }}
       >
         <AnimatePresence mode="wait">
@@ -104,11 +107,13 @@ export function Tour({
   stage,
   notchOpen,
   onStart,
+  onContinue,
   onDone,
 }: {
   stage: TourStage;
   notchOpen: boolean;
   onStart: () => void;
+  onContinue: () => void;
   onDone: () => void;
 }) {
   return (
@@ -116,24 +121,24 @@ export function Tour({
       {stage === "welcome" && (
         <Curtain
           key="welcome"
-          title="You're all set."
-          body="Gojobs now lives at the top of every page you open. Here's how to use it — thirty seconds."
+          title="Here's your first application."
+          body="Gojobs sits at the top of any application page. Thirty seconds and you'll never fill one by hand again."
           action="Show me"
           onAction={onStart}
         />
       )}
 
-      {(stage === "hover" || stage === "settings" || stage === "fill") && (
-        <Spotlight key="spot" open={notchOpen} label={BEATS[stage].label} />
-      )}
+      {/* "filling" has no overlay on purpose — the user is watching their own
+          form fill, and dimming it would hide the thing worth seeing. */}
+      {BEATS[stage] && <Spotlight key="spot" open={notchOpen} label={BEATS[stage]} />}
 
       {stage === "finale" && (
         <Curtain
           key="finale"
           title="Let the fun begin."
-          body="That's one application done. Open another and click the notch — it'll be waiting."
-          action="Get to work"
-          onAction={onDone}
+          body="One application down. The gear stays on the notch — that's where you change an answer or swap your resume."
+          action="Show me that"
+          onAction={onContinue}
         />
       )}
     </AnimatePresence>

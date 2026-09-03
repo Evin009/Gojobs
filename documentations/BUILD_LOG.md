@@ -350,3 +350,13 @@ whether it runs.
 - Each spotlight beat advances when the user performs the gesture — hovering, opening and closing settings, filling — rather than on a Next button. A tour you click through teaches nothing.
 - The spotlight is one huge spread shadow around a transparent box, so the hole moves with the box: no SVG mask, no second element to keep in sync.
 - The tour layer is `pointer-events: none`, otherwise the dim would block the very control it's pointing at.
+
+### 2026-09-03 — Frontend: the tour waits for a real application
+- The surface now appears only where `autofill.js` announces a fillable form. Setup is the one exception — it stays put wherever the user is until they finish it.
+- The tour no longer fires on install. It waits for the first application page, so it can point at a notch that actually exists and demonstrate a fill that actually happens.
+- Onboarding ends by telling the user to open a job posting, rather than pretending the tour can start where it finished.
+- Notch top corners are square: it hangs off the top edge of the window, and a rounded top floats it away from the edge it belongs to.
+- Collapsed, only the progress bar shows. A field name in a 116px pill is unreadable, and the bar alone still says work is happening.
+- No overlay while the form fills — the user is watching their own form, and dimming it hides the thing worth seeing.
+- The gear survives the fill, and the closing beat points at it: filled is not finished, and settings is never off-limits.
+- Landing screen rebuilt with a drifting accent glow, a three-cell claim strip, and a button whose light sweeps across on hover.
