@@ -128,13 +128,29 @@ export function Heading({
 
 // The window chrome: a title bar that makes the popup read as a tool rather
 // than a web page in a box.
-export function Chrome({ label }: { label: string }) {
+export function Chrome({
+  label,
+  onClose,
+}: {
+  label: string;
+  onClose?: () => void;
+}) {
   return (
     <div className="flex items-center gap-2 border-b border-ink-800 px-4 py-2.5">
       <div className="h-1.5 w-1.5 animate-sweep rounded-full bg-acid" />
       <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
         {label}
       </span>
+
+      {onClose && (
+        <button
+          onClick={onClose}
+          aria-label="Collapse"
+          className="ml-auto font-mono text-[13px] leading-none text-ink-600 transition-colors hover:text-ink-100"
+        >
+          &times;
+        </button>
+      )}
     </div>
   );
 }

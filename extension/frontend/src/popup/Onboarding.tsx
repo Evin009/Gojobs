@@ -23,7 +23,13 @@ const slide = {
   exit: (dir: number) => ({ opacity: 0, x: dir * -26 }),
 };
 
-export function Popup() {
+export function Onboarding({
+  onFinish,
+  onClose,
+}: {
+  onFinish: () => void;
+  onClose: () => void;
+}) {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [profile, setProfile] = useState<Profile>({});
@@ -74,18 +80,12 @@ export function Popup() {
     go(step + 1);
   }
 
-  // Tells the content script to show the notch, then closes the popup — the
-  // handoff the welcome screen is describing.
-  function handOff() {
-    chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-      if (tab?.id) chrome.tabs.sendMessage(tab.id, { type: "showNotch" });
-      window.close();
-    });
-  }
-
   return (
-    <div className="grid-bg min-h-[440px] bg-ink-950 text-ink-100">
-      <Chrome label={step === LAST ? "ready" : `setup ${step}/${LAST}`} />
+    <div className="grid-bg min-h-[440px] text-ink-100">
+      <Chrome
+        label={step === LAST ? "ready" : `setup ${step}/${LAST}`}
+        onClose={onClose}
+      />
 
       <div className="px-4 pb-5 pt-5">
         <AnimatePresence mode="wait" custom={direction}>
@@ -232,7 +232,7 @@ export function Popup() {
                   <Button variant="ghost" onClick={() => go(1)}>
                     Review
                   </Button>
-                  <Button onClick={handOff}>Take me there</Button>
+                  <Button onClick={onFinish}>Take me there</Button>
                 </div>
               </div>
             )}

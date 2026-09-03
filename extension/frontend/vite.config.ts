@@ -2,25 +2,23 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
-// Builds the popup into ../dist, which the manifest points at. Chrome loads
-// extension/ — the content scripts sit there as plain files, since they run in
-// the page and need no bundling.
+// One bundle, injected into the page as a content script. The UI can't live in
+// a toolbar popup: a popup is a separate document, so it could never morph into
+// the notch. Same document, same element, real morph.
+//
+// IIFE because MV3 content scripts aren't modules.
 export default defineConfig({
   plugins: [react()],
-  // relative asset paths: the page is served from dist/, so a leading "/"
-  // would resolve to the extension root and load nothing
-  base: "./",
+  define: { "process.env.NODE_ENV": '"production"' },
   build: {
     outDir: resolve(__dirname, "../dist"),
     emptyOutDir: true,
-    rollupOptions: {
-      input: { popup: resolve(__dirname, "index.html") },
-      output: {
-        // stable names: the manifest references these paths directly
-        entryFileNames: "[name].js",
-        chunkFileNames: "[name].js",
-        assetFileNames: "[name].[ext]",
-      },
+    cssCodeSplit: false,
+    lib: {
+      entry: resolve(__dirname, "src/content/mount.tsx"),
+      name: "GojobsUI",
+      formats: ["iife"],
+      fileName: () => "ui.js",
     },
   },
 });

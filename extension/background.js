@@ -11,20 +11,28 @@
 const BACKEND = "http://localhost:8080";   // Go: profile, repos
 const AI = "http://localhost:8000";        // Python: Claude-backed answers
 
-// First install opens setup — the extension is useless until the profile and
-// resume exist, and nobody thinks to click the toolbar icon unprompted.
+// The UI lives in the page, so both of these just tell the active tab to open
+// its panel. Nothing to open here — there is no popup document any more.
+function openPanel(tabId) {
+  chrome.tabs.sendMessage(tabId, { type: "openPanel" }).catch(() => {
+    // no content script on this tab (chrome:// page, web store) — nothing to do
+  });
+}
+
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.id) openPanel(tab.id);
+});
+
+// First install: open setup on whatever real page is in front of the user.
 chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === "install") chrome.runtime.openOptionsPage();
+  if (details.reason !== "install") return;
+
+  chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+    if (tab?.id) openPanel(tab.id);
+  });
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // The notch's gear reopens setup. A content script can't open the popup
-  // itself, so the worker does it.
-  if (message.type === "openSettings") {
-    chrome.runtime.openOptionsPage();
-    return;
-  }
-
   if (message.type === "getProfile") {
     fetch(`${BACKEND}/profile`)
       .then((r) => (r.ok ? r.json() : {}))

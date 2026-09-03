@@ -30,14 +30,22 @@
       ],
       "run_at": "document_idle",
       "all_frames": true
+    },
+    {
+      "matches": [
+        "https://*/*"
+      ],
+      "js": [
+        "dist/ui.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": false
     }
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "dist/index.html",
     "default_title": "Gojobs"
-  },
-  "options_page": "dist/index.html"
+  }
 }

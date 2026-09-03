@@ -117,7 +117,7 @@ user-facing surface of the product.
 - [x] GitHub monitoring explainer as its own onboarding step
 - [x] Welcome screen morphs into the notch
 - [x] Notch exists from first install, not only on application pages
-- [x] Settings control on the notch reopens the popup
+- [x] Settings control on the notch morphs it back into the panel
 - [x] Notch tour: settings control, and click anywhere to fill
 - [x] Notch stops accepting clicks once a form is filled
 

@@ -333,3 +333,12 @@ whether it runs.
 - Two-beat tour: where settings live, and that the notch itself is the button. Shown once, remembered in `chrome.storage.local`.
 - The notch locks after filling. A stray second click would overwrite anything the user had edited by hand.
 - Accent moved to the same acid green as the popup, so the two surfaces read as one product.
+
+### 2026-09-03 — Frontend: panel and notch are one morphing surface
+- Moved the whole UI out of the toolbar popup and into the page as a content script. A popup is a separate document, so it could never morph into the notch — same document was the only way to get a real one.
+- Panel and notch share a Framer `layoutId`, so the geometry animates between them: the panel physically becomes the notch, and the gear brings it back.
+- Content cross-fades on its own timing rather than scaling with the box — text stretching with the container reads as a zoom, not a morph.
+- Shadow DOM keeps the host page's CSS out; the compiled Tailwind is imported with `?inline` and injected into the shadow root, since a `<link>` would leak both ways.
+- The React bundle runs top-frame only (one notch per window) while `autofill.js` still runs in every frame, since forms are usually nested. The top frame relays "run" down and progress back up.
+- `autofill.js` lost its hand-written notch entirely — 250 lines of DOM and CSS replaced by the React surface. It now owns only the form.
+- Toolbar click and first install both just message the active tab; there's no popup document left to open.

@@ -4,17 +4,6 @@
 
 /* A toolbar popup has no viewport of its own — it's sized by its content, so
    width is fixed here and height is capped by Chrome at 600px. */
-html,
-body {
-  margin: 0;
-  width: 400px;
-  background: #08080a;
-}
-
-#root {
-  -webkit-font-smoothing: antialiased;
-}
-
 ::-webkit-scrollbar {
   width: 0;
 }
@@ -26,4 +15,175 @@ body {
     linear-gradient(to right, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.028) 1px, transparent 1px);
   background-size: 22px 22px;
+}
+
+/* ---------------------------------------------------------------- in-page
+
+   The UI is injected into whatever site the user is on, so it needs its own
+   stacking context and must not inherit anything. Shadow DOM handles the CSS
+   isolation; these handle position and the shapes Framer morphs between. */
+
+.gojobs-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none; /* the page stays usable around our UI */
+  font-family: Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gojobs-layer > * {
+  pointer-events: auto;
+}
+
+/* panel and notch share a layoutId, so these two rule sets are the start and
+   end of one animation. Keep the visual language identical — only geometry
+   should appear to change. */
+.gojobs-panel {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  max-height: 92vh;
+  overflow-y: auto;
+  color: #e8e8ef;
+  background: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75);
+}
+
+.gojobs-notch {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  color: #e8e8ef;
+  background: #08080a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-top: 0;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.55);
+}
+
+.gojobs-notch.is-locked {
+  cursor: default;
+}
+
+.gojobs-notch-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 22px;
+}
+
+.gojobs-gear {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: rgba(232, 232, 239, 0.45);
+  background: none;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.gojobs-gear:hover {
+  color: #e8e8ef;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.gojobs-gear svg {
+  width: 13px;
+  height: 13px;
+}
+
+.gojobs-label {
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: -0.005em;
+  white-space: nowrap;
+}
+
+.gojobs-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.gojobs-current {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 12.5px;
+  color: rgba(232, 232, 239, 0.92);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gojobs-track {
+  position: absolute;
+  right: 22px;
+  bottom: 12px;
+  left: 22px;
+  height: 3px;
+  overflow: hidden;
+  background: rgba(232, 232, 239, 0.14);
+  border-radius: 999px;
+}
+
+.gojobs-fill {
+  height: 100%;
+  background: #c8ff3d;
+  border-radius: 999px;
+}
+
+.gojobs-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  background: #c8ff3d;
+  border-radius: 50%;
+  animation: gojobs-breathe 2s ease-in-out infinite;
+}
+
+@keyframes gojobs-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.gojobs-spinner {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid rgba(232, 232, 239, 0.3);
+  border-top-color: #e8e8ef;
+  border-radius: 50%;
+  animation: gojobs-spin 700ms linear infinite;
+}
+
+@keyframes gojobs-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
