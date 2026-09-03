@@ -17,7 +17,7 @@ const MSG = "gojobs";
 
 export function Shell() {
   const [mode, setMode] = useState<Mode>("hidden");
-  const [notchOpen, setNotchOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [tour, setTour] = useState<TourStage>("off");
   const [isApplication, setIsApplication] = useState(false);
   const [setupDone, setSetupDone] = useState(false);
@@ -31,8 +31,8 @@ export function Shell() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // autofill.js announces a form it can fill. That's our signal that this page
-  // is worth showing the notch on — the surface stays hidden everywhere else.
+  // autofill.js announces a form it can fill — that's what makes this page an
+  // application page. The notch appears nowhere else.
   useEffect(() => {
     function onMessage(event: MessageEvent) {
       if (event.data?.source === MSG && event.data.type === "formFound") {
@@ -47,13 +47,11 @@ export function Shell() {
   useEffect(() => {
     chrome.storage.local.get(["setupDone", "tourDone"], (stored) => {
       setSetupDone(Boolean(stored.setupDone));
-
-      // Setup opens by itself the first time. After that the surface only
-      // appears on application pages.
-      if (!stored.setupDone) return setMode("panel");
-      if (!stored.tourDone) setTourPending(true);
+      if (stored.setupDone && !stored.tourDone) setTourPending(true);
     });
 
+    // Clicking the toolbar icon opens setup on whatever page the user is on,
+    // application or not.
     const listener = (message: { type?: string }) => {
       if (message.type === "openPanel") setMode("panel");
     };
@@ -62,15 +60,14 @@ export function Shell() {
     return () => chrome.runtime.onMessage.removeListener(listener);
   }, []);
 
-  // The notch belongs on application pages only. Setup is the one exception:
-  // it stays put until the user finishes it, wherever they happen to be.
+  // The notch belongs on application pages. The panel is never hidden by this
+  // — it closes on its own terms.
   useEffect(() => {
     if (mode === "panel") return;
     setMode(setupDone && isApplication ? "notch" : "hidden");
   }, [mode, setupDone, isApplication]);
 
-  // The tour teaches the notch, so it can't run until there's a notch to point
-  // at — which means an application page, not whatever tab setup finished on.
+  // The tour teaches the notch, so it waits for a page that has one.
   useEffect(() => {
     if (tourPending && isApplication && mode === "notch" && tour === "off") {
       setTour("welcome");
@@ -78,10 +75,19 @@ export function Shell() {
     }
   }, [tourPending, isApplication, mode, tour]);
 
-  // Each beat advances when the user performs the gesture it describes.
+  // Hovering satisfies the first beat and reveals the gear the second points at.
   useEffect(() => {
-    if (tour === "hover" && notchOpen) setTour("settings");
-  }, [tour, notchOpen]);
+    if (tour === "hover" && hovered) setTour("gear");
+  }, [tour, hovered]);
+
+  // While the gear beat runs, the notch stays open whether or not the pointer
+  // is on it — otherwise the spotlight would point at a gear that vanished.
+  const notchOpen = hovered || tour === "gear";
+
+  const endTour = useCallback(() => {
+    chrome.storage.local.set({ tourDone: true });
+    setTour("off");
+  }, []);
 
   function finishSetup() {
     chrome.storage.local.set({ setupDone: true });
@@ -90,17 +96,15 @@ export function Shell() {
     setMode(isApplication ? "notch" : "hidden");
   }
 
-  function closePanel() {
-    setMode(setupDone && isApplication ? "notch" : "hidden");
-    // the settings beat is satisfied by opening and closing the panel
-    if (tour === "settings") setTour("fill");
-    if (tour === "settingsAgain") endTour();
+  function openPanel() {
+    if (tour === "gear") setTour("settings");
+    setMode("panel");
   }
 
-  const endTour = useCallback(() => {
-    chrome.storage.local.set({ tourDone: true });
-    setTour("off");
-  }, []);
+  function closePanel() {
+    setMode(setupDone && isApplication ? "notch" : "hidden");
+    if (tour === "settings") setTour("fill");
+  }
 
   if (mode === "hidden") return null;
 
@@ -108,21 +112,15 @@ export function Shell() {
 
   return (
     <div className="gojobs-layer">
-      <Tour
-        stage={tour}
-        notchOpen={notchOpen}
-        onStart={() => setTour("hover")}
-        onContinue={() => setTour("settingsAgain")}
-        onDone={endTour}
-      />
+      <Tour stage={tour} onStart={() => setTour("hover")} onDone={endTour} />
 
       <motion.div
         className={`gojobs-surface ${mode === "panel" ? "is-panel" : "is-notch"}`}
         initial={false}
         animate={box}
         transition={morph}
-        onHoverStart={() => mode === "notch" && setNotchOpen(true)}
-        onHoverEnd={() => setNotchOpen(false)}
+        onHoverStart={() => setHovered(true)}
+        onHoverEnd={() => setHovered(false)}
       >
         {/* Content cross-fades on its own timing. Letting it scale with the
             box reads as a zoom rather than a morph. */}
@@ -138,7 +136,7 @@ export function Shell() {
           ) : (
             <NotchContent
               open={notchOpen}
-              onSettings={() => setMode("panel")}
+              onSettings={openPanel}
               onFilling={() => tour === "fill" && setTour("filling")}
               onFilled={() => tour === "filling" && setTour("finale")}
             />

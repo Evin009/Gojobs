@@ -9,7 +9,8 @@
   "host_permissions": [
     "http://localhost:8000/*",
     "http://localhost:8080/*",
-    "https://*/*"
+    "https://*/*",
+    "http://*/*"
   ],
   "content_scripts": [
     {
@@ -22,7 +23,8 @@
     },
     {
       "matches": [
-        "https://*/*"
+        "https://*/*",
+        "http://*/*"
       ],
       "js": [
         "form_scanner.js",
@@ -34,7 +36,8 @@
     },
     {
       "matches": [
-        "https://*/*"
+        "https://*/*",
+        "http://*/*"
       ],
       "js": [
         "dist/ui.js"

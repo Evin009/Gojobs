@@ -360,3 +360,11 @@ whether it runs.
 - No overlay while the form fills — the user is watching their own form, and dimming it hides the thing worth seeing.
 - The gear survives the fill, and the closing beat points at it: filled is not finished, and settings is never off-limits.
 - Landing screen rebuilt with a drifting accent glow, a three-cell claim strip, and a button whose light sweeps across on hover.
+
+### 2026-09-03 — Frontend: the tour follows the real sequence
+- Beats now run welcome -> hover the notch -> click the gear -> settings -> click to fill -> "Let the fun begin", and the finale ends the tour rather than leaving it open.
+- The gear beat spotlights the gear alone. Highlighting the whole bar didn't say which part to click.
+- The notch is held open for that beat regardless of the pointer, so the spotlight can't point at a gear that just vanished.
+- No overlay while settings are open or while the form fills — both are moments where the dim would hide the thing worth looking at.
+- The panel opens from the toolbar icon on any page, application or not; the notch stays exclusive to pages with a real form.
+- Content scripts and host permissions now cover `http://` as well as `https://`, so the panel isn't dead on plain-http pages.

@@ -1,24 +1,23 @@
 import { AnimatePresence, motion } from "framer-motion";
 
-import { notchBox } from "./geometry";
+import { gearBox, notchBox } from "./geometry";
 
 export type TourStage =
   | "off"
   | "welcome"
   | "hover"
+  | "gear"
   | "settings"
   | "fill"
   | "filling"
-  | "settingsAgain"
   | "finale";
 
-// Each spotlight beat waits for the user to actually do the thing, rather than
-// for a Next button. A tour you click through teaches nothing.
+// Each beat waits for the user to perform the gesture it describes. A tour you
+// click through teaches nothing.
 const BEATS: Record<string, string> = {
-  hover: "Hover to interact",
-  settings: "Click the gear to reopen setup",
-  fill: "Click anywhere to start filling",
-  settingsAgain: "The gear is always here — reopen setup any time",
+  hover: "Hover over the notch",
+  gear: "Click the gear to open settings",
+  fill: "Click anywhere on the notch to fill this form",
 };
 
 const fade = {
@@ -27,10 +26,16 @@ const fade = {
   exit: { opacity: 0 },
 };
 
+const spring = { type: "spring" as const, stiffness: 220, damping: 28 };
+
 // The dim is one enormous spread shadow around a transparent box, so the hole
 // moves with the box — no mask, no second element to keep in sync.
-function Spotlight({ open, label }: { open: boolean; label: string }) {
-  const box = notchBox(open);
+function Spotlight({ stage }: { stage: TourStage }) {
+  // the gear only exists while the notch is expanded, so its beat spotlights
+  // the small square rather than the whole bar
+  const target = stage === "gear" ? gearBox() : notchBox(stage !== "hover");
+  const pad = stage === "gear" ? 6 : 8;
+  const radius = stage === "gear" ? 8 : 20;
 
   return (
     <motion.div
@@ -41,28 +46,32 @@ function Spotlight({ open, label }: { open: boolean; label: string }) {
       <motion.div
         className="gojobs-spot"
         animate={{
-          x: box.x - 6,
-          y: -8,
-          width: box.width + 12,
-          height: box.height + 14,
+          x: target.x - pad,
+          y: target.y - pad,
+          width: target.width + pad * 2,
+          height: target.height + pad * 2,
+          borderRadius: radius,
         }}
-        transition={{ type: "spring", stiffness: 220, damping: 28 }}
+        transition={spring}
       />
 
       <motion.div
         className="gojobs-tour-tip"
-        animate={{ x: box.x + box.width / 2, y: box.height + 18 }}
-        transition={{ type: "spring", stiffness: 220, damping: 28 }}
+        animate={{
+          x: target.x + target.width / 2,
+          y: target.y + target.height + 18,
+        }}
+        transition={spring}
       >
         <AnimatePresence mode="wait">
           <motion.span
-            key={label}
+            key={stage}
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.18 }}
           >
-            {label}
+            {BEATS[stage]}
           </motion.span>
         </AnimatePresence>
       </motion.div>
@@ -105,15 +114,11 @@ function Curtain({
 
 export function Tour({
   stage,
-  notchOpen,
   onStart,
-  onContinue,
   onDone,
 }: {
   stage: TourStage;
-  notchOpen: boolean;
   onStart: () => void;
-  onContinue: () => void;
   onDone: () => void;
 }) {
   return (
@@ -122,23 +127,25 @@ export function Tour({
         <Curtain
           key="welcome"
           title="Here's your first application."
-          body="Gojobs sits at the top of any application page. Thirty seconds and you'll never fill one by hand again."
+          body="Gojobs sits at the top of any application page. Thirty seconds and you'll never fill one of these by hand again."
           action="Show me"
           onAction={onStart}
         />
       )}
 
-      {/* "filling" has no overlay on purpose — the user is watching their own
-          form fill, and dimming it would hide the thing worth seeing. */}
-      {BEATS[stage] && <Spotlight key="spot" open={notchOpen} label={BEATS[stage]} />}
+      {BEATS[stage] && <Spotlight key="spot" stage={stage} />}
+
+      {/* "settings" and "filling" show nothing on purpose — the user is
+          reading the settings panel, or watching their own form fill, and a
+          dim would hide the thing worth looking at. */}
 
       {stage === "finale" && (
         <Curtain
           key="finale"
           title="Let the fun begin."
-          body="One application down. The gear stays on the notch — that's where you change an answer or swap your resume."
-          action="Show me that"
-          onAction={onContinue}
+          body="One application down, filled in seconds. The gear is always on the notch when you want to change an answer."
+          action="Get to work"
+          onAction={onDone}
         />
       )}
     </AnimatePresence>

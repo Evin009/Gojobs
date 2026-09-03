@@ -38,3 +38,16 @@ export function panelBox() {
     borderBottomRightRadius: 16,
   };
 }
+
+// The gear sits inside the expanded notch, top-right. The tour spotlights it
+// on its own — highlighting the whole bar wouldn't say which part to click.
+export function gearBox() {
+  const notch = notchBox(true);
+
+  return {
+    x: notch.x + NOTCH_OPEN.w - 30,
+    y: 8,
+    width: 20,
+    height: 20,
+  };
+}
