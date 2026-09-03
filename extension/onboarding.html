@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gojobs — Setup</title>
+    <link rel="stylesheet" href="onboarding.css" />
+  </head>
+  <body>
+    <div class="rail" aria-hidden="true"><div class="rail-fill"></div></div>
+
+    <main class="stage">
+      <!-- Welcome -->
+      <section class="step is-active" data-step="0">
+        <p class="eyebrow">Setup</p>
+        <h1>Fill applications<br />without filling them.</h1>
+        <p class="lede">
+          Answer a handful of questions once. Gojobs reuses them on every
+          application you open, and writes only what it can't reuse.
+        </p>
+        <button class="primary" data-next>Get started</button>
+        <p class="foot">Takes about two minutes</p>
+      </section>
+
+      <!-- Profile -->
+      <section class="step" data-step="1">
+        <p class="eyebrow">1 of 4 — About you</p>
+        <h2>The basics</h2>
+        <p class="lede">Typed into every form, exactly as you write them here.</p>
+
+        <div class="grid">
+          <label>First name<input name="first_name" autocomplete="given-name" /></label>
+          <label>Last name<input name="last_name" autocomplete="family-name" /></label>
+          <label class="wide">Email<input name="email" type="email" autocomplete="email" /></label>
+          <label>Phone<input name="phone" type="tel" autocomplete="tel" /></label>
+          <label>Location<input name="location" placeholder="City, Country" /></label>
+          <label>LinkedIn<input name="linkedin" placeholder="linkedin.com/in/you" /></label>
+          <label>GitHub<input name="github" placeholder="github.com/you" /></label>
+          <label class="wide">Portfolio <span class="opt">optional</span><input name="website" /></label>
+        </div>
+
+        <div class="actions">
+          <button class="ghost" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <!-- Declarations -->
+      <section class="step" data-step="2">
+        <p class="eyebrow">2 of 4 — Declarations</p>
+        <h2>The ones every form asks</h2>
+        <p class="lede">
+          These carry legal weight, so they're yours to answer — never guessed.
+          The demographic questions are voluntary everywhere.
+        </p>
+
+        <div class="grid">
+          <label class="wide">
+            Are you legally authorized to work in your target country?
+            <select name="work_authorization">
+              <option>Yes</option>
+              <option>No</option>
+            </select>
+          </label>
+          <label class="wide">
+            Will you now or in the future require visa sponsorship?
+            <select name="visa_sponsorship">
+              <option>No</option>
+              <option>Yes</option>
+            </select>
+          </label>
+          <label>
+            Gender
+            <select name="gender">
+              <option>Decline to self-identify</option>
+              <option>Male</option>
+              <option>Female</option>
+              <option>Non-binary</option>
+            </select>
+          </label>
+          <label>
+            Race / ethnicity
+            <select name="ethnicity">
+              <option>Decline to self-identify</option>
+              <option>Asian</option>
+              <option>Black or African American</option>
+              <option>Hispanic or Latino</option>
+              <option>Native American or Alaska Native</option>
+              <option>Native Hawaiian or Pacific Islander</option>
+              <option>White</option>
+              <option>Two or more races</option>
+            </select>
+          </label>
+          <label>
+            Veteran status
+            <select name="veteran_status">
+              <option>I am not a protected veteran</option>
+              <option>I identify as a protected veteran</option>
+              <option>I do not wish to answer</option>
+            </select>
+          </label>
+          <label>
+            Disability status
+            <select name="disability_status">
+              <option>I do not wish to answer</option>
+              <option>No, I do not have a disability</option>
+              <option>Yes, I have a disability</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="ghost" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <!-- Resume -->
+      <section class="step" data-step="3">
+        <p class="eyebrow">3 of 4 — Resume</p>
+        <h2>Your LaTeX resume</h2>
+        <p class="lede">
+          Gojobs rewrites bullet wording per job and leaves your formatting
+          alone. A <code>.tex</code> file, not a PDF — the structure is what
+          keeps edits safe.
+        </p>
+
+        <label class="drop" id="resume-drop">
+          <input type="file" accept=".tex,text/plain" hidden />
+          <span class="drop-icon">↥</span>
+          <span class="drop-title">Drop your .tex here</span>
+          <span class="drop-sub">or click to choose a file</span>
+        </label>
+
+        <div class="actions">
+          <button class="ghost" data-back>Back</button>
+          <button class="primary" data-next>Continue</button>
+        </div>
+      </section>
+
+      <!-- Cover letter -->
+      <section class="step" data-step="4">
+        <p class="eyebrow">4 of 4 — Voice <span class="opt">optional</span></p>
+        <h2>Something you've written</h2>
+        <p class="lede">
+          A cover letter, an essay, anything in your own words. Gojobs matches
+          its tone when it writes for you. Skip it and you'll get a solid,
+          neutral letter instead.
+        </p>
+
+        <textarea
+          name="writing_sample"
+          rows="8"
+          placeholder="Paste a cover letter or a few paragraphs you've written…"
+        ></textarea>
+
+        <div class="actions">
+          <button class="ghost" data-back>Back</button>
+          <button class="primary" data-next>Finish</button>
+        </div>
+      </section>
+
+      <!-- Done -->
+      <section class="step" data-step="5">
+        <div class="tick" aria-hidden="true">✓</div>
+        <h2>You're set up.</h2>
+        <p class="lede" id="summary">Saved.</p>
+        <p class="foot">
+          Open any job application and the notch appears at the top of your
+          window. Come back here any time to change an answer.
+        </p>
+        <button class="ghost" id="review">Review answers</button>
+      </section>
+    </main>
+
+    <p class="status" id="status" role="status"></p>
+
+    <script src="onboarding.js"></script>
+  </body>
+</html>

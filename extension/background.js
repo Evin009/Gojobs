@@ -11,6 +11,12 @@
 const BACKEND = "http://localhost:8080";   // Go: profile, repos
 const AI = "http://localhost:8000";        // Python: Claude-backed answers
 
+// First install opens setup — the extension is useless until the profile and
+// resume exist, and nobody goes looking for an options page on their own.
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === "install") chrome.runtime.openOptionsPage();
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "getProfile") {
     fetch(`${BACKEND}/profile`)

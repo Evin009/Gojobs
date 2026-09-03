@@ -32,5 +32,6 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "options_page": "onboarding.html"
 }

@@ -108,9 +108,9 @@ Replaces hand-seeded SQL with data the user actually gives us, and is the first
 user-facing surface of the product.
 
 - [x] `POST /profile` (batch upsert) + `GET`/`POST /resume/base`
-- [ ] Onboarding page: profile facts, declarations, `.tex` resume, optional cover letter
-- [ ] Open it automatically on install
-- [ ] Show whether onboarding is complete, and let the user re-edit answers
+- [x] Onboarding page: profile facts, declarations, `.tex` resume, optional cover letter
+- [x] Open it automatically on install
+- [x] Show whether onboarding is complete, and let the user re-edit answers — the page prefills from stored data
 - [ ] Autofill reads only stored data — no seeded rows left
 
 ## Phase 16 — Tracker board

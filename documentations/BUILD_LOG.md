@@ -284,3 +284,11 @@ Format per entry (1-2 lines max, no more):
 - `SaveBaseResume`/`GetBaseResume`: a base resume is the row with no `job_id`; newest wins. Old ones are kept so a past application can still show exactly what was sent.
 - Missing resume returns `""`, not an error — "not uploaded yet" is a normal state for the caller to handle.
 - Verified: profile POST 204, resume POST 201, GET returns the stored `.tex`.
+
+### 2026-09-02 — Phase 15: Onboarding page
+- Built: `onboarding.html/css/js` as the extension's options page — six steps (welcome, profile, declarations, `.tex` upload, optional writing sample, done), opened automatically on install.
+- Saves per step, not once at the end: a half-finished setup is still worth keeping, and a reload shouldn't cost the user their typing.
+- Prefills from `GET /profile`, so returning to the page is editing rather than starting over.
+- Blank fields are dropped before saving — an empty string would look like a real answer and get typed into a form.
+- Steps share one grid cell and cross-fade, so the page never jumps height; back navigation exits the opposite way so direction reads as direction.
+- `.tex` only on upload — a PDF would store as mojibake and fail at compile time instead of at the point the user could fix it.
