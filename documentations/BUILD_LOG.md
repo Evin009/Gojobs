@@ -292,3 +292,10 @@ Format per entry (1-2 lines max, no more):
 - Blank fields are dropped before saving — an empty string would look like a real answer and get typed into a form.
 - Steps share one grid cell and cross-fade, so the page never jumps height; back navigation exits the opposite way so direction reads as direction.
 - `.tex` only on upload — a PDF would store as mojibake and fail at compile time instead of at the point the user could fix it.
+
+### 2026-09-02 — Phase 15: Popup rebuilt in React
+- Replaced the vanilla options page with a 384px toolbar popup: React 18 + TypeScript + Vite + Tailwind + Framer Motion, source in `extension/frontend/`, built to `extension/dist/`.
+- Plain Vite rather than CRXJS — the manifest stays hand-written, so manifest generation would only get in the way. Content scripts stay unbundled in `extension/`; they run in the page and need no build.
+- MV3 forbids CDN loads on extension pages, so every dependency is bundled. That's the constraint the build step actually solves.
+- Steps slide in the direction of travel and share one `AnimatePresence`, so forward and back read differently. Onboarding questions live in `lib/steps.ts` as data — adding a field is a row, not a component.
+- A returning user with a profile and a resume lands on the final step instead of walking the flow again.

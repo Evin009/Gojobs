@@ -33,5 +33,9 @@
   "background": {
     "service_worker": "background.js"
   },
-  "options_page": "onboarding.html"
+  "action": {
+    "default_popup": "dist/index.html",
+    "default_title": "Gojobs"
+  },
+  "options_page": "dist/index.html"
 }
