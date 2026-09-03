@@ -1,27 +1,25 @@
-import { motion, type Transition } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 type State = "idle" | "loading" | "progress" | "done";
-
 type Progress = { label: string; index: number; total: number };
 
 // Talks to autofill.js over postMessage — that script owns the form, this owns
 // the surface. Only a "go" signal and a count cross the boundary.
 const MSG = "gojobs";
 
-export function Notch({
-  layoutId,
-  transition,
+export function NotchContent({
+  open,
   onSettings,
+  onFilled,
 }: {
-  layoutId: string;
-  transition: Transition;
+  open: boolean;
   onSettings: () => void;
+  onFilled: () => void;
 }) {
   const [state, setState] = useState<State>("idle");
   const [progress, setProgress] = useState<Progress | null>(null);
   const [filled, setFilled] = useState(0);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -36,17 +34,17 @@ export function Notch({
       if (data.type === "filled") {
         setState("done");
         setFilled(data.count);
+        onFilled();
       }
     }
 
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, []);
+  }, [onFilled]);
 
   // Locked once filled: a stray second click would overwrite anything the user
-  // edited by hand after the fill.
-  const locked = state === "done" || state === "loading" || state === "progress";
-  const expanded = open || state === "loading" || state === "progress";
+  // edited by hand afterwards.
+  const locked = state !== "idle";
 
   function start() {
     if (locked) return;
@@ -56,18 +54,13 @@ export function Notch({
   }
 
   return (
-    <motion.div
-      layoutId={layoutId}
-      transition={transition}
-      onHoverStart={() => setOpen(true)}
-      onHoverEnd={() => setOpen(false)}
+    <div
+      className={`gojobs-notch-body ${locked ? "is-locked" : ""}`}
       onClick={start}
-      animate={{ width: expanded ? 400 : 104, height: expanded ? 64 : 30 }}
-      className={`gojobs-notch ${expanded ? "is-open" : ""} ${locked ? "is-locked" : ""}`}
     >
       <motion.button
         className="gojobs-gear"
-        animate={{ opacity: expanded && !locked ? 1 : 0 }}
+        animate={{ opacity: open && state === "idle" ? 1 : 0 }}
         onClick={(e) => {
           e.stopPropagation(); // the whole notch is the fill target
           onSettings();
@@ -80,52 +73,69 @@ export function Notch({
         </svg>
       </motion.button>
 
-      <motion.div animate={{ opacity: expanded ? 1 : 0 }} className="gojobs-notch-body">
-        {state === "idle" && (
-          <>
-            <span className="gojobs-dot" />
-            <span className="gojobs-label">Autofill application</span>
-          </>
-        )}
+      <motion.div
+        className="gojobs-notch-inner"
+        animate={{ opacity: open || state !== "idle" ? 1 : 0 }}
+        transition={{ duration: 0.22 }}
+      >
+        <AnimatePresence mode="wait">
+          {state === "idle" && (
+            <motion.div key="idle" {...swap} className="gojobs-row">
+              <span className="gojobs-dot" />
+              <span className="gojobs-label">Autofill application</span>
+            </motion.div>
+          )}
 
-        {state === "loading" && (
-          <>
-            <span className="gojobs-spinner" />
-            <span className="gojobs-label">Filling application</span>
-          </>
-        )}
+          {state === "loading" && (
+            <motion.div key="loading" {...swap} className="gojobs-row">
+              <span className="gojobs-spinner" />
+              <span className="gojobs-label">Filling application</span>
+            </motion.div>
+          )}
 
-        {state === "progress" && progress && (
-          <div className="gojobs-progress">
-            {/* keyed by label so each field re-runs the roll-in */}
-            <motion.span
-              key={progress.label}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="gojobs-current"
-            >
-              {progress.label}
-            </motion.span>
-            <div className="gojobs-track">
-              <motion.div
-                className="gojobs-fill"
-                animate={{
-                  width: `${((progress.index + 1) / progress.total) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        )}
+          {state === "progress" && progress && (
+            <motion.div key="progress" {...swap} className="gojobs-progress">
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={progress.label}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                  className="gojobs-current"
+                >
+                  {progress.label}
+                </motion.span>
+              </AnimatePresence>
 
-        {state === "done" && (
-          <>
-            <span className="gojobs-dot" />
-            <span className="gojobs-label">
-              Filled {filled} {filled === 1 ? "field" : "fields"}
-            </span>
-          </>
-        )}
+              <div className="gojobs-track">
+                <motion.div
+                  className="gojobs-fill"
+                  animate={{
+                    width: `${((progress.index + 1) / progress.total) * 100}%`,
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {state === "done" && (
+            <motion.div key="done" {...swap} className="gojobs-row">
+              <span className="gojobs-dot" />
+              <span className="gojobs-label">
+                Filled {filled} {filled === 1 ? "field" : "fields"}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
+
+const swap = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.16 },
+};

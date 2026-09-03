@@ -342,3 +342,11 @@ whether it runs.
 - The React bundle runs top-frame only (one notch per window) while `autofill.js` still runs in every frame, since forms are usually nested. The top frame relays "run" down and progress back up.
 - `autofill.js` lost its hand-written notch entirely — 250 lines of DOM and CSS replaced by the React surface. It now owns only the form.
 - Toolbar click and first install both just message the active tab; there's no popup document left to open.
+
+### 2026-09-03 — Frontend: seamless morph and a real product tour
+- The morph stalled because panel and notch were two elements swapped through `AnimatePresence`, which waits for the outgoing exit before the incoming enters. Now it's one element whose geometry animates — no gap.
+- Position comes from animated `x`/`y`, not CSS offsets: animating `right` on one shape and `left` on the other gives Framer nothing continuous to tween, and transforms are GPU-composited so it stays smooth over a busy page.
+- Tour is four beats: a full-screen welcome curtain, then spotlights on hover, settings and fill, then a closing curtain after the first form is filled.
+- Each spotlight beat advances when the user performs the gesture — hovering, opening and closing settings, filling — rather than on a Next button. A tour you click through teaches nothing.
+- The spotlight is one huge spread shadow around a transparent box, so the hole moves with the box: no SVG mask, no second element to keep in sync.
+- The tour layer is `pointer-events: none`, otherwise the dim would block the very control it's pointing at.

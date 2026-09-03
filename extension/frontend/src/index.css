@@ -19,9 +19,9 @@
 
 /* ---------------------------------------------------------------- in-page
 
-   The UI is injected into whatever site the user is on, so it needs its own
-   stacking context and must not inherit anything. Shadow DOM handles the CSS
-   isolation; these handle position and the shapes Framer morphs between. */
+   Injected into whatever site the user is on, so it needs its own stacking
+   context and must inherit nothing. Shadow DOM handles CSS isolation; these
+   handle the two shapes the surface morphs between. */
 
 .gojobs-layer {
   position: fixed;
@@ -36,61 +36,59 @@
   pointer-events: auto;
 }
 
-/* Panel and notch share a layoutId, so these two rule sets are the start and
-   end of one animation — the panel sits top-right, the notch top-centre, and
-   Framer animates between the two positions.
-   
-   Never position these with `transform`: Framer writes its own transform to
-   project the layout, so a translate here is overwritten and the element lands
-   in the wrong place. Offsets only. */
-.gojobs-panel {
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  width: 400px;
-  max-height: 90vh;
-  overflow-y: auto;
-  color: #e8e8ef;
-  background: #08080a;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 16px;
-  box-shadow: 0 24px 60px -18px rgba(0, 0, 0, 0.75);
-}
-
-.gojobs-notch {
+/* One element in two shapes. Position comes from animated x/y, never from CSS
+   offsets or transforms — Framer owns the transform, and anything set here
+   would be overwritten mid-animation. */
+.gojobs-surface {
   position: fixed;
   top: 0;
-  /* centred by offsets, not translate — see above */
-  left: calc(50% - 52px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  left: 0;
   overflow: hidden;
-  cursor: pointer;
   color: #e8e8ef;
   background: #08080a;
   border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.7);
+}
+
+.gojobs-surface.is-notch {
+  cursor: pointer;
   border-top: 0;
-  border-radius: 0 0 20px 20px;
-  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.55);
 }
 
-/* expanded is wider, so the centring offset has to grow with it */
-.gojobs-notch.is-open {
-  left: calc(50% - 200px);
+.gojobs-surface.is-panel {
+  overflow-y: auto;
 }
 
-.gojobs-notch.is-locked {
-  cursor: default;
+.gojobs-surface-content {
+  width: 100%;
+  height: 100%;
 }
 
 .gojobs-notch-body {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  width: 100%;
+  height: 100%;
+}
+
+.gojobs-notch-body.is-locked {
+  cursor: default;
+}
+
+.gojobs-notch-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   padding: 0 22px;
+}
+
+.gojobs-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .gojobs-gear {
@@ -192,5 +190,95 @@
 @keyframes gojobs-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------- tour */
+
+.gojobs-tour-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* the user has to reach the thing being pointed at */
+}
+
+/* The dim is one enormous spread shadow around a transparent box, so the hole
+   moves with the box — no mask, no second element to keep in sync. */
+.gojobs-spot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 22px;
+  box-shadow: 0 0 0 9999px rgba(4, 4, 6, 0.74);
+}
+
+.gojobs-tour-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-left: -110px;
+  width: 220px;
+  padding: 9px 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 550;
+  color: #08080a;
+  background: #c8ff3d;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.6);
+}
+
+.gojobs-curtain {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 4, 6, 0.88);
+  backdrop-filter: blur(3px);
+}
+
+.gojobs-curtain-inner {
+  max-width: 420px;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.gojobs-curtain-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: #f4f4f6;
+}
+
+.gojobs-curtain-body {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(232, 232, 239, 0.62);
+}
+
+.gojobs-curtain-action {
+  margin-top: 26px;
+  padding: 10px 22px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: #08080a;
+  background: #c8ff3d;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.gojobs-curtain-action:hover {
+  background: #9fd420;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gojobs-dot,
+  .gojobs-spinner {
+    animation: none;
   }
 }
