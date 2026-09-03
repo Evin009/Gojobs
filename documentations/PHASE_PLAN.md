@@ -112,6 +112,14 @@ user-facing surface of the product.
 - [x] Open it automatically on install
 - [x] Show whether onboarding is complete, and let the user re-edit answers — the page prefills from stored data
 - [ ] Autofill reads only stored data — no seeded rows left
+- [ ] Developer theme: near-black, one accent, mono labels
+- [ ] Landing page on first install, before the form
+- [ ] GitHub monitoring explainer as its own onboarding step
+- [ ] Welcome screen morphs into the notch
+- [ ] Notch exists from first install, not only on application pages
+- [ ] Settings control on the notch reopens the popup, and morphs back on close
+- [ ] Notch tour: settings control, and click anywhere to fill
+- [ ] Notch stops accepting clicks once a form is filled
 
 ## Phase 16 — Tracker board
 - [ ] Kanban CRUD, auto-updated on apply

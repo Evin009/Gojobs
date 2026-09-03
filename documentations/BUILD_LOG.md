@@ -299,3 +299,20 @@ Format per entry (1-2 lines max, no more):
 - MV3 forbids CDN loads on extension pages, so every dependency is bundled. That's the constraint the build step actually solves.
 - Steps slide in the direction of travel and share one `AnimatePresence`, so forward and back read differently. Onboarding questions live in `lib/steps.ts` as data — adding a field is a row, not a component.
 - A returning user with a profile and a resume lands on the final step instead of walking the flow again.
+
+## Frontend
+
+The user-facing surface: the popup, the onboarding flow, and the notch. Logged
+separately from backend work because it's judged on how it feels, not just
+whether it runs.
+
+### 2026-09-03 — Planned: developer-theme onboarding that becomes the notch
+- Theme: near-black with a single acid accent, mono type for labels — a developer tool, not a generic dashboard.
+- First install opens a landing page, not a form — the flow starts by saying what this is.
+- Onboarding order: landing -> profile -> declarations -> resume -> GitHub monitoring explainer -> welcome.
+- GitHub explainer earns its own step: the repo-monitoring prompt appears on pages the user visits later, so it needs explaining before it shows up unannounced.
+- The welcome screen morphs into the notch rather than closing — same element, so the user sees where the extension went.
+- The notch exists from first install, before any application is opened, so it's never a surprise.
+- A settings control sits top-right of the notch and reopens the popup; closing it morphs back to the notch.
+- A short tour points out the settings control and that clicking anywhere on the notch starts filling.
+- Once a form is filled the notch stops accepting clicks — refilling a submitted application is never wanted.
