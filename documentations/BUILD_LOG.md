@@ -380,3 +380,11 @@ whether it runs.
 - The tour is marked done the moment it starts, not when it ends: a user who abandons it halfway has still seen it, and meeting it again on every later application is worse than missing its last beat.
 - Location split into city, state and country. One combined value was being typed into a country dropdown, where it matched no option and silently filled nothing.
 - Pattern order matters in `classify.js`: `country` is listed before `location`, or a "Country" label would match the looser pattern first.
+
+### 2026-09-03 — Frontend: pick locations from lists, store them normalised
+- Country and state are dropdowns now. Free text was the real problem: "usa" and "United States" are the same place to a person and two different values to a form's dropdown, so neither matched.
+- State options follow the chosen country, and a country with no standard list falls back to free text rather than offering somebody else's states. Changing country clears a state left over from the previous one.
+- Dialling code is its own field. Forms put it in a separate dropdown, and a number with "+1" glued on fails their validation.
+- `phone_country_code` is matched before `phone` in `classify.js` — "phone country code" contains "phone", so the looser pattern would otherwise type a full number into a code dropdown.
+- Names and places are title-cased once on save rather than guessed at on every fill.
+- An unset dropdown shows "Select…" instead of silently claiming its first option, which would store an answer the user never gave.

@@ -11,7 +11,12 @@ import {
   saveProfile,
   type Profile,
 } from "../lib/api";
-import { DECLARATION_FIELDS, PROFILE_FIELDS } from "../lib/steps";
+import {
+  DECLARATION_FIELDS,
+  PROFILE_FIELDS,
+  locationFields,
+  normalise,
+} from "../lib/steps";
 
 // landing -> profile -> declarations -> resume -> github -> welcome
 const LAST = 5;
@@ -54,7 +59,12 @@ export function Onboarding({
   }, []);
 
   function set(key: string, value: string) {
-    setProfile((current) => ({ ...current, [key]: value }));
+    setProfile((current) => ({
+      ...current,
+      [key]: value,
+      // a state from the old country's list is wrong for the new one
+      ...(key === "country" ? { state: "" } : {}),
+    }));
   }
 
   function go(next: number) {
@@ -67,8 +77,12 @@ export function Onboarding({
   async function next() {
     setBusy(true);
 
+    // normalised on the way out: capitalisation is fixed once here rather
+    // than guessed at again every time a form is filled
     const filled = Object.fromEntries(
-      Object.entries(profile).filter(([, value]) => value.trim()),
+      Object.entries(profile)
+        .map(([key, value]) => [key, normalise(key, value)])
+        .filter(([, value]) => value),
     );
 
     const savedProfile = await saveProfile(filled);
@@ -206,7 +220,11 @@ export function Onboarding({
                   lede="Typed into every form, exactly as written here."
                 />
                 <div className="grid grid-cols-2 gap-2.5">
-                  {PROFILE_FIELDS.map((field) => (
+                  {[
+                    ...PROFILE_FIELDS,
+                    // state options depend on the country picked above
+                    ...locationFields(profile.country ?? ""),
+                  ].map((field) => (
                     <Input
                       key={field.key}
                       field={field}

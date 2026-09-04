@@ -1,6 +1,8 @@
 // The onboarding questions, as data. Adding a field is a row here, not a new
 // component — and the keys match the profile table and classify.js patterns.
 
+import { COUNTRIES, DIAL_CODES, STATES } from "./places";
+
 export type Field = {
   key: string;
   label: string;
@@ -14,12 +16,13 @@ export const PROFILE_FIELDS: Field[] = [
   { key: "first_name", label: "First name" },
   { key: "last_name", label: "Last name" },
   { key: "email", label: "Email", type: "email" },
-  { key: "phone", label: "Phone", type: "tel" },
+  // Dialling code is its own field: forms usually put it in a separate
+  // dropdown, and a number typed with "+1" glued on fails their validation.
+  { key: "phone_country_code", label: "Code", options: DIAL_CODES },
+  { key: "phone", label: "Phone", type: "tel", placeholder: "555 010 0100" },
   // Separate fields, because forms ask for them separately — a single
   // "location" value ended up in a country dropdown and matched no option.
   { key: "city", label: "City" },
-  { key: "state", label: "State / Province" },
-  { key: "country", label: "Country" },
   { key: "linkedin", label: "LinkedIn", placeholder: "linkedin.com/in/you" },
   { key: "github", label: "GitHub", placeholder: "github.com/you", optional: true },
   { key: "website", label: "Portfolio", optional: true },
@@ -76,3 +79,45 @@ export const DECLARATION_FIELDS: Field[] = [
     ],
   },
 ];
+
+// State options depend on the chosen country, so these are built at render
+// time rather than sitting in the list above. A country with no standard list
+// gets a free-text box, not somebody else's states.
+export function locationFields(country: string): Field[] {
+  const states = STATES[country];
+
+  return [
+    {
+      key: "state",
+      label: "State / Province",
+      ...(states ? { options: states } : { placeholder: "Region" }),
+    },
+    {
+      key: "country",
+      label: "Country",
+      options: COUNTRIES.map((c) => c.name),
+    },
+  ];
+}
+
+// Names and places are stored the way a form expects to see them: "new york"
+// and "NEW YORK" are the same place to a person, and two failed matches to a
+// dropdown.
+const TITLE_CASE_KEYS = ["first_name", "last_name", "full_name", "city", "state", "country"];
+
+// Small words stay lowercase unless they lead — "Isle of Man", not "Isle Of Man".
+const MINOR = new Set(["of", "and", "the", "da", "de", "del", "van", "von"]);
+
+export function normalise(key: string, value: string): string {
+  const trimmed = value.trim().replace(/\s+/g, " ");
+  if (!TITLE_CASE_KEYS.includes(key)) return trimmed;
+
+  return trimmed
+    .split(" ")
+    .map((word, i) =>
+      i > 0 && MINOR.has(word.toLowerCase())
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
+    .join(" ");
+}

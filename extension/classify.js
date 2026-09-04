@@ -12,6 +12,9 @@ const PROFILE_PATTERNS = {
   last_name: ["last name"],
   full_name: ["full name"],
   email: ["email"],
+  // Code before phone: "phone country code" contains "phone", so the looser
+  // pattern would swallow it and type a full number into a code dropdown.
+  phone_country_code: ["country code", "dial code", "dialing code", "phone code", "area code"],
   phone: ["phone", "mobile"],
   linkedin: ["linkedin"],
   github: ["github"],

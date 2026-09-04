@@ -58,9 +58,14 @@ export function Input({
       {field.options ? (
         <select
           className={shared}
-          value={value || field.options[0]}
+          value={value}
           onChange={(e) => onChange(e.target.value)}
         >
+          {/* an unset select must not silently claim its first option — that
+              would store an answer the user never gave */}
+          <option value="" className="bg-ink-900">
+            Select…
+          </option>
           {field.options.map((option) => (
             <option key={option} className="bg-ink-900">
               {option}
