@@ -256,3 +256,14 @@ Template for new entries:
 - **Done:** polling stops after ten seconds — a page with no form by then won't grow one, and polling forever on every tab is rude.
 - **Verified:** bundle rebuilds clean; ping/answer path present in both files.
 - **Worth keeping:** two scripts that mount at different times can't communicate with a single fire-and-forget message. One of them has to ask.
+
+---
+
+### 2026-09-03 — Tour restarted every time settings were closed
+
+- **Issue:** finishing the tour, then reopening settings and pressing Done, started the whole tour again.
+- **Cause:** settings opens on the final setup screen, whose Done button calls `finishSetup` — and `finishSetup` queued the tour unconditionally. It couldn't tell a genuine first finish from a return visit.
+- **Fix:** a `tourSeen` flag, read from storage on mount and set when the tour starts. `finishSetup` only queues a tour when that flag is clear.
+- **Done:** the fill handler now completes the tour from either the `fill` or `filling` beat, so the closing curtain can't be skipped by a fast fill.
+- **Verified:** typecheck and build clean.
+- **Worth keeping:** reusing one screen for two purposes — first-run setup and later editing — means its buttons need to know which case they're in.

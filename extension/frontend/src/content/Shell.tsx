@@ -22,6 +22,7 @@ export function Shell() {
   const [isApplication, setIsApplication] = useState(false);
   const [setupDone, setSetupDone] = useState(false);
   const [tourPending, setTourPending] = useState(false);
+  const [tourSeen, setTourSeen] = useState(false);
   const [, setResize] = useState(0);
 
   // geometry is measured from the window, so recompute it on resize
@@ -54,6 +55,7 @@ export function Shell() {
   useEffect(() => {
     chrome.storage.local.get(["setupDone", "tourDone"], (stored) => {
       setSetupDone(Boolean(stored.setupDone));
+      setTourSeen(Boolean(stored.tourDone));
       if (stored.setupDone && !stored.tourDone) setTourPending(true);
     });
 
@@ -80,12 +82,13 @@ export function Shell() {
   // abandons it halfway has still seen it, and meeting the same tour on every
   // subsequent application would be worse than missing its last beat.
   useEffect(() => {
-    if (tourPending && isApplication && mode === "notch" && tour === "off") {
+    if (tourPending && !tourSeen && isApplication && mode === "notch" && tour === "off") {
       chrome.storage.local.set({ tourDone: true });
+      setTourSeen(true);
       setTour("welcome");
       setTourPending(false);
     }
-  }, [tourPending, isApplication, mode, tour]);
+  }, [tourPending, tourSeen, isApplication, mode, tour]);
 
   // Hovering satisfies the first beat and reveals the gear the second points at.
   useEffect(() => {
@@ -106,7 +109,10 @@ export function Shell() {
   function finishSetup() {
     chrome.storage.local.set({ setupDone: true });
     setSetupDone(true);
-    setTourPending(true);
+    // Only a genuine first finish queues the tour. Reopening settings lands on
+    // this same screen, and its Done button must not restart a tour the user
+    // has already been through.
+    if (!tourSeen) setTourPending(true);
     setMode(isApplication ? "notch" : "hidden");
   }
 
@@ -162,7 +168,11 @@ export function Shell() {
               disabled={fillBlocked}
               onSettings={openPanel}
               onFilling={() => tour === "fill" && setTour("filling")}
-              onFilled={() => tour === "filling" && setTour("finale")}
+              // finishes the tour however the fill was reached — the closing
+              // curtain is the only thing that marks it complete for the user
+              onFilled={() =>
+                (tour === "filling" || tour === "fill") && setTour("finale")
+              }
             />
           )}
         </motion.div>
