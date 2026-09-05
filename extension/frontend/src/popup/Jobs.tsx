@@ -2,7 +2,22 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 import { Chrome } from "../components/ui";
-import { getJobs, type JobFeed } from "../lib/api";
+import { Dropdown } from "../components/Dropdown";
+import { DISCIPLINES, LEVELS, REGIONS } from "../lib/roles";
+import {
+  getJobs,
+  getSettings,
+  saveSettings,
+  type JobFeed,
+  type Settings,
+} from "../lib/api";
+
+function parseList(value: string): string[] {
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
 
 // Precision drops as things age: minutes matter for something found just now,
 // days are enough for anything older than a day.
@@ -35,16 +50,22 @@ export function Jobs({
   onTab: (id: string) => void;
 }) {
   const [feed, setFeed] = useState<JobFeed | null>(null);
+  const [filters, setFilters] = useState<Settings>({});
   const [state, setState] = useState<"loading" | "ready" | "offline">("loading");
 
-  // Refetched every time this view is shown, not just the first time: the
-  // counts depend on filters the user may have just changed next door.
+  async function load() {
+    const result = await getJobs();
+    setFeed(result);
+    setState(result ? "ready" : "offline");
+  }
+
   useEffect(() => {
     let live = true;
 
-    getJobs().then((result) => {
+    Promise.all([getSettings(), getJobs()]).then(([stored, result]) => {
       if (!live) return;
 
+      setFilters(stored);
       setFeed(result);
       setState(result ? "ready" : "offline");
     });
@@ -53,6 +74,16 @@ export function Jobs({
       live = false;
     };
   }, []);
+
+  // Changing a filter writes it and refetches straight away. No Save: a filter
+  // you have to confirm is a filter people forget to confirm, and the count
+  // beside it would go on lying until they did.
+  async function setFilter(key: string, next: string[]) {
+    const updated = { ...filters, [key]: next.join(",") };
+    setFilters(updated);
+
+    if (await saveSettings(updated)) await load();
+  }
 
   return (
     <div className="grid-bg min-h-[440px] text-ink-100">
@@ -79,6 +110,30 @@ export function Jobs({
           </p>
         </div>
 
+        <div className="mb-4 grid grid-cols-3 gap-1.5">
+          <Dropdown
+            label="Field"
+            options={DISCIPLINES}
+            selected={parseList(filters.roles ?? "")}
+            onChange={(next) => setFilter("roles", next)}
+            anyLabel="Any"
+          />
+          <Dropdown
+            label="Type"
+            options={LEVELS}
+            selected={parseList(filters.levels ?? "")}
+            onChange={(next) => setFilter("levels", next)}
+            anyLabel="Any"
+          />
+          <Dropdown
+            label="Location"
+            options={REGIONS}
+            selected={parseList(filters.regions ?? "")}
+            onChange={(next) => setFilter("regions", next)}
+            anyLabel="Anywhere"
+          />
+        </div>
+
         {state === "loading" && <Skeleton />}
 
         {state === "offline" && (
@@ -91,7 +146,7 @@ export function Jobs({
         {state === "ready" && !feed?.jobs.length && (
           <Empty
             title="Nothing found yet"
-            body="Monitoring runs every 30 minutes. Add a board or widen your filters in Settings."
+            body="Monitoring runs every 30 minutes. Widen the filters above, or add a board in Settings."
           />
         )}
 

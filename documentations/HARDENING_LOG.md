@@ -60,6 +60,11 @@ _What this feature is responsible for, agreed before testing._
 - Single-word names match whole tokens only: "india" was matching inside "Indianapolis". Caught by a test, not by reading it.
 - Unknown locations pass the filter. "Remote" is everywhere, and dropping what we can't parse would silently lose real matches — the same fail-open choice as the repo check.
 - `other` is distinct from `unknown` on purpose: one means we recognised a foreign posting and can drop it, the other means we couldn't tell and shouldn't.
+- Filters moved out of Settings and onto the Jobs panel, directly under the counts they change. Two screens away from the number they affect was the wrong place for them.
+- Three custom multi-select dropdowns (Field, Type, Location), built from buttons — a native `<select multiple>` can't be styled and behaves badly inside a shadow root.
+- Selecting applies immediately: writes the setting, refetches, updates the count. No Save anywhere in the filter path.
+- Each dropdown says what "nothing selected" means ("Any", "Anywhere") rather than showing a blank, since an empty filter is a real choice here.
+- Menus close on a backdrop click rather than a document listener — shadow-DOM event retargeting makes the latter unreliable.
 
 ---
 
