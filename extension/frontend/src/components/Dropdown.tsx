@@ -14,6 +14,8 @@ export function Dropdown({
   selected,
   onChange,
   anyLabel,
+  counts,
+  alignRight = false,
 }: {
   label: string;
   options: Choice[];
@@ -22,6 +24,10 @@ export function Dropdown({
   // what "nothing selected" means, spelled out — an empty filter is a real
   // choice here, not an unfinished one
   anyLabel: string;
+  // how many of today's postings each option would bring in
+  counts?: Record<string, number>;
+  // last column: open the menu leftwards so it stays inside the panel
+  alignRight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -86,7 +92,12 @@ export function Dropdown({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.14 }}
-              className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-md border border-ink-700 bg-ink-900 shadow-[0_16px_36px_-12px_rgba(0,0,0,0.8)]"
+              // wider than its trigger where the labels need it — the menu
+              // is the one place the full name has to be readable. right-0
+              // keeps the last column's menu inside the panel.
+              className={`absolute top-full z-20 mt-1 w-max min-w-full overflow-hidden rounded-md border border-ink-700 bg-ink-900 shadow-[0_16px_36px_-12px_rgba(0,0,0,0.8)] ${
+                alignRight ? "right-0" : "left-0"
+              }`}
             >
               {options.map((option) => {
                 const on = selected.includes(option.id);
@@ -107,10 +118,20 @@ export function Dropdown({
                       {on ? "✓" : ""}
                     </span>
                     <span
-                      className={`truncate font-mono text-[10.5px] ${on ? "text-ink-100" : "text-ink-300"}`}
+                      className={`whitespace-nowrap font-mono text-[10.5px] ${on ? "text-ink-100" : "text-ink-300"}`}
                     >
                       {option.label}
                     </span>
+
+                    {counts && (
+                      <span
+                        className={`ml-auto pl-3 font-mono text-[10px] tabular-nums ${
+                          counts[option.id] ? "text-ink-400" : "text-ink-700"
+                        }`}
+                      >
+                        {counts[option.id] ?? 0}
+                      </span>
+                    )}
                   </button>
                 );
               })}

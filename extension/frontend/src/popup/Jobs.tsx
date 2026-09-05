@@ -117,6 +117,7 @@ export function Jobs({
             selected={parseList(filters.roles ?? "")}
             onChange={(next) => setFilter("roles", next)}
             anyLabel="Any"
+            counts={feed?.counts?.roles}
           />
           <Dropdown
             label="Type"
@@ -124,6 +125,7 @@ export function Jobs({
             selected={parseList(filters.levels ?? "")}
             onChange={(next) => setFilter("levels", next)}
             anyLabel="Any"
+            counts={feed?.counts?.levels}
           />
           <Dropdown
             label="Location"
@@ -131,6 +133,8 @@ export function Jobs({
             selected={parseList(filters.regions ?? "")}
             onChange={(next) => setFilter("regions", next)}
             anyLabel="Anywhere"
+            counts={feed?.counts?.regions}
+            alignRight
           />
         </div>
 

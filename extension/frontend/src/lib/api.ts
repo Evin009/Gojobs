@@ -88,11 +88,16 @@ export type Job = {
   created_at: string;
 };
 
+// counts[axis][optionId] — how many of today's postings each option would
+// bring in, with the other axes still applied.
+export type Facets = Record<string, Record<string, number>>;
+
 export type JobFeed = {
   jobs: Job[];
   today: number;
   applied: number;
   last_checked: string;
+  counts: Facets;
 };
 
 export async function getJobs(limit = 50): Promise<JobFeed | null> {

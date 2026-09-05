@@ -12,6 +12,7 @@ import (
 	"github.com/Evin009/Gojobs/backend/internal/location"
 	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
+	"github.com/Evin009/Gojobs/backend/internal/roles"
 )
 
 // withCORS wraps a handler to allow the extension (running on other origins,
@@ -275,6 +276,8 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		jobs = append(jobs, job)
 	}
 
+	counts := facetCounts(found, disciplines, levels, regions)
+
 	checked, err := db.LastChecked()
 	if err != nil {
 		// a missing or unparseable timestamp shouldn't fail the whole request;
@@ -295,7 +298,48 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		// omitted, so the panel shows an honest zero instead of a blank.
 		"applied":      0,
 		"last_checked": lastChecked,
+		"counts":       counts,
 	})
+}
+
+// facetCounts says how many of today's postings each filter option would
+// bring in.
+//
+// Each axis is counted with the *other* axes still applied but its own relaxed
+// — the useful question is "how many more would this add to what I'm already
+// looking at", not "how many exist in total".
+func facetCounts(found []db.Job, disciplines, levels, regions []string) map[string]map[string]int {
+	counts := map[string]map[string]int{
+		"roles":   {},
+		"levels":  {},
+		"regions": {},
+	}
+
+	for _, role := range roles.Disciplines {
+		for _, job := range found {
+			if match.Title(job.Role, role.Keywords, levels) && location.Matches(job.Location, regions) {
+				counts["roles"][role.ID]++
+			}
+		}
+	}
+
+	for _, level := range roles.Levels {
+		for _, job := range found {
+			if match.Title(job.Role, disciplines, level.Keywords) && location.Matches(job.Location, regions) {
+				counts["levels"][level.ID]++
+			}
+		}
+	}
+
+	for _, region := range []string{location.US, location.Canada} {
+		for _, job := range found {
+			if match.Title(job.Role, disciplines, levels) && location.Matches(job.Location, []string{region}) {
+				counts["regions"][region]++
+			}
+		}
+	}
+
+	return counts
 }
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {

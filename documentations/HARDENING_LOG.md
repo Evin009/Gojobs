@@ -65,6 +65,9 @@ _What this feature is responsible for, agreed before testing._
 - Selecting applies immediately: writes the setting, refetches, updates the count. No Save anywhere in the filter path.
 - Each dropdown says what "nothing selected" means ("Any", "Anywhere") rather than showing a blank, since an empty filter is a real choice here.
 - Menus close on a backdrop click rather than a document listener — shadow-DOM event retargeting makes the latter unreliable.
+- Each option shows how many of today's postings it would bring in. Counted with the other axes still applied and its own relaxed: the useful question is "how many more would this add to what I'm looking at", not "how many exist".
+- Menus size to their content rather than their trigger, so labels are never cut off. The last column opens leftwards to stay inside the panel.
+- A zero count is dimmed rather than hidden — knowing an option has nothing today is worth more than a blank.
 
 ---
 
