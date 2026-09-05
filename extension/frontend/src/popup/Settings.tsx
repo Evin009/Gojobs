@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { Button, Chrome, Heading } from "../components/ui";
 import { Toggle } from "../components/Toggle";
+import { ChoiceGroup } from "../components/ChoiceGroup";
+import { DISCIPLINES, LEVELS } from "../lib/roles";
 import { getSettings, saveSettings, type Settings as Values } from "../lib/api";
 
 // Companies are stored as one comma-separated string, but edited as chips —
@@ -160,6 +162,40 @@ export function Settings({
                 <Button variant="ghost" onClick={addCompany}>
                   Add
                 </Button>
+              </div>
+            </section>
+
+            <section className="border-t border-ink-800 pt-6">
+              <Heading
+                eyebrow="Filtering"
+                title="What counts as a match"
+                lede="A job has to match one of your fields and one of your levels."
+              />
+
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
+                    Field
+                  </p>
+                  <ChoiceGroup
+                    options={DISCIPLINES}
+                    selected={parseList(values.roles ?? "")}
+                    onChange={(next) => set("roles", next.join(","))}
+                    emptyMeans="Any field — no filter on discipline."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
+                    Level
+                  </p>
+                  <ChoiceGroup
+                    options={LEVELS}
+                    selected={parseList(values.levels ?? "")}
+                    onChange={(next) => set("levels", next.join(","))}
+                    emptyMeans="Any level — no filter on seniority."
+                  />
+                </div>
               </div>
             </section>
 

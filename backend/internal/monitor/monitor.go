@@ -14,7 +14,7 @@ import (
 // checkGreenhouse checks every company at the same time (one goroutine each),
 // keeps only jobs matching any of `keywords`, saves new ones to the DB, and
 // returns everything newly found — does NOT notify, caller combines results first.
-func checkGreenhouse(companies []string, keywords []string) []jobposting.Posting {
+func checkGreenhouse(companies []string, disciplines, levels []string) []jobposting.Posting {
 	resultsChan := make(chan []jobposting.Posting, len(companies))
 	var wg sync.WaitGroup
 
@@ -30,7 +30,7 @@ func checkGreenhouse(companies []string, keywords []string) []jobposting.Posting
 				return
 			}
 
-			matches := greenhouse.FilterByKeywords(jobs, keywords)
+			matches := greenhouse.FilterByRoles(jobs, disciplines, levels)
 			newJobs := greenhouse.Save(matches)
 			resultsChan <- newJobs
 		}(company)
@@ -50,7 +50,7 @@ func checkGreenhouse(companies []string, keywords []string) []jobposting.Posting
 // checkGitHub checks every monitored repo at the same time, keeps only listings
 // matching any of `keywords`, saves new ones to the DB, and returns everything
 // newly found (each tagged with its repo name) — does NOT notify.
-func checkGitHub(keywords []string) []jobposting.Posting {
+func checkGitHub(disciplines, levels []string) []jobposting.Posting {
 	repoURLs, err := db.GetMonitoredRepos()
 	if err != nil {
 		fmt.Println("get monitored repos error:", err)
@@ -72,7 +72,7 @@ func checkGitHub(keywords []string) []jobposting.Posting {
 				return
 			}
 
-			matches := github.FilterByKeywords(listings, keywords)
+			matches := github.FilterByRoles(listings, disciplines, levels)
 			repoName := github.RepoNameFromURL(repoURL)
 			newJobs := github.Save(matches, repoName)
 			resultsChan <- newJobs
@@ -92,17 +92,22 @@ func checkGitHub(keywords []string) []jobposting.Posting {
 
 // runOnce checks Greenhouse then GitHub (each internally concurrent already),
 // combines everything newly found, and sends ONE grouped slack summary.
-func runOnce(keywords []string) {
-	// read every run, so a company added in the extension is picked up at the
-	// next tick without a restart
+func runOnce() {
+	// Settings are read every run, so an edit in the extension is picked up at
+	// the next tick without a restart.
 	companies, err := db.GetCompanies()
 	if err != nil {
 		fmt.Println("read companies error:", err)
 	}
 
+	disciplines, levels, err := db.GetRoleKeywords()
+	if err != nil {
+		fmt.Println("read roles error:", err)
+	}
+
 	var allNew []jobposting.Posting
-	allNew = append(allNew, checkGreenhouse(companies, keywords)...)
-	allNew = append(allNew, checkGitHub(keywords)...)
+	allNew = append(allNew, checkGreenhouse(companies, disciplines, levels)...)
+	allNew = append(allNew, checkGitHub(disciplines, levels)...)
 
 	if err := jobposting.NotifyNew(allNew); err != nil {
 		fmt.Println("notify error:", err)
@@ -111,13 +116,13 @@ func runOnce(keywords []string) {
 
 // StartLoop runs one check immediately, then repeats forever on `interval`.
 // Each repeat is launched via `go` so a slow check never delays the next tick.
-func StartLoop(keywords []string, interval time.Duration) {
-	runOnce(keywords)
+func StartLoop(interval time.Duration) {
+	runOnce()
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		go runOnce(keywords)
+		go runOnce()
 	}
 }

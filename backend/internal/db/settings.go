@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/Evin009/Gojobs/backend/internal/roles"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -81,4 +82,33 @@ func SlackTarget() (string, error) {
 	}
 
 	return strings.TrimSpace(settings["slack_webhook"]), nil
+}
+
+// Splits a comma-separated setting into trimmed, non-empty entries.
+func listSetting(settings map[string]string, key string) []string {
+	var out []string
+
+	for _, entry := range strings.Split(settings[key], ",") {
+		if trimmed := strings.TrimSpace(entry); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+
+	return out
+}
+
+
+// chosen discipline AND ANY chosen level. An empty list means "no filter on
+// this axis" — not "match nothing", which would silently stop all monitoring.
+func GetRoleKeywords() (disciplines []string, levels []string, err error) {
+	settings, err := GetSettings()
+	if err != nil {
+		return nil, nil, err
+	}
+	
+	disciplines = roles.Expand(roles.Disciplines, listSetting(settings, "roles"))
+	levels = roles.Expand(roles.Levels, listSetting(settings, "levels"))
+
+
+	return disciplines, levels, nil
 }

@@ -49,13 +49,24 @@ func TestParseMarkdownListingsIgnoresNonTableText(t *testing.T) {
 	}
 }
 
-// the keyword filter runs on markdown-sourced listings too, so make sure
-// they flow through it the same way JSON ones do
-func TestParsedListingsWorkWithKeywordFilter(t *testing.T) {
+// the role filter runs on markdown-sourced listings too, so make sure they
+// flow through it the same way JSON ones do
+func TestParsedListingsWorkWithRoleFilter(t *testing.T) {
 	listings := ParseMarkdownListings(sampleTable)
-	matches := FilterByKeywords(listings, []string{"intern"})
+	matches := FilterByRoles(listings, nil, []string{"intern"})
 
 	if len(matches) != 2 {
 		t.Fatalf("expected both intern roles to match, got %d", len(matches))
+	}
+}
+
+// An empty axis must mean "no filter here", not "match nothing" — otherwise
+// clearing one group of checkboxes would silently stop all monitoring.
+func TestEmptyAxisMatchesEverything(t *testing.T) {
+	listings := ParseMarkdownListings(sampleTable)
+	matches := FilterByRoles(listings, nil, nil)
+
+	if len(matches) != len(listings) {
+		t.Fatalf("expected all %d listings with no filters, got %d", len(listings), len(matches))
 	}
 }

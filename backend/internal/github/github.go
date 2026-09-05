@@ -3,9 +3,9 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Evin009/Gojobs/backend/internal/match"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
@@ -23,8 +23,9 @@ type Listing struct {
 
 // FetchListings pulls a repo's job feed. Trackers publish in one of two shapes,
 // picked here by file extension:
-//   .json — a plain array of listings (not wrapped like Greenhouse's {"jobs": [...]})
-//   .md   — a markdown table, parsed by ParseMarkdownListings
+//
+//	.json — a plain array of listings (not wrapped like Greenhouse's {"jobs": [...]})
+//	.md   — a markdown table, parsed by ParseMarkdownListings
 func FetchListings(url string) ([]Listing, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -85,21 +86,18 @@ func ResolveFeedURL(owner, repo string) (string, error) {
 	return "", fmt.Errorf("no readable job feed found for %s/%s", owner, repo)
 }
 
-// FilterByKeywords keeps active, visible listings whose title whole-word-matches
-// ANY of the given keywords.
-func FilterByKeywords(listings []Listing, keywords []string) []Listing {
+// FilterByRoles keeps active, visible listings whose title matches any chosen
+// discipline AND any chosen level.
+func FilterByRoles(listings []Listing, disciplines, levels []string) []Listing {
 	var matches []Listing
 
 	for _, listing := range listings {
 		if !listing.Active || !listing.IsVisible {
 			continue
 		}
-		for _, keyword := range keywords {
-			pattern := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(keyword) + `\b`)
-			if pattern.MatchString(listing.Title) {
-				matches = append(matches, listing)
-				break
-			}
+
+		if match.Title(listing.Title, disciplines, levels) {
+			matches = append(matches, listing)
 		}
 	}
 

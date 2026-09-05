@@ -340,9 +340,9 @@ func main() {
 	http.HandleFunc("/settings", withCORS(settingsHandler))
 	http.HandleFunc("/resume/base", withCORS(baseResumeHandler))
 
-	// Companies come from settings now, read fresh on every run — editing them
-	// in the extension takes effect at the next tick, with no restart.
-	go monitor.StartLoop([]string{"intern", "internship"}, 30*time.Minute)
+	// Companies and role filters come from settings now, read fresh on every
+	// run — editing them in the extension takes effect at the next tick.
+	go monitor.StartLoop(30 * time.Minute)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

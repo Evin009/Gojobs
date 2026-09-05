@@ -3,8 +3,8 @@ package greenhouse
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Evin009/Gojobs/backend/internal/match"
 	"net/http"
-	"regexp"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/jobposting"
@@ -45,18 +45,14 @@ func FetchJobs(company string) ([]Job, error) {
 	return result.Jobs, nil
 }
 
-// FilterByKeywords keeps jobs whose title whole-word-matches ANY of the given
-// keywords (not substring) — "intern" won't match inside "internal".
-func FilterByKeywords(jobs []Job, keywords []string) []Job {
+// FilterByRoles keeps jobs whose title matches any chosen discipline AND any
+// chosen level. An empty list on either axis means no filter there.
+func FilterByRoles(jobs []Job, disciplines, levels []string) []Job {
 	var matches []Job
 
 	for _, job := range jobs {
-		for _, keyword := range keywords {
-			pattern := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(keyword) + `\b`)
-			if pattern.MatchString(job.Title) {
-				matches = append(matches, job)
-				break
-			}
+		if match.Title(job.Title, disciplines, levels) {
+			matches = append(matches, job)
 		}
 	}
 

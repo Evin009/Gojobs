@@ -36,6 +36,11 @@ _What this feature is responsible for, agreed before testing._
 - Company names are lowercased and de-duplicated on entry — Greenhouse board names are lowercase slugs, and a duplicate would double every posting from that company.
 - The webhook field collapses away when notifications are off, rather than sitting there inert.
 - Build environment: `node_modules` renamed to `node_modules.nosync` and symlinked. iCloud skips `.nosync`, so builds went from 2m42s to 1.4s.
+- Discipline and level are separate axes. One combined list would have meant "any SWE job or any internship" when the user asked for SWE internships.
+- An empty axis means "no filter here", never "match nothing" — otherwise clearing one group of checkboxes would silently stop all monitoring. Covered by a test.
+- Matching moved into `internal/match`, shared by both sources so Greenhouse and GitHub can't drift on what counts as a match. Regexes are cached rather than recompiled per keyword per job.
+- Whole-word matching kept throughout: "ml" must not match "html", "ai" must not match "email".
+- Known limit: only titles are matched, since that's all the list endpoints return. A level stated only in the job body is invisible to this.
 
 ---
 
@@ -76,9 +81,10 @@ message per run. No ranking, no descriptions, no applying.
 - [x] Personal info editable from the same place — Settings links into the onboarding answers
 
 **B — Role filters**
-- [ ] Role categories (SWE, AI/ML, Product management, Product design, ...) replacing the single keyword list
-- [ ] User picks which roles they want; monitoring filters on those
-- [ ] Keyword sets per role, stored as data so a category can change without a deploy
+- [x] Role categories (SWE, AI/ML, Data, PM, Design, Security) replacing the single keyword list
+- [x] Levels as a separate axis (Internship, New grad, Mid, Senior) — combined with AND, not OR
+- [x] User picks both in Settings; monitoring reads them fresh every run
+- [x] Keyword sets live in `internal/roles`, so fixing a missed job title is an edit, not a redesign
 
 **C — Jobs in the panel**
 - [ ] Panel lists what monitoring has found, newest first, both sources
