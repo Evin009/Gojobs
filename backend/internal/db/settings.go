@@ -112,20 +112,13 @@ func GetRoleKeywords() (disciplines []string, levels []string, err error) {
 	return disciplines, levels, nil
 }
 
-// The clock the daily count resets on. Fixed rather than the server's local
-// zone, so the number means the same thing wherever this runs.
-var resetZone = mustLoad("America/New_York")
-
-func mustLoad(name string) *time.Location {
-	loc, err := time.LoadLocation(name)
-	if err != nil {
-		// UTC is wrong but survivable; a missing tzdata shouldn't stop the
-		// server from starting
-		return time.UTC
-	}
-
-	return loc
-}
+// The clock the daily count resets on: EST, fixed at UTC-5 all year.
+//
+// Deliberately not America/New_York — that observes daylight saving, so the
+// reset would drift by an hour twice a year. A fixed offset means "midnight"
+// is the same moment every day, at the cost of being an hour off local New
+// York time through the summer.
+var resetZone = time.FixedZone("EST", -5*60*60)
 
 // StartOfDay is midnight in the reset zone — the point the daily job count
 // goes back to zero.
