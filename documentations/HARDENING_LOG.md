@@ -53,6 +53,13 @@ _What this feature is responsible for, agreed before testing._
 - `last_checked` is written after a run completes, not before, so the panel can't claim a check that failed halfway. Shown in the header, so a stale panel is obvious.
 - Rows lead with company, then role, then age and source; each has its own Apply button.
 - Timestamps lose precision as they age: minutes, then hours, then days. The exact minute a week-old posting was found is noise.
+- Co-op split out of Internship. Lumping them made every result look like a co-op — the tracker repos are co-op heavy. Now 80 co-ops vs 14 internships where there was one number of 103.
+- Location was never saved: both sources return it and `InsertJob` dropped it. Migration 009 adds the column; rows saved before it show a dash until the next monitoring run.
+- `internal/location` classifies a free-text location as us / canada / other / unknown. There's no country field on either source, so it's inferred from the string.
+- Signals are checked strongest first — country name, then state code, then city name, then foreign country. "Vancouver, WA" was classifying as Canada until city names moved last.
+- Single-word names match whole tokens only: "india" was matching inside "Indianapolis". Caught by a test, not by reading it.
+- Unknown locations pass the filter. "Remote" is everywhere, and dropping what we can't parse would silently lose real matches — the same fail-open choice as the repo check.
+- `other` is distinct from `unknown` on purpose: one means we recognised a foreign posting and can drop it, the other means we couldn't tell and shouldn't.
 
 ---
 

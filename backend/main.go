@@ -9,6 +9,7 @@ import (
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/github"
+	"github.com/Evin009/Gojobs/backend/internal/location"
 	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 )
@@ -248,6 +249,12 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	regions, err := db.GetRegions()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	found, err := db.ListJobsSince(db.StartOfDay())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -256,9 +263,16 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 
 	jobs := []db.Job{}
 	for _, job := range found {
-		if match.Title(job.Role, disciplines, levels) {
-			jobs = append(jobs, job)
+		if !match.Title(job.Role, disciplines, levels) {
+			continue
 		}
+
+		if !location.Matches(job.Location, regions) {
+			continue
+		}
+
+		job.Location = location.Display(job.Location)
+		jobs = append(jobs, job)
 	}
 
 	checked, err := db.LastChecked()

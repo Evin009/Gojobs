@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button, Chrome, Heading } from "../components/ui";
 import { Toggle } from "../components/Toggle";
 import { ChoiceGroup } from "../components/ChoiceGroup";
-import { DISCIPLINES, LEVELS } from "../lib/roles";
+import { DISCIPLINES, LEVELS, REGIONS } from "../lib/roles";
 import { getSettings, saveSettings, type Settings as Values } from "../lib/api";
 
 // Companies are stored as one comma-separated string, but edited as chips —
@@ -206,6 +206,21 @@ export function Settings({
                     onChange={(next) => set("levels", next.join(","))}
                     emptyMeans="Any level — no filter on seniority."
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-ink-400">
+                    Location
+                  </p>
+                  <ChoiceGroup
+                    options={REGIONS}
+                    selected={parseList(values.regions ?? "")}
+                    onChange={(next) => set("regions", next.join(","))}
+                    emptyMeans="Anywhere — no filter on location."
+                  />
+                  <p className="font-sans text-[10.5px] leading-snug text-ink-600">
+                    Postings with no readable location are kept either way.
+                  </p>
                 </div>
               </div>
             </section>

@@ -7,10 +7,10 @@ import (
 
 // InsertJob saves a job posting, returns whether a row was actually inserted
 // (false = duplicate url, skipped via ON CONFLICT DO NOTHING).
-func InsertJob(company, role, description, url, source string) (bool, error) {
+func InsertJob(company, role, description, url, source, location string) (bool, error) {
 	tag, err := pool.Exec(context.Background(),
-		"INSERT INTO jobs (company, role, description, url, source) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (url) DO NOTHING",
-		company, role, description, url, source)
+		"INSERT INTO jobs (company, role, description, url, source, location) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (url) DO NOTHING",
+		company, role, description, url, source, location)
 
 	return tag.RowsAffected() > 0, err
 }
@@ -22,12 +22,13 @@ type Job struct {
 	Role      string    `json:"role"`
 	URL       string    `json:"url"`
 	Source    string    `json:"source"`
+	Location  string    `json:"location"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 // TODO (you): return the most recently found jobs, newest first.
 //
-//  1. SELECT company, role, url, source, created_at FROM jobs
+//  1. SELECT company, role, url, source, location, created_at FROM jobs
 //  2. ORDER BY created_at DESC LIMIT $1
 //  3. scan each row into a Job, append to a slice, return it
 //
@@ -35,7 +36,7 @@ type Job struct {
 // grows forever, and the panel only ever shows a screenful.
 func ListJobs(limit int) ([]Job, error) {
 	rows, err := pool.Query(context.Background(),
-		`SELECT company, role, url, source, created_at FROM jobs 
+		`SELECT company, role, url, source, location, created_at FROM jobs 
 	ORDER BY created_at DESC LIMIT $1`, limit)
 
 	if err != nil {
@@ -49,7 +50,7 @@ func ListJobs(limit int) ([]Job, error) {
 	for rows.Next() {
 		var job Job
 
-		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.CreatedAt); err != nil {
+		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.Location, &job.CreatedAt); err != nil {
 			return nil, err
 		}
 
@@ -80,7 +81,7 @@ func CountJobs() (int, error) {
 // matches that sit below the cut.
 func ListJobsSince(since time.Time) ([]Job, error) {
 	rows, err := pool.Query(context.Background(),
-		`SELECT company, role, url, source, created_at FROM jobs
+		`SELECT company, role, url, source, location, created_at FROM jobs
 		 WHERE created_at >= $1 ORDER BY created_at DESC`, since)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ func ListJobsSince(since time.Time) ([]Job, error) {
 
 	for rows.Next() {
 		var job Job
-		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.CreatedAt); err != nil {
+		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.Location, &job.CreatedAt); err != nil {
 			return nil, err
 		}
 

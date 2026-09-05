@@ -106,6 +106,9 @@ export function Jobs({
                   <p className="truncate font-sans text-[11.5px] text-ink-400">
                     {job.role}
                   </p>
+                  <p className="mt-1 truncate font-mono text-[10px] text-ink-300">
+                    {job.location}
+                  </p>
                   <p className="mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
                     {ago(job.created_at)} · {job.source === "github" ? "repo" : "greenhouse"}
                   </p>

@@ -64,7 +64,7 @@ func Save(jobs []Job) []jobposting.Posting {
 	var newJobs []jobposting.Posting
 
 	for _, job := range jobs {
-		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse")
+		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse", job.Location.Name)
 		if err != nil {
 			fmt.Println(err)
 			continue

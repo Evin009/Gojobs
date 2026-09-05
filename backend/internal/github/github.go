@@ -128,7 +128,7 @@ func Save(listings []Listing, repoName string) []jobposting.Posting {
 			location = listing.Location[0]
 		}
 
-		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github")
+		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github", location)
 		if err != nil {
 			fmt.Println(err)
 			continue

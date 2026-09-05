@@ -74,7 +74,15 @@ var Levels = []Role{
 	{
 		ID:       "intern",
 		Label:    "Internship",
-		Keywords: []string{"intern", "internship", "co-op", "coop"},
+		Keywords: []string{"intern", "internship"},
+	},
+	// Separate from internship: co-ops are longer, usually paid differently,
+	// and often the only thing a tracker repo lists. Lumping them together
+	// made every result look like a co-op.
+	{
+		ID:       "coop",
+		Label:    "Co-op",
+		Keywords: []string{"co-op", "coop"},
 	},
 	{
 		ID:       "newgrad",

@@ -84,6 +84,7 @@ export type Job = {
   role: string;
   url: string;
   source: string;
+  location: string;
   created_at: string;
 };
 

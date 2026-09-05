@@ -85,6 +85,17 @@ func SlackTarget() (string, error) {
 	return strings.TrimSpace(settings["slack_webhook"]), nil
 }
 
+// GetRegions returns the location regions the user wants, or nil for no
+// location filter at all.
+func GetRegions() ([]string, error) {
+	settings, err := GetSettings()
+	if err != nil {
+		return nil, err
+	}
+
+	return listSetting(settings, "regions"), nil
+}
+
 // Splits a comma-separated setting into trimmed, non-empty entries.
 func listSetting(settings map[string]string, key string) []string {
 	var out []string
