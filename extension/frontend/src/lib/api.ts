@@ -87,7 +87,12 @@ export type Job = {
   created_at: string;
 };
 
-export type JobFeed = { jobs: Job[]; total: number; applied: number };
+export type JobFeed = {
+  jobs: Job[];
+  today: number;
+  applied: number;
+  last_checked: string;
+};
 
 export async function getJobs(limit = 50): Promise<JobFeed | null> {
   try {

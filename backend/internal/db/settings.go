@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/roles"
 	"github.com/jackc/pgx/v5"
@@ -19,19 +20,19 @@ func GetSettings() (map[string]string, error) {
 
 	settings := make(map[string]string)
 
-	for rows.Next(){
+	for rows.Next() {
 		var key string
 		var value string
 
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, err
 		}
-		
+
 		settings[key] = value
 	}
 
 	return settings, nil
-	
+
 }
 
 func SaveSettings(values map[string]string) error {
@@ -44,7 +45,7 @@ func SaveSettings(values map[string]string) error {
 			key, value,
 		)
 	}
-	return  pool.SendBatch(context.Background(), batch).Close()
+	return pool.SendBatch(context.Background(), batch).Close()
 }
 
 // Helpers so callers don't each re-parse the same TEXT values.
@@ -97,7 +98,6 @@ func listSetting(settings map[string]string, key string) []string {
 	return out
 }
 
-
 // chosen discipline AND ANY chosen level. An empty list means "no filter on
 // this axis" — not "match nothing", which would silently stop all monitoring.
 func GetRoleKeywords() (disciplines []string, levels []string, err error) {
@@ -105,10 +105,55 @@ func GetRoleKeywords() (disciplines []string, levels []string, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	disciplines = roles.Expand(roles.Disciplines, listSetting(settings, "roles"))
 	levels = roles.Expand(roles.Levels, listSetting(settings, "levels"))
 
-
 	return disciplines, levels, nil
+}
+
+// The clock the daily count resets on. Fixed rather than the server's local
+// zone, so the number means the same thing wherever this runs.
+var resetZone = mustLoad("America/New_York")
+
+func mustLoad(name string) *time.Location {
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		// UTC is wrong but survivable; a missing tzdata shouldn't stop the
+		// server from starting
+		return time.UTC
+	}
+
+	return loc
+}
+
+// StartOfDay is midnight in the reset zone — the point the daily job count
+// goes back to zero.
+func StartOfDay() time.Time {
+	now := time.Now().In(resetZone)
+
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, resetZone)
+}
+
+// LastChecked returns when monitoring last completed a run, or the zero time
+// if it hasn't yet.
+func LastChecked() (time.Time, error) {
+	settings, err := GetSettings()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	stamp := settings["last_checked"]
+	if stamp == "" {
+		return time.Time{}, nil
+	}
+
+	return time.Parse(time.RFC3339, stamp)
+}
+
+// MarkChecked records the end of a monitoring run.
+func MarkChecked() error {
+	return SaveSettings(map[string]string{
+		"last_checked": time.Now().UTC().Format(time.RFC3339),
+	})
 }

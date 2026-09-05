@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/github"
+	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 )
 
@@ -233,42 +233,54 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GET /jobs — what monitoring has found, newest first, for the panel.
-// ?limit= caps it; the table grows forever and the panel shows a screenful.
+// GET /jobs — today's matching postings, plus the counts the panel shows.
+//
+// Saved jobs are re-filtered against the user's current role settings rather
+// than served as-is: narrowing a filter should change what's listed and what's
+// counted, without waiting for the next monitoring run.
+//
+// "Today" is midnight in the reset zone, not a rolling 24 hours — the count is
+// meant to go back to zero at a predictable time.
 func jobsHandler(w http.ResponseWriter, r *http.Request) {
-	limit := 50
+	disciplines, levels, err := db.GetRoleKeywords()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	if raw := r.URL.Query().Get("limit"); raw != "" {
-		// a bad limit is the caller's mistake, not a reason to return
-		// everything — fall back to the default rather than erroring
-		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 200 {
-			limit = parsed
+	found, err := db.ListJobsSince(db.StartOfDay())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jobs := []db.Job{}
+	for _, job := range found {
+		if match.Title(job.Role, disciplines, levels) {
+			jobs = append(jobs, job)
 		}
 	}
 
-	jobs, err := db.ListJobs(limit)
+	checked, err := db.LastChecked()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		// a missing or unparseable timestamp shouldn't fail the whole request;
+		// the panel just won't show a "last checked" line
+		log.Println("read last_checked:", err)
 	}
 
-	total, err := db.CountJobs()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if jobs == nil {
-		jobs = []db.Job{}
+	lastChecked := ""
+	if !checked.IsZero() {
+		lastChecked = checked.UTC().Format(time.RFC3339)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
 		"jobs":  jobs,
-		"total": total,
+		"today": len(jobs),
 		// applications aren't tracked yet (Phase 16). Sent as 0 rather than
 		// omitted, so the panel shows an honest zero instead of a blank.
-		"applied": 0,
+		"applied":      0,
+		"last_checked": lastChecked,
 	})
 }
 

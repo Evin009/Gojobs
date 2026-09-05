@@ -4,16 +4,27 @@ import { useEffect, useState } from "react";
 import { Chrome } from "../components/ui";
 import { getJobs, type JobFeed } from "../lib/api";
 
-// "3h", "2d" — a list of timestamps is unreadable at a glance, and the exact
-// minute a posting was found never matters.
+// Precision drops as things age: minutes matter for something found just now,
+// days are enough for anything older than a day.
 function ago(iso: string): string {
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
 
   if (minutes < 1) return "now";
-  if (minutes < 60) return `${minutes}m`;
-  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 1440) {
+    const hours = Math.floor(minutes / 60);
+    return `${hours} hr${hours === 1 ? "" : "s"} ago`;
+  }
 
-  return `${Math.round(minutes / 1440)}d`;
+  const days = Math.floor(minutes / 1440);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+// Shown in the header, so a stale panel is obvious rather than silently wrong.
+function checkedLabel(iso: string): string {
+  if (!iso) return "not run yet";
+
+  return `checked ${ago(iso)}`;
 }
 
 export function Jobs({
@@ -49,9 +60,13 @@ export function Jobs({
       <div className="px-4 pb-5 pt-5">
         {/* Numbers first: the point of this view is "is it working", and a
             count answers that before any list does. */}
-        <div className="mb-5 flex gap-6 border-b border-ink-800 pb-5">
-          <Stat label="Found" value={feed?.total ?? 0} loading={state === "loading"} />
+        <div className="mb-5 flex items-end gap-6 border-b border-ink-800 pb-5">
+          <Stat label="Today" value={feed?.today ?? 0} loading={state === "loading"} />
           <Stat label="Applied" value={feed?.applied ?? 0} loading={state === "loading"} />
+
+          <p className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
+            {state === "ready" ? checkedLabel(feed?.last_checked ?? "") : ""}
+          </p>
         </div>
 
         {state === "loading" && <Skeleton />}
@@ -73,34 +88,38 @@ export function Jobs({
         {state === "ready" && !!feed?.jobs.length && (
           <div className="divide-y divide-ink-800">
             {feed.jobs.map((job, i) => (
-              <motion.a
+              <motion.div
                 key={job.url}
-                href={job.url}
-                target="_blank"
-                rel="noreferrer"
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 // staggered, but capped: past ~15 rows the cascade stops
                 // reading as sequence and starts reading as lag
                 transition={{ delay: Math.min(i, 15) * 0.022 }}
-                className="group flex items-baseline gap-3 py-2.5"
+                className="group flex items-center gap-3 py-3"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-sans text-[12.5px] text-ink-100 transition-colors group-hover:text-acid">
+                  {/* company first: you decide whether a posting is worth
+                      opening by who it's from before what it's called */}
+                  <p className="truncate font-sans text-[12.5px] font-medium text-ink-100">
+                    {job.company}
+                  </p>
+                  <p className="truncate font-sans text-[11.5px] text-ink-400">
                     {job.role}
                   </p>
-                  <p className="truncate font-mono text-[10px] text-ink-400">
-                    {job.company}
+                  <p className="mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
+                    {ago(job.created_at)} · {job.source === "github" ? "repo" : "greenhouse"}
                   </p>
                 </div>
 
-                <span className="shrink-0 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
-                  {job.source === "github" ? "repo" : "gh"}
-                </span>
-                <span className="w-7 shrink-0 text-right font-mono text-[10px] text-ink-600">
-                  {ago(job.created_at)}
-                </span>
-              </motion.a>
+                <a
+                  href={job.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-md border border-ink-700 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-300 transition-colors hover:border-acid hover:bg-acid hover:text-ink-950"
+                >
+                  Apply
+                </a>
+              </motion.div>
             ))}
           </div>
         )}

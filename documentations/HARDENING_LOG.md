@@ -47,6 +47,12 @@ _What this feature is responsible for, agreed before testing._
 - "Applied" is sent as 0 rather than omitted, so the panel shows an honest zero instead of a gap until the tracker exists.
 - Row stagger is capped at 15: past that the cascade stops reading as sequence and starts reading as lag.
 - Toolbar icon opens Jobs, the notch gear opens Settings, tabs switch between them.
+- Saved jobs are re-filtered against the current role settings on every request, so narrowing a filter changes the list and the count immediately instead of waiting for the next run. Verified: 103 -> 0 -> 103 switching between AI/ML and Design.
+- The count is "today" — since midnight in America/New_York — not a rolling 24 hours. A count that resets at a predictable time is easier to trust than one that slides.
+- Reset zone is fixed rather than the server's local zone, so the number means the same thing wherever this runs.
+- `last_checked` is written after a run completes, not before, so the panel can't claim a check that failed halfway. Shown in the header, so a stale panel is obvious.
+- Rows lead with company, then role, then age and source; each has its own Apply button.
+- Timestamps lose precision as they age: minutes, then hours, then days. The exact minute a week-old posting was found is noise.
 
 ---
 

@@ -34,8 +34,8 @@ type Job struct {
 // Take the limit as an argument rather than fetching everything: this table
 // grows forever, and the panel only ever shows a screenful.
 func ListJobs(limit int) ([]Job, error) {
-	rows, err := pool.Query(context.Background(), 
-	`SELECT company, role, url, source, created_at FROM jobs 
+	rows, err := pool.Query(context.Background(),
+		`SELECT company, role, url, source, created_at FROM jobs 
 	ORDER BY created_at DESC LIMIT $1`, limit)
 
 	if err != nil {
@@ -46,7 +46,7 @@ func ListJobs(limit int) ([]Job, error) {
 
 	var jobs []Job
 
-	for rows.Next(){
+	for rows.Next() {
 		var job Job
 
 		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.CreatedAt); err != nil {
@@ -71,4 +71,32 @@ func CountJobs() (int, error) {
 	}
 
 	return count, nil
+}
+
+// ListJobsSince returns jobs saved at or after `since`, newest first.
+//
+// No LIMIT here on purpose: the caller filters these against the user's
+// current role settings, and cutting the list before filtering would drop
+// matches that sit below the cut.
+func ListJobsSince(since time.Time) ([]Job, error) {
+	rows, err := pool.Query(context.Background(),
+		`SELECT company, role, url, source, created_at FROM jobs
+		 WHERE created_at >= $1 ORDER BY created_at DESC`, since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jobs []Job
+
+	for rows.Next() {
+		var job Job
+		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source, &job.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, job)
+	}
+
+	return jobs, rows.Err()
 }

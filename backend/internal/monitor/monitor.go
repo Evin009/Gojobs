@@ -112,6 +112,11 @@ func runOnce() {
 	if err := jobposting.NotifyNew(allNew); err != nil {
 		fmt.Println("notify error:", err)
 	}
+
+	// recorded after the work, so "last checked" means a completed run
+	if err := db.MarkChecked(); err != nil {
+		fmt.Println("mark checked error:", err)
+	}
 }
 
 // StartLoop runs one check immediately, then repeats forever on `interval`.
