@@ -54,7 +54,7 @@ _What this feature is responsible for, agreed before testing._
 - Rows lead with company, then role, then age and source; each has its own Apply button.
 - Timestamps lose precision as they age: minutes, then hours, then days. The exact minute a week-old posting was found is noise.
 - Co-op split out of Internship. Lumping them made every result look like a co-op — the tracker repos are co-op heavy. Now 80 co-ops vs 14 internships where there was one number of 103.
-- Location was never saved: both sources return it and `InsertJob` dropped it. Migration 009 adds the column; rows saved before it show a dash until the next monitoring run.
+- Location was never saved: both sources return it and `InsertJob` dropped it. Migration 009 adds the column; rows saved before it show a dash until the next monitoring run. Only 4 of 5017 existing rows have one, so the location filter and its counts stay near-empty until monitoring has run a few times.
 - `internal/location` classifies a free-text location as us / canada / other / unknown. There's no country field on either source, so it's inferred from the string.
 - Signals are checked strongest first — country name, then state code, then city name, then foreign country. "Vancouver, WA" was classifying as Canada until city names moved last.
 - Single-word names match whole tokens only: "india" was matching inside "Indianapolis". Caught by a test, not by reading it.
@@ -65,7 +65,8 @@ _What this feature is responsible for, agreed before testing._
 - Selecting applies immediately: writes the setting, refetches, updates the count. No Save anywhere in the filter path.
 - Each dropdown says what "nothing selected" means ("Any", "Anywhere") rather than showing a blank, since an empty filter is a real choice here.
 - Menus close on a backdrop click rather than a document listener — shadow-DOM event retargeting makes the latter unreliable.
-- Each option shows how many of today's postings it would bring in. Counted with the other axes still applied and its own relaxed: the useful question is "how many more would this add to what I'm looking at", not "how many exist".
+- Each option shows how many of today's postings match it, counted independently of the other filters. A number that shifts every time a different filter changes can't be compared to anything — "US: 40" should mean forty US postings today, always.
+- Region counts use exact classification rather than the filter's fail-open rule: counting unknown locations under both US and Canada would make the numbers meaningless.
 - Menus size to their content rather than their trigger, so labels are never cut off. The last column opens leftwards to stay inside the panel.
 - A zero count is dimmed rather than hidden — knowing an option has nothing today is worth more than a blank.
 

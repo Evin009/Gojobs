@@ -276,7 +276,7 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		jobs = append(jobs, job)
 	}
 
-	counts := facetCounts(found, disciplines, levels, regions)
+	counts := facetCounts(found)
 
 	checked, err := db.LastChecked()
 	if err != nil {
@@ -302,40 +302,40 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// facetCounts says how many of today's postings each filter option would
-// bring in.
+// facetCounts says how many of today's postings match each filter option on
+// its own.
 //
-// Each axis is counted with the *other* axes still applied but its own relaxed
-// — the useful question is "how many more would this add to what I'm already
-// looking at", not "how many exist in total".
-func facetCounts(found []db.Job, disciplines, levels, regions []string) map[string]map[string]int {
+// Deliberately independent of the other axes: a number that shifts every time
+// a different filter changes can't be compared to anything. "US: 40" means
+// forty US postings today, always — not forty given whatever else is ticked.
+func facetCounts(found []db.Job) map[string]map[string]int {
 	counts := map[string]map[string]int{
 		"roles":   {},
 		"levels":  {},
 		"regions": {},
 	}
 
-	for _, role := range roles.Disciplines {
-		for _, job := range found {
-			if match.Title(job.Role, role.Keywords, levels) && location.Matches(job.Location, regions) {
+	for _, job := range found {
+		for _, role := range roles.Disciplines {
+			if match.Any(job.Role, role.Keywords) {
 				counts["roles"][role.ID]++
 			}
 		}
-	}
 
-	for _, level := range roles.Levels {
-		for _, job := range found {
-			if match.Title(job.Role, disciplines, level.Keywords) && location.Matches(job.Location, regions) {
+		for _, level := range roles.Levels {
+			if match.Any(job.Role, level.Keywords) {
 				counts["levels"][level.ID]++
 			}
 		}
-	}
 
-	for _, region := range []string{location.US, location.Canada} {
-		for _, job := range found {
-			if match.Title(job.Role, disciplines, levels) && location.Matches(job.Location, []string{region}) {
-				counts["regions"][region]++
-			}
+		// Region is exact here rather than going through Matches, which lets
+		// unknown locations pass any filter — counting those under both US and
+		// Canada would make the numbers meaningless.
+		switch location.Region(job.Location) {
+		case location.US:
+			counts["regions"][location.US]++
+		case location.Canada:
+			counts["regions"][location.Canada]++
 		}
 	}
 
