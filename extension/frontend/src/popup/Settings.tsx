@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button, Chrome, Heading } from "../components/ui";
 import { Toggle } from "../components/Toggle";
@@ -21,23 +21,55 @@ export function Settings({
   onClose,
   onEditProfile,
   onTab,
+  onSaved,
 }: {
   onClose: () => void;
   onEditProfile: () => void;
   onTab: (id: string) => void;
+  // lets the jobs view know its counts are stale
+  onSaved: () => void;
 }) {
   const [values, setValues] = useState<Values>({});
   const [draft, setDraft] = useState("");
-  const [state, setState] = useState<"loading" | "ready" | "saving" | "error">(
-    "loading",
-  );
+  const [state, setState] = useState<
+    "loading" | "ready" | "saving" | "saved" | "error"
+  >("loading");
+
+  // Skips the save that would otherwise fire the moment loaded values land in
+  // state — writing back exactly what we just read.
+  const loaded = useRef(false);
 
   useEffect(() => {
     getSettings().then((stored) => {
       setValues(stored);
       setState(Object.keys(stored).length ? "ready" : "error");
+      loaded.current = true;
     });
   }, []);
+
+  // Changes save themselves. The Save button was a trap: switching tabs
+  // unmounts this view, so anything unsaved vanished without a word — and a
+  // filter that looks applied but isn't is worse than no filter.
+  useEffect(() => {
+    if (!loaded.current) return;
+
+    const timer = setTimeout(async () => {
+      setState("saving");
+      const ok = await saveSettings(values);
+      setState(ok ? "saved" : "error");
+      if (ok) onSaved();
+    }, 400); // one write per burst of clicks, not one per click
+
+    return () => clearTimeout(timer);
+  }, [values]);
+
+  // "Saved" fades back to nothing, so the panel doesn't wear a permanent badge
+  useEffect(() => {
+    if (state !== "saved") return;
+
+    const timer = setTimeout(() => setState("ready"), 1600);
+    return () => clearTimeout(timer);
+  }, [state]);
 
   const companies = parseList(values.companies ?? "");
   const slackOn = values.slack_enabled === "true";
@@ -58,13 +90,6 @@ export function Settings({
 
   function removeCompany(name: string) {
     set("companies", companies.filter((entry) => entry !== name).join(","));
-  }
-
-  async function save() {
-    setState("saving");
-    const ok = await saveSettings(values);
-    setState(ok ? "ready" : "error");
-    if (ok) onClose();
   }
 
   return (
@@ -237,22 +262,27 @@ export function Settings({
             </section>
 
             <div className="flex items-center border-t border-ink-800 pt-5">
-              <AnimatePresence>
-                {state === "error" && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="font-mono text-[10px] text-ink-400"
-                  >
-                    Can't reach Gojobs — is the backend running?
-                  </motion.span>
-                )}
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={state}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-600"
+                >
+                  {state === "error"
+                    ? "Can't reach Gojobs"
+                    : state === "saving"
+                      ? "Saving"
+                      : state === "saved"
+                        ? "Saved"
+                        : "Changes save automatically"}
+                </motion.span>
               </AnimatePresence>
 
               <div className="ml-auto">
-                <Button onClick={save} disabled={state === "saving"}>
-                  {state === "saving" ? "Saving" : "Save"}
+                <Button variant="ghost" onClick={onClose}>
+                  Done
                 </Button>
               </div>
             </div>

@@ -30,6 +30,9 @@ export function Shell() {
   const [setupDone, setSetupDone] = useState(false);
   const [tourPending, setTourPending] = useState(false);
   const [tourSeen, setTourSeen] = useState(false);
+  // bumped whenever settings change, so the jobs view refetches instead of
+  // showing counts from before the filter was edited
+  const [settingsVersion, setSettingsVersion] = useState(0);
   const [, setResize] = useState(0);
 
   // geometry is measured from the window, so recompute it on resize
@@ -167,12 +170,17 @@ export function Shell() {
         >
           {mode === "panel" ? (
             view === "jobs" ? (
-              <Jobs onClose={closePanel} onTab={(id) => setView(id as View)} />
+              <Jobs
+                key={settingsVersion}
+                onClose={closePanel}
+                onTab={(id) => setView(id as View)}
+              />
             ) : view === "settings" ? (
               <Settings
                 onClose={closePanel}
                 onEditProfile={() => setView("onboarding")}
                 onTab={(id) => setView(id as View)}
+                onSaved={() => setSettingsVersion((n) => n + 1)}
               />
             ) : (
               <Onboarding

@@ -267,3 +267,14 @@ Template for new entries:
 - **Done:** the fill handler now completes the tour from either the `fill` or `filling` beat, so the closing curtain can't be skipped by a fast fill.
 - **Verified:** typecheck and build clean.
 - **Worth keeping:** reusing one screen for two purposes — first-run setup and later editing — means its buttons need to know which case they're in.
+
+---
+
+### 2026-09-05 — Filter changes appeared to do nothing
+
+- **Issue:** toggling a field, level or location chip left the jobs count unchanged, so the filters looked broken.
+- **Cause:** two separate things, neither in the filtering itself — which was correct, and verified server-side (103 -> 0 -> 103 between AI/ML and Design). First, Settings only wrote on an explicit Save, and switching tabs unmounted the view and discarded unsaved changes without a word. Second, the Jobs view fetched once on mount and kept showing counts from before the edit.
+- **Fix:** settings save themselves, debounced 400ms so a burst of clicks is one write. The jobs view is keyed on a version counter that a successful save bumps, so it remounts and refetches.
+- **Done:** the Save button is gone entirely — a control whose absence loses work is worse than no control. The footer says "Changes save automatically", and shows Saving/Saved as it happens.
+- **Verified:** typecheck and build clean; settings confirmed persisting server-side across changes.
+- **Worth keeping:** a filter that looks applied but isn't is worse than one that visibly fails. Silent discard on unmount is the trap.

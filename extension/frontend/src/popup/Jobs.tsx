@@ -37,11 +37,21 @@ export function Jobs({
   const [feed, setFeed] = useState<JobFeed | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "offline">("loading");
 
+  // Refetched every time this view is shown, not just the first time: the
+  // counts depend on filters the user may have just changed next door.
   useEffect(() => {
+    let live = true;
+
     getJobs().then((result) => {
+      if (!live) return;
+
       setFeed(result);
       setState(result ? "ready" : "offline");
     });
+
+    return () => {
+      live = false;
+    };
   }, []);
 
   return (
