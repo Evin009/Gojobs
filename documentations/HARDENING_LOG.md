@@ -47,7 +47,49 @@ Status: not started
 
 ## 5. Job monitoring
 
-Status: not started
+Status: **planned** — building this first, ahead of the stated order.
+
+### Scope today
+Polls Greenhouse companies and monitored GitHub repos every 30 minutes, keeps
+postings matching a keyword list, saves new ones, sends one grouped Slack
+message per run. No ranking, no descriptions, no applying.
+
+### Plan
+
+**A — Settings UI** (first: unblocks everything below)
+- [ ] Settings section in the extension panel, separate from onboarding
+- [ ] Slack webhook stored in the DB and editable, not hardcoded
+- [ ] Slack on/off toggle — notifications are opt-in, not assumed
+- [ ] Greenhouse company list editable, not hardcoded in `main.go`
+- [ ] Personal info editable from the same place
+
+**B — Role filters**
+- [ ] Role categories (SWE, AI/ML, Product management, Product design, ...) replacing the single keyword list
+- [ ] User picks which roles they want; monitoring filters on those
+- [ ] Keyword sets per role, stored as data so a category can change without a deploy
+
+**C — Jobs in the panel**
+- [ ] Panel lists what monitoring has found, newest first, both sources
+- [ ] Prove dedupe holds — the same posting must never appear twice
+- [ ] Each row links out to the actual posting
+
+**D — Dashboard stats**
+- [ ] Total jobs found, and how many applied to
+- [ ] "Applied" stays 0 until the tracker exists (Phase 16) — shown honestly, not hidden
+
+**E — Sponsorship filter** (last: needs descriptions, and costs money per job)
+- [ ] Fetch the full description per posting — Greenhouse has a per-job endpoint; GitHub trackers link out and will sometimes fail
+- [ ] Keyword pre-pass first: most descriptions that mention sponsorship use standard phrasing
+- [ ] Claude classifies only the ambiguous ones — same fast-path/AI-fallback shape as `/route`
+- [ ] Three verdicts: sponsors, explicitly will not, silent
+- [ ] Cache the verdict per job — a description doesn't change, so classify once ever
+- [ ] Expect "silent" to be the large majority; the filter is only as good as what companies actually write
+
+### Tested
+
+### Found
+
+### Fixed
 
 ---
 
