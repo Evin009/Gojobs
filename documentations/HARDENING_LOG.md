@@ -69,6 +69,9 @@ _What this feature is responsible for, agreed before testing._
 - Region counts use exact classification rather than the filter's fail-open rule: counting unknown locations under both US and Canada would make the numbers meaningless.
 - Menus size to their content rather than their trigger, so labels are never cut off. The last column opens leftwards to stay inside the panel.
 - A zero count is dimmed rather than hidden — knowing an option has nothing today is worth more than a blank.
+- Mid and senior levels removed. This is for students in tech; those two were noise, and their counts dwarfed everything else in the dropdown.
+- "Last 30m" counter added beside Today, matching the monitoring interval, and counted inside the filter loop so it tracks the chosen field, type and location like every other number.
+- "Checked" shows exact time and date rather than "3 hrs ago" — a panel that hasn't refreshed in hours should be obvious, not vague.
 
 ---
 

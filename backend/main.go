@@ -262,7 +262,13 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// One monitoring interval. Anything newer than this arrived on the last
+	// run, which is what "new" means to someone watching the panel.
+	recentSince := time.Now().Add(-30 * time.Minute)
+
 	jobs := []db.Job{}
+	recent := 0
+
 	for _, job := range found {
 		if !match.Title(job.Role, disciplines, levels) {
 			continue
@@ -274,6 +280,12 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 
 		job.Location = location.Display(job.Location)
 		jobs = append(jobs, job)
+
+		// counted inside the filter loop, so it tracks the chosen field, type
+		// and location like every other number on the panel
+		if job.CreatedAt.After(recentSince) {
+			recent++
+		}
 	}
 
 	counts := facetCounts(found)
@@ -292,8 +304,9 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
-		"jobs":  jobs,
-		"today": len(jobs),
+		"jobs":   jobs,
+		"today":  len(jobs),
+		"recent": recent,
 		// applications aren't tracked yet (Phase 16). Sent as 0 rather than
 		// omitted, so the panel shows an honest zero instead of a blank.
 		"applied":      0,

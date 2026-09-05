@@ -95,6 +95,7 @@ export type Facets = Record<string, Record<string, number>>;
 export type JobFeed = {
   jobs: Job[];
   today: number;
+  recent: number;
   applied: number;
   last_checked: string;
   counts: Facets;

@@ -17,12 +17,12 @@ export const DISCIPLINES: Choice[] = [
   { id: "security", label: "Security" },
 ];
 
+// Only what a student can apply to. Mid and senior were noise, and their
+// counts dwarfed everything else in the dropdown.
 export const LEVELS: Choice[] = [
   { id: "intern", label: "Internship" },
   { id: "coop", label: "Co-op" },
   { id: "newgrad", label: "New grad" },
-  { id: "mid", label: "Mid level" },
-  { id: "senior", label: "Senior" },
 ];
 
 // Where the job is. Only the two we can classify reliably today — see

@@ -68,8 +68,11 @@ var Disciplines = []Role{
 	},
 }
 
-// Experience level. Choosing none means no level filter at all — every
-// seniority, which is a legitimate choice, not an empty one.
+// Experience level. Only the three a student can actually apply to — mid and
+// senior were noise here, and their counts dwarfed everything else.
+//
+// Choosing none means no level filter at all, which is a legitimate choice
+// rather than an empty one.
 var Levels = []Role{
 	{
 		ID:       "intern",
@@ -88,16 +91,6 @@ var Levels = []Role{
 		ID:       "newgrad",
 		Label:    "New grad",
 		Keywords: []string{"new grad", "new graduate", "entry level", "university graduate", "early career", "junior"},
-	},
-	{
-		ID:       "mid",
-		Label:    "Mid level",
-		Keywords: []string{"mid level", "ii", "iii"},
-	},
-	{
-		ID:       "senior",
-		Label:    "Senior",
-		Keywords: []string{"senior", "staff", "principal", "lead"},
 	},
 }
 

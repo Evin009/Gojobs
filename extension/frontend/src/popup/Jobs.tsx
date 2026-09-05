@@ -35,11 +35,24 @@ function ago(iso: string): string {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
-// Shown in the header, so a stale panel is obvious rather than silently wrong.
+// Exact time and date, so a panel that hasn't refreshed in hours is obvious
+// rather than hiding behind a vague "3 hrs ago".
 function checkedLabel(iso: string): string {
   if (!iso) return "not run yet";
 
-  return `checked ${ago(iso)}`;
+  const when = new Date(iso);
+
+  const time = when.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const date = when.toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  });
+
+  return `${time} · ${date}`;
 }
 
 export function Jobs({
@@ -101,13 +114,24 @@ export function Jobs({
       <div className="px-4 pb-5 pt-5">
         {/* Numbers first: the point of this view is "is it working", and a
             count answers that before any list does. */}
-        <div className="mb-5 flex items-end gap-6 border-b border-ink-800 pb-5">
+        <div className="mb-4 flex items-end gap-6 border-b border-ink-800 pb-4">
           <Stat label="Today" value={feed?.today ?? 0} loading={state === "loading"} />
+          <Stat
+            label="Last 30m"
+            value={feed?.recent ?? 0}
+            loading={state === "loading"}
+            accent
+          />
           <Stat label="Applied" value={feed?.applied ?? 0} loading={state === "loading"} />
 
-          <p className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
-            {state === "ready" ? checkedLabel(feed?.last_checked ?? "") : ""}
-          </p>
+          <div className="ml-auto text-right">
+            <p className="font-mono text-[8.5px] uppercase tracking-[0.14em] text-ink-600">
+              Checked
+            </p>
+            <p className="font-mono text-[10px] text-ink-400">
+              {state === "ready" ? checkedLabel(feed?.last_checked ?? "") : "—"}
+            </p>
+          </div>
         </div>
 
         <div className="mb-4 grid grid-cols-3 gap-1.5">
@@ -204,10 +228,13 @@ function Stat({
   label,
   value,
   loading,
+  accent,
 }: {
   label: string;
   value: number;
   loading: boolean;
+  // the number worth glancing at — everything else is context for it
+  accent?: boolean;
 }) {
   return (
     <div>
@@ -217,7 +244,11 @@ function Stat({
       {loading ? (
         <div className="mt-1.5 h-6 w-10 rounded bg-ink-800" />
       ) : (
-        <p className="font-mono text-[23px] leading-tight tracking-[-0.02em] text-ink-100">
+        <p
+          className={`font-mono text-[23px] leading-tight tracking-[-0.02em] tabular-nums ${
+            accent && value > 0 ? "text-acid" : "text-ink-100"
+          }`}
+        >
           {value}
         </p>
       )}
