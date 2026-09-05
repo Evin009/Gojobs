@@ -20,10 +20,18 @@ Status: **scoping**
 _What this feature is responsible for, agreed before testing._
 
 ### Tested
+- `GET`/`POST /settings` round-trip: read defaults, wrote a fourth company, read it back.
 
 ### Found
+- Slack webhook was read straight from `SLACK_WEBHOOK_URL` with no way to change it, and no way to turn notifications off at all.
+- `slack.Send` ignored the response status, so a wrong webhook URL failed silently — Slack answers 4xx, we called it success.
+- No timeout on the Slack post: a hung webhook would hold a monitor goroutine open indefinitely.
+- Greenhouse companies were hardcoded in `main.go`, so changing them meant editing and restarting.
 
 ### Fixed
+- `settings` table (migration 008), key-value like `profile` so a new setting needs no migration; ships with defaults and Slack off.
+- `slack.SendTo` takes the webhook as an argument, checks the status code, and carries a 10s timeout. Empty URL means "off", not an error.
+- Companies are read fresh on every monitor run, so an edit lands at the next tick with no restart.
 
 ---
 
@@ -58,9 +66,9 @@ message per run. No ranking, no descriptions, no applying.
 
 **A — Settings UI** (first: unblocks everything below)
 - [ ] Settings section in the extension panel, separate from onboarding
-- [ ] Slack webhook stored in the DB and editable, not hardcoded
-- [ ] Slack on/off toggle — notifications are opt-in, not assumed
-- [ ] Greenhouse company list editable, not hardcoded in `main.go`
+- [x] Slack webhook stored in the DB and editable, not hardcoded
+- [x] Slack on/off toggle — notifications are opt-in, not assumed
+- [x] Greenhouse company list editable, not hardcoded in `main.go`
 - [ ] Personal info editable from the same place
 
 **B — Role filters**

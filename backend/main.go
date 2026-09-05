@@ -191,6 +191,49 @@ func addRepoHandler(w http.ResponseWriter, r *http.Request) {
 // /profile — GET returns every stored fact, POST saves the onboarding form.
 // Method is branched here, not registered separately, so OPTIONS preflight
 // still reaches withCORS.
+// /settings — GET returns every setting, POST upserts the ones sent.
+// Same method-branching reason as /repos: an OPTIONS preflight must still
+// reach withCORS.
+func settingsHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		settings, err := db.GetSettings()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if settings == nil {
+			settings = make(map[string]string)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(settings)
+
+	case http.MethodPost:
+		var values map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&values); err != nil {
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if len(values) == 0 {
+			http.Error(w, "no settings to save", http.StatusBadRequest)
+			return
+		}
+
+		if err := db.SaveSettings(values); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		saveProfileHandler(w, r)
@@ -294,9 +337,12 @@ func main() {
 	http.HandleFunc("/repos", withCORS(reposHandler))
 	http.HandleFunc("/repos/check", withCORS(checkRepoHandler))
 	http.HandleFunc("/profile", withCORS(profileHandler))
+	http.HandleFunc("/settings", withCORS(settingsHandler))
 	http.HandleFunc("/resume/base", withCORS(baseResumeHandler))
 
-	go monitor.StartLoop([]string{"databricks", "robinhood", "cloudflare"}, []string{"intern", "internship"}, 30*time.Minute)
+	// Companies come from settings now, read fresh on every run — editing them
+	// in the extension takes effect at the next tick, with no restart.
+	go monitor.StartLoop([]string{"intern", "internship"}, 30*time.Minute)
 
 	log.Println("server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

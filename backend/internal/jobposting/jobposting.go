@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/slack"
 )
 
@@ -78,5 +79,12 @@ func NotifyNew(newJobs []Posting) error {
 		}
 	}
 
-	return slack.Send(sb.String())
+	// Off or unconfigured comes back as an empty webhook — the jobs are still
+	// saved, we just don't announce them.
+	webhook, err := db.SlackTarget()
+	if err != nil {
+		return err
+	}
+
+	return slack.SendTo(webhook, sb.String())
 }

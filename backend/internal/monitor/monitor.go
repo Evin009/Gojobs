@@ -92,7 +92,14 @@ func checkGitHub(keywords []string) []jobposting.Posting {
 
 // runOnce checks Greenhouse then GitHub (each internally concurrent already),
 // combines everything newly found, and sends ONE grouped slack summary.
-func runOnce(companies []string, keywords []string) {
+func runOnce(keywords []string) {
+	// read every run, so a company added in the extension is picked up at the
+	// next tick without a restart
+	companies, err := db.GetCompanies()
+	if err != nil {
+		fmt.Println("read companies error:", err)
+	}
+
 	var allNew []jobposting.Posting
 	allNew = append(allNew, checkGreenhouse(companies, keywords)...)
 	allNew = append(allNew, checkGitHub(keywords)...)
@@ -104,13 +111,13 @@ func runOnce(companies []string, keywords []string) {
 
 // StartLoop runs one check immediately, then repeats forever on `interval`.
 // Each repeat is launched via `go` so a slow check never delays the next tick.
-func StartLoop(companies []string, keywords []string, interval time.Duration) {
-	runOnce(companies, keywords)
+func StartLoop(keywords []string, interval time.Duration) {
+	runOnce(keywords)
 
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		go runOnce(companies, keywords)
+		go runOnce(keywords)
 	}
 }
