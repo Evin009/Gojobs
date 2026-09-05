@@ -32,6 +32,10 @@ _What this feature is responsible for, agreed before testing._
 - `settings` table (migration 008), key-value like `profile` so a new setting needs no migration; ships with defaults and Slack off.
 - `slack.SendTo` takes the webhook as an argument, checks the status code, and carries a 10s timeout. Empty URL means "off", not an error.
 - Companies are read fresh on every monitor run, so an edit lands at the next tick with no restart.
+- Settings view in the panel: Slack toggle and webhook, companies as removable chips, a link into profile answers. The toolbar icon opens Settings for a returning user and setup for a new one.
+- Company names are lowercased and de-duplicated on entry — Greenhouse board names are lowercase slugs, and a duplicate would double every posting from that company.
+- The webhook field collapses away when notifications are off, rather than sitting there inert.
+- Build environment: `node_modules` renamed to `node_modules.nosync` and symlinked. iCloud skips `.nosync`, so builds went from 2m42s to 1.4s.
 
 ---
 
@@ -65,11 +69,11 @@ message per run. No ranking, no descriptions, no applying.
 ### Plan
 
 **A — Settings UI** (first: unblocks everything below)
-- [ ] Settings section in the extension panel, separate from onboarding
+- [x] Settings section in the extension panel, separate from onboarding
 - [x] Slack webhook stored in the DB and editable, not hardcoded
 - [x] Slack on/off toggle — notifications are opt-in, not assumed
 - [x] Greenhouse company list editable, not hardcoded in `main.go`
-- [ ] Personal info editable from the same place
+- [x] Personal info editable from the same place — Settings links into the onboarding answers
 
 **B — Role filters**
 - [ ] Role categories (SWE, AI/ML, Product management, Product design, ...) replacing the single keyword list

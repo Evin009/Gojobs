@@ -52,3 +52,29 @@ export async function saveBaseResume(content: string): Promise<boolean> {
     return false;
   }
 }
+
+export type Settings = Record<string, string>;
+
+export async function getSettings(): Promise<Settings> {
+  try {
+    const response = await fetch(`${BACKEND}/settings`);
+    return response.ok ? await response.json() : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveSettings(values: Settings): Promise<boolean> {
+  if (!Object.keys(values).length) return true;
+
+  try {
+    const response = await fetch(`${BACKEND}/settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(values),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

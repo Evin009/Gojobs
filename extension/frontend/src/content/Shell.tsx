@@ -2,11 +2,16 @@ import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 
 import { Onboarding } from "../popup/Onboarding";
+import { Settings } from "../popup/Settings";
 import { NotchContent } from "./Notch";
 import { Tour, type TourStage } from "./Tour";
 import { notchBox, panelBox } from "./geometry";
 
 export type Mode = "hidden" | "panel" | "notch";
+
+// What the panel is showing. Settings is the resting view once setup is done —
+// the gear should land on preferences, not on a form the user already filled.
+type View = "onboarding" | "settings";
 
 // One element, two shapes. Not two elements swapped through AnimatePresence:
 // that waits for the outgoing exit before the incoming enters, which is what
@@ -17,6 +22,7 @@ const MSG = "gojobs";
 
 export function Shell() {
   const [mode, setMode] = useState<Mode>("hidden");
+  const [view, setView] = useState<View>("onboarding");
   const [hovered, setHovered] = useState(false);
   const [tour, setTour] = useState<TourStage>("off");
   const [isApplication, setIsApplication] = useState(false);
@@ -62,7 +68,13 @@ export function Shell() {
     // Clicking the toolbar icon opens setup on whatever page the user is on,
     // application or not.
     const listener = (message: { type?: string }) => {
-      if (message.type === "openPanel") setMode("panel");
+      if (message.type !== "openPanel") return;
+
+      // the toolbar icon opens settings for a returning user, setup for a new one
+      chrome.storage.local.get("setupDone", ({ setupDone }) => {
+        setView(setupDone ? "settings" : "onboarding");
+        setMode("panel");
+      });
     };
 
     chrome.runtime.onMessage.addListener(listener);
@@ -118,6 +130,7 @@ export function Shell() {
 
   function openPanel() {
     if (tour === "gear") setTour("settings");
+    setView(setupDone ? "settings" : "onboarding");
     setMode("panel");
   }
 
@@ -145,23 +158,30 @@ export function Shell() {
         {/* Content cross-fades on its own timing. Letting it scale with the
             box reads as a zoom rather than a morph. */}
         <motion.div
-          key={mode}
+          key={mode === "panel" ? view : mode}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2, delay: mode === "panel" ? 0.12 : 0.08 }}
           className="gojobs-surface-content"
         >
           {mode === "panel" ? (
-            <Onboarding
-              onFinish={finishSetup}
-              onClose={closePanel}
-              startAtEnd={setupDone}
-              hint={
-                tour === "settings"
-                  ? "This is where your answers live. Close it to carry on."
-                  : undefined
-              }
-            />
+            view === "settings" ? (
+              <Settings
+                onClose={closePanel}
+                onEditProfile={() => setView("onboarding")}
+              />
+            ) : (
+              <Onboarding
+                onFinish={finishSetup}
+                onClose={closePanel}
+                startAtEnd={setupDone}
+                hint={
+                  tour === "settings"
+                    ? "This is where your answers live. Close it to carry on."
+                    : undefined
+                }
+              />
+            )
           ) : (
             <NotchContent
               open={notchOpen}
