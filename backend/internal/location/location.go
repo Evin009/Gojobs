@@ -35,6 +35,16 @@ var usNames = []string{
 	"united states", "usa", "u.s.", "america", "remote - us", "remote, us",
 }
 
+// Cities that routinely appear without a state code — "NYC", "San Francisco",
+// "Bay Area". Checked after state codes, like the Canadian list.
+var usCities = []string{
+	"nyc", "new york city", "san francisco", "bay area", "silicon valley",
+	"seattle", "boston", "chicago", "los angeles", "austin", "denver",
+	"atlanta", "philadelphia", "washington dc", "san jose", "san diego",
+	"portland", "phoenix", "dallas", "houston", "miami", "pittsburgh",
+	"minneapolis", "detroit", "raleigh", "nashville", "salt lake city",
+}
+
 // Country names are checked before anything else; city names last, because a
 // city name is the weakest signal — "Vancouver, WA" is a real US city.
 var caNames = []string{"canada"}
@@ -97,6 +107,12 @@ func Region(raw string) string {
 	for _, name := range caCities {
 		if hasName(text, name) {
 			return Canada
+		}
+	}
+
+	for _, name := range usCities {
+		if hasName(text, name) {
+			return US
 		}
 	}
 

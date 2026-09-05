@@ -134,6 +134,14 @@ func Save(listings []Listing, repoName string) []jobposting.Posting {
 			continue
 		}
 
+		// already known: fill in a location if it's missing, since the insert
+		// above skipped the row entirely
+		if !inserted {
+			if err := db.BackfillLocation(listing.AbsoluteURL, location); err != nil {
+				fmt.Println("backfill location:", err)
+			}
+		}
+
 		if inserted {
 			newJobs = append(newJobs, jobposting.Posting{
 				CompanyName: listing.CompanyName,

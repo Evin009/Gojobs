@@ -101,3 +101,21 @@ func ListJobsSince(since time.Time) ([]Job, error) {
 
 	return jobs, rows.Err()
 }
+
+// BackfillLocation fills in a location for a job we already have.
+//
+// Needed because InsertJob skips duplicates entirely: a posting saved before
+// the location column existed would never get one, however many times
+// monitoring saw it again. Only writes when the stored value is empty, so a
+// real location is never overwritten by a blank one.
+func BackfillLocation(url, location string) error {
+	if location == "" {
+		return nil
+	}
+
+	_, err := pool.Exec(context.Background(),
+		"UPDATE jobs SET location = $2 WHERE url = $1 AND location = ''",
+		url, location)
+
+	return err
+}

@@ -22,6 +22,9 @@ func TestRegion(t *testing.T) {
 		// "Indianapolis"
 		{"Indianapolis", Unknown},
 		{"Indianapolis, IN", US},
+		// cities that routinely appear with no state code
+		{"NYC", US},
+		{"San Francisco", US},
 	}
 
 	for _, tc := range cases {

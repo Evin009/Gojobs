@@ -278,3 +278,14 @@ Template for new entries:
 - **Done:** the Save button is gone entirely — a control whose absence loses work is worse than no control. The footer says "Changes save automatically", and shows Saving/Saved as it happens.
 - **Verified:** typecheck and build clean; settings confirmed persisting server-side across changes.
 - **Worth keeping:** a filter that looks applied but isn't is worse than one that visibly fails. Silent discard on unmount is the trap.
+
+---
+
+### 2026-09-05 — Location counts stayed near zero while job counts climbed
+
+- **Issue:** the Location dropdown showed almost nothing while the job count showed hundreds — 544 jobs today, 18 with a location.
+- **Cause:** `InsertJob` uses `ON CONFLICT (url) DO NOTHING`, so a posting saved before the location column existed was skipped entirely on every later run and never gained one. Re-running monitoring could not fix it, however many times it saw the same job.
+- **Fix:** `BackfillLocation` — when an insert is skipped as a duplicate, fill the location in if the stored one is empty. Only writes over a blank, so a real value is never replaced by a missing one.
+- **Also:** `NYC`, `San Francisco`, `Bay Area` and similar classified as unknown, since they carry no state code. Added a bare-city list, checked after state codes so "Vancouver, WA" still resolves to Washington.
+- **Verified:** one monitoring run took today's located rows from 18 to 132; region counts went from empty to US 75 / Canada 12.
+- **Worth keeping:** `DO NOTHING` means a column added later stays empty forever for existing rows. Adding a column needs a plan for the rows already there.

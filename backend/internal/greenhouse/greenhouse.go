@@ -70,6 +70,14 @@ func Save(jobs []Job) []jobposting.Posting {
 			continue
 		}
 
+		// already known: fill in a location if it's missing, since the insert
+		// above skipped the row entirely
+		if !inserted {
+			if err := db.BackfillLocation(job.AbsoluteURL, job.Location.Name); err != nil {
+				fmt.Println("backfill location:", err)
+			}
+		}
+
 		if inserted {
 			newJobs = append(newJobs, jobposting.Posting{
 				CompanyName: job.CompanyName,
