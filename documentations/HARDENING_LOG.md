@@ -41,6 +41,12 @@ _What this feature is responsible for, agreed before testing._
 - Matching moved into `internal/match`, shared by both sources so Greenhouse and GitHub can't drift on what counts as a match. Regexes are cached rather than recompiled per keyword per job.
 - Whole-word matching kept throughout: "ml" must not match "html", "ai" must not match "email".
 - Known limit: only titles are matched, since that's all the list endpoints return. A level stated only in the job body is invisible to this.
+- `GET /jobs` returns the newest postings plus a total; the limit is capped at 200 and a bad `?limit=` falls back to the default rather than returning the whole table.
+- Jobs view in the panel: counts first (the question is "is this working", which a number answers before a list does), then the postings, each linking out.
+- Three distinct empty states — loading, backend unreachable, and genuinely nothing found. `getJobs` returns null rather than an empty feed so those stay distinguishable.
+- "Applied" is sent as 0 rather than omitted, so the panel shows an honest zero instead of a gap until the tracker exists.
+- Row stagger is capped at 15: past that the cascade stops reading as sequence and starts reading as lag.
+- Toolbar icon opens Jobs, the notch gear opens Settings, tabs switch between them.
 
 ---
 
@@ -87,13 +93,13 @@ message per run. No ranking, no descriptions, no applying.
 - [x] Keyword sets live in `internal/roles`, so fixing a missed job title is an edit, not a redesign
 
 **C — Jobs in the panel**
-- [ ] Panel lists what monitoring has found, newest first, both sources
+- [x] Panel lists what monitoring has found, newest first, both sources
+- [x] Each row links out to the actual posting
 - [ ] Prove dedupe holds — the same posting must never appear twice
-- [ ] Each row links out to the actual posting
 
 **D — Dashboard stats**
-- [ ] Total jobs found, and how many applied to
-- [ ] "Applied" stays 0 until the tracker exists (Phase 16) — shown honestly, not hidden
+- [x] Total jobs found, and how many applied to
+- [x] "Applied" stays 0 until the tracker exists (Phase 16) — shown honestly, not hidden
 
 **E — Sponsorship filter** (last: needs descriptions, and costs money per job)
 - [ ] Fetch the full description per posting — Greenhouse has a per-job endpoint; GitHub trackers link out and will sometimes fail

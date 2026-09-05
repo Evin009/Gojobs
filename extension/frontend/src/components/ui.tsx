@@ -136,16 +136,51 @@ export function Heading({
 export function Chrome({
   label,
   onClose,
+  tabs,
+  active,
+  onTab,
 }: {
   label: string;
   onClose?: () => void;
+  // Optional: a returning user gets tabs, a first-run user gets a plain title
+  // bar, because there's nothing to switch to yet.
+  tabs?: { id: string; label: string }[];
+  active?: string;
+  onTab?: (id: string) => void;
 }) {
   return (
     <div className="flex items-center gap-2 border-b border-ink-800 px-4 py-2.5">
       <div className="h-1.5 w-1.5 animate-sweep rounded-full bg-acid" />
-      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
-        {label}
-      </span>
+
+      {tabs ? (
+        <div className="flex gap-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTab?.(tab.id)}
+              className="relative px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] transition-colors"
+            >
+              <span
+                className={
+                  tab.id === active ? "text-ink-100" : "text-ink-600 hover:text-ink-300"
+                }
+              >
+                {tab.label}
+              </span>
+              {tab.id === active && (
+                <motion.span
+                  layoutId="tab-underline"
+                  className="absolute -bottom-[11px] left-0 right-0 h-px bg-acid"
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-400">
+          {label}
+        </span>
+      )}
 
       {onClose && (
         <button

@@ -20,9 +20,11 @@ function parseList(value: string): string[] {
 export function Settings({
   onClose,
   onEditProfile,
+  onTab,
 }: {
   onClose: () => void;
   onEditProfile: () => void;
+  onTab: (id: string) => void;
 }) {
   const [values, setValues] = useState<Values>({});
   const [draft, setDraft] = useState("");
@@ -67,7 +69,16 @@ export function Settings({
 
   return (
     <div className="grid-bg min-h-[440px] text-ink-100">
-      <Chrome label="settings" onClose={onClose} />
+      <Chrome
+        label="settings"
+        onClose={onClose}
+        tabs={[
+          { id: "jobs", label: "Jobs" },
+          { id: "settings", label: "Settings" },
+        ]}
+        active="settings"
+        onTab={onTab}
+      />
 
       <div className="space-y-7 px-4 pb-5 pt-5">
         {state === "loading" ? (

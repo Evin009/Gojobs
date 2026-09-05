@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Onboarding } from "../popup/Onboarding";
 import { Settings } from "../popup/Settings";
+import { Jobs } from "../popup/Jobs";
 import { NotchContent } from "./Notch";
 import { Tour, type TourStage } from "./Tour";
 import { notchBox, panelBox } from "./geometry";
@@ -11,7 +12,7 @@ export type Mode = "hidden" | "panel" | "notch";
 
 // What the panel is showing. Settings is the resting view once setup is done —
 // the gear should land on preferences, not on a form the user already filled.
-type View = "onboarding" | "settings";
+type View = "onboarding" | "settings" | "jobs";
 
 // One element, two shapes. Not two elements swapped through AnimatePresence:
 // that waits for the outgoing exit before the incoming enters, which is what
@@ -72,7 +73,7 @@ export function Shell() {
 
       // the toolbar icon opens settings for a returning user, setup for a new one
       chrome.storage.local.get("setupDone", ({ setupDone }) => {
-        setView(setupDone ? "settings" : "onboarding");
+        setView(setupDone ? "jobs" : "onboarding");
         setMode("panel");
       });
     };
@@ -165,10 +166,13 @@ export function Shell() {
           className="gojobs-surface-content"
         >
           {mode === "panel" ? (
-            view === "settings" ? (
+            view === "jobs" ? (
+              <Jobs onClose={closePanel} onTab={(id) => setView(id as View)} />
+            ) : view === "settings" ? (
               <Settings
                 onClose={closePanel}
                 onEditProfile={() => setView("onboarding")}
+                onTab={(id) => setView(id as View)}
               />
             ) : (
               <Onboarding

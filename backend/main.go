@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
@@ -143,50 +144,48 @@ func checkRepoHandler(w http.ResponseWriter, r *http.Request) {
 // storing an unreadable feed would "succeed" and then silently never produce
 // a single job.
 func addRepoHandler(w http.ResponseWriter, r *http.Request) {
-		var req addRepoRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-
-		if req.Owner == "" || req.Repo == "" {
-			http.Error(w, "owner and repo are required", http.StatusBadRequest)
-			return
-		}
-
-		// reuse the cached resolution when the extension already checked this
-		// repo on page load, so a click doesn't repeat the whole lookup
-		feedURL, cached, err := db.GetRepoCheck(req.Owner, req.Repo)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if !cached {
-			feedURL, err = github.ResolveFeedURL(req.Owner, req.Repo)
-			if err != nil {
-				feedURL = ""
-			}
-			if saveErr := db.SaveRepoCheck(req.Owner, req.Repo, feedURL); saveErr != nil {
-				log.Println("failed to cache repo check:", saveErr)
-			}
-		}
-
-		if feedURL == "" {
-			// 422: the request was well-formed, we just can't monitor this repo
-			http.Error(w, "no readable job feed found for this repo", http.StatusUnprocessableEntity)
-			return
-		}
-
-		if err := db.AddMonitoredRepo(feedURL); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.WriteHeader(http.StatusCreated)
+	var req addRepoRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
 	}
 
+	if req.Owner == "" || req.Repo == "" {
+		http.Error(w, "owner and repo are required", http.StatusBadRequest)
+		return
+	}
 
+	// reuse the cached resolution when the extension already checked this
+	// repo on page load, so a click doesn't repeat the whole lookup
+	feedURL, cached, err := db.GetRepoCheck(req.Owner, req.Repo)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !cached {
+		feedURL, err = github.ResolveFeedURL(req.Owner, req.Repo)
+		if err != nil {
+			feedURL = ""
+		}
+		if saveErr := db.SaveRepoCheck(req.Owner, req.Repo, feedURL); saveErr != nil {
+			log.Println("failed to cache repo check:", saveErr)
+		}
+	}
+
+	if feedURL == "" {
+		// 422: the request was well-formed, we just can't monitor this repo
+		http.Error(w, "no readable job feed found for this repo", http.StatusUnprocessableEntity)
+		return
+	}
+
+	if err := db.AddMonitoredRepo(feedURL); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
 
 // /profile — GET returns every stored fact, POST saves the onboarding form.
 // Method is branched here, not registered separately, so OPTIONS preflight
@@ -232,6 +231,45 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// GET /jobs — what monitoring has found, newest first, for the panel.
+// ?limit= caps it; the table grows forever and the panel shows a screenful.
+func jobsHandler(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		// a bad limit is the caller's mistake, not a reason to return
+		// everything — fall back to the default rather than erroring
+		if parsed, err := strconv.Atoi(raw); err == nil && parsed > 0 && parsed <= 200 {
+			limit = parsed
+		}
+	}
+
+	jobs, err := db.ListJobs(limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	total, err := db.CountJobs()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if jobs == nil {
+		jobs = []db.Job{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		"jobs":  jobs,
+		"total": total,
+		// applications aren't tracked yet (Phase 16). Sent as 0 rather than
+		// omitted, so the panel shows an honest zero instead of a blank.
+		"applied": 0,
+	})
 }
 
 func profileHandler(w http.ResponseWriter, r *http.Request) {
@@ -310,7 +348,7 @@ func baseResumeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getProfileHandler(w http.ResponseWriter, r *http.Request){
+func getProfileHandler(w http.ResponseWriter, r *http.Request) {
 	profile, err := db.GetProfile()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -326,7 +364,6 @@ func getProfileHandler(w http.ResponseWriter, r *http.Request){
 
 }
 
-
 // entry point — connects DB, registers routes, starts the background monitor loop and HTTP server
 func main() {
 	db.Connect()
@@ -338,6 +375,7 @@ func main() {
 	http.HandleFunc("/repos/check", withCORS(checkRepoHandler))
 	http.HandleFunc("/profile", withCORS(profileHandler))
 	http.HandleFunc("/settings", withCORS(settingsHandler))
+	http.HandleFunc("/jobs", withCORS(jobsHandler))
 	http.HandleFunc("/resume/base", withCORS(baseResumeHandler))
 
 	// Companies and role filters come from settings now, read fresh on every

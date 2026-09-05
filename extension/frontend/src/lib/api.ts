@@ -78,3 +78,24 @@ export async function saveSettings(values: Settings): Promise<boolean> {
     return false;
   }
 }
+
+export type Job = {
+  company: string;
+  role: string;
+  url: string;
+  source: string;
+  created_at: string;
+};
+
+export type JobFeed = { jobs: Job[]; total: number; applied: number };
+
+export async function getJobs(limit = 50): Promise<JobFeed | null> {
+  try {
+    const response = await fetch(`${BACKEND}/jobs?limit=${limit}`);
+    return response.ok ? await response.json() : null;
+  } catch {
+    // null, not an empty feed: "can't reach the backend" and "found nothing"
+    // are different states and the panel says different things about them
+    return null;
+  }
+}
