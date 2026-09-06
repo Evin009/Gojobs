@@ -115,3 +115,18 @@ export async function getJobs(range = "today", q = ""): Promise<JobFeed | null> 
     return null;
   }
 }
+
+export type BoardCheck = { ok: boolean; count: number };
+
+// Greenhouse publishes no directory of its customers, so a board name can only
+// be validated by fetching it.
+export async function checkBoard(name: string): Promise<BoardCheck | null> {
+  try {
+    const response = await fetch(
+      `${BACKEND}/boards/check?name=${encodeURIComponent(name)}`,
+    );
+    return response.ok ? await response.json() : null;
+  } catch {
+    return null;
+  }
+}

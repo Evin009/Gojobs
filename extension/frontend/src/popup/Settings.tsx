@@ -3,7 +3,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button, Chrome, Heading } from "../components/ui";
 import { Toggle } from "../components/Toggle";
-import { getSettings, saveSettings, type Settings as Values } from "../lib/api";
+import {
+  checkBoard,
+  getSettings,
+  saveSettings,
+  type BoardCheck,
+  type Settings as Values,
+} from "../lib/api";
 
 // Companies are stored as one comma-separated string, but edited as chips —
 // a text field invites trailing commas and stray whitespace that then become
@@ -36,6 +42,10 @@ export function Settings({
   // Skips the save that would otherwise fire the moment loaded values land in
   // state — writing back exactly what we just read.
   const loaded = useRef(false);
+
+  // Checked once each, in the background. A board that fetches nothing was
+  // otherwise invisible — "datadogs" returned zero on every run for days.
+  const [checks, setChecks] = useState<Record<string, BoardCheck | null>>({});
 
   useEffect(() => {
     getSettings().then((stored) => {
@@ -70,6 +80,18 @@ export function Settings({
   }, [state]);
 
   const companies = parseList(values.companies ?? "");
+
+  useEffect(() => {
+    for (const name of companies) {
+      if (name in checks) continue;
+
+      // marked pending first, so a slow check isn't started twice
+      setChecks((current) => ({ ...current, [name]: null }));
+      checkBoard(name).then((result) =>
+        setChecks((current) => ({ ...current, [name]: result })),
+      );
+    }
+  }, [companies.join(",")]);
   const slackOn = values.slack_enabled === "true";
 
   function set(key: string, value: string) {
@@ -171,6 +193,22 @@ export function Settings({
                       className="group flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-900 px-2 py-1 font-mono text-[10.5px] text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100"
                     >
                       {name}
+
+                      {checks[name] && !checks[name]?.ok && (
+                        <span
+                          title="This board returns no jobs — check the name"
+                          className="text-[9px] text-amber-400"
+                        >
+                          !
+                        </span>
+                      )}
+
+                      {checks[name]?.ok && (
+                        <span className="text-[9px] tabular-nums text-ink-600">
+                          {checks[name]?.count}
+                        </span>
+                      )}
+
                       <span className="text-ink-600 transition-colors group-hover:text-acid">
                         &times;
                       </span>

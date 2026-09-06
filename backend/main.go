@@ -11,6 +11,7 @@ import (
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/github"
+	"github.com/Evin009/Gojobs/backend/internal/greenhouse"
 	"github.com/Evin009/Gojobs/backend/internal/location"
 	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
@@ -475,6 +476,30 @@ func facetCounts(found []db.Job) map[string]map[string]int {
 	return counts
 }
 
+// GET /boards/check?name=stripe — does this Greenhouse board exist, and how
+// many jobs does it have?
+//
+// Greenhouse publishes no directory of its customers, so a slug can only be
+// validated by asking. Without this a typo like "datadogs" fetches nothing on
+// every run and nobody ever finds out.
+func boardCheckHandler(w http.ResponseWriter, r *http.Request) {
+	name := strings.TrimSpace(r.URL.Query().Get("name"))
+	if name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+
+	jobs, err := greenhouse.FetchJobs(name)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{
+		// an unreachable board and an empty one look the same to the user and
+		// need the same response: don't rely on this one
+		"ok":    err == nil && len(jobs) > 0,
+		"count": len(jobs),
+	})
+}
+
 func profileHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		saveProfileHandler(w, r)
@@ -579,6 +604,7 @@ func main() {
 	http.HandleFunc("/profile", withCORS(profileHandler))
 	http.HandleFunc("/settings", withCORS(settingsHandler))
 	http.HandleFunc("/jobs", withCORS(jobsHandler))
+	http.HandleFunc("/boards/check", withCORS(boardCheckHandler))
 	http.HandleFunc("/resume/base", withCORS(baseResumeHandler))
 
 	// Companies and role filters come from settings now, read fresh on every

@@ -104,10 +104,15 @@ _What this feature is responsible for, agreed before testing._
 - Refusals are checked before offers: a posting that sponsors for senior roles but not this one is refusing for this one. Covered by a test.
 - The context regex first required exactly "visa" and missed "visas", so a plain refusal read as not-stated. Caught by a test, not by reading it.
 - Verified on real data: 34 explicit refusals, 14 offering, 32 unclear, 523 silent. Filtering to refusals returns exactly 34.
+- Dedupe verified: 6,148 rows against 6,148 distinct urls. Repeated company+role pairs are real separate postings — L3Harris lists "Software Engineer Intern" once per site (Palm Bay, Greenville, Northampton, Colorado Springs), each its own url and its own job.
+
+- `GET /boards/check` validates a Greenhouse slug by fetching it, and the Settings chips now show each board's job count — or an amber "!" when it returns nothing. `datadogs` had been fetching zero on every run with nothing anywhere to say so.
+- An unreachable board and an empty one get the same answer on purpose: both mean "don't rely on this one".
+- `datadogs` corrected to `datadog` — 441 jobs.
 
 ### Found (monitoring itself)
 - The 30-minute loop had not fired in 282 minutes despite 4h44m uptime. `time.Ticker` doesn't fire while the machine sleeps, and delivers one tick on wake rather than the nine it missed. Not fixable locally in any real sense — monitoring needs a host, which is deferred.
-- `datadogs` is not a Greenhouse board (`datadog` is). It returns nothing and fails silently on every run; nothing in the UI says a configured board is dead.
+- `datadogs` is not a Greenhouse board (`datadog` is). It returned nothing and failed silently on every run — fixed, and boards are now validated on sight.
 - Greenhouse publishes no directory of its customers, so a board name can only be validated by fetching it. Worth doing when one is added.
 
 ---
@@ -157,7 +162,7 @@ message per run. No ranking, no descriptions, no applying.
 **C — Jobs in the panel**
 - [x] Panel lists what monitoring has found, newest first, both sources
 - [x] Each row links out to the actual posting
-- [ ] Prove dedupe holds — the same posting must never appear twice
+- [x] Prove dedupe holds — 6,148 rows, 6,148 distinct urls, zero duplicates
 
 **D — Dashboard stats**
 - [x] Total jobs found, and how many applied to
