@@ -83,7 +83,9 @@ _What this feature is responsible for, agreed before testing._
 - Abbreviations need word boundaries — bare "ms" appears inside "systems" and "ba" inside "database". Caught by a test.
 - "Not stated" is a real option rather than a silent pass. Only 127 of 615 Stripe postings mention a degree at all, so treating silence as "matches everything" would have made the filter useless.
 - Term filter (Spring/Summer/Fall/Winter by year), read from the title first and the description only as a fallback — descriptions mention other intakes in passing too often to trust.
-- The term list is generated from the current date, six terms ahead, and sent to the panel. Hardcoding it would rot within a year.
+- The term list is three fixed intakes (Fall 2026, Spring 2027, Summer 2027), not a rolling window. A generated list produced Fall 2027 and Winter 2027 buckets holding the same postings as Summer and Spring 2027 — job text mentions future terms in passing far more often than it advertises them.
+- Winter is folded into spring: in North American hiring they're one intake, and keeping them apart gave two buckets of the same listings.
+- Migration 012 brings existing rows into line. The first attempt only cleared rows matching *no* tracked term, leaving untracked ones inside combined values like "summer_2027,fall_2027" — those need stripping element by element.
 - Season and year must appear within 20 characters of each other; further apart is usually two unrelated facts in one sentence.
 - Tracker jobs now get real descriptions. Their links point at an ATS — Ashby 318, Greenhouse 302, Lever 119, SmartRecruiters 105 of a 4,000 sample — so `internal/jobsource` reads the provider and job id out of the URL and calls that provider's API instead of scraping a rendered page.
 - Fetched per board, not per job: Ashby and Lever only offer a board endpoint anyway, and for the others it turns dozens of requests into one.

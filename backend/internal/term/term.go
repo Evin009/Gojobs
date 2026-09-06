@@ -1,10 +1,8 @@
 package term
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // Which intake a posting is for — "Summer 2027", "Fall 2026".
@@ -59,6 +57,17 @@ func Detect(title, description string) string {
 	return strings.Join(ids, ",")
 }
 
+// Winter and spring are one intake in North American hiring — a "Winter 2027"
+// posting and a "Spring 2027" posting are the same job cycle, and keeping them
+// apart produced two buckets holding the same listings.
+func canonical(season, year string) string {
+	if season == "winter" {
+		season = "spring"
+	}
+
+	return season + "_" + year
+}
+
 func collect(text string, found map[string]bool) {
 	for _, m := range nearby.FindAllStringSubmatch(text, -1) {
 		season, year := m[1], m[2]
@@ -69,35 +78,21 @@ func collect(text string, found map[string]bool) {
 		for id, names := range seasons {
 			for _, name := range names {
 				if strings.EqualFold(season, name) {
-					found[id+"_"+year] = true
+					found[canonical(id, year)] = true
 				}
 			}
 		}
 	}
 }
 
-// Recent lists the terms worth offering as filters: this season and the next
-// five, so the list moves forward on its own instead of being edited every
-// year.
+// The intakes actually being hired for. Deliberately three, not a rolling
+// window: a generated list produced Fall 2027 and Winter 2027 buckets that
+// matched the same postings as Summer and Spring 2027, since job text mentions
+// future terms in passing far more often than it advertises them.
+//
+// Revisit when the cycle moves on — this is a list to edit, not to compute.
 func Recent() []string {
-	order := []string{"spring", "summer", "fall", "winter"}
-
-	now := time.Now()
-	year := now.Year()
-	index := int(now.Month()-1) / 3 // rough quarter -> season
-
-	var ids []string
-	for i := 0; i < 6; i++ {
-		ids = append(ids, fmt.Sprintf("%s_%d", order[index], year))
-
-		index++
-		if index == len(order) {
-			index = 0
-			year++
-		}
-	}
-
-	return ids
+	return []string{"fall_2026", "spring_2027", "summer_2027"}
 }
 
 // Label turns "summer_2027" into "Summer 2027".

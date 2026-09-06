@@ -16,6 +16,10 @@ func TestDetect(t *testing.T) {
 		{"Intern - Summer 2027", "Previous Fall 2026 interns welcome", "summer_2027"},
 		// falls back to the description only when the title says nothing
 		{"Engineering Intern", "This is a Spring 2027 placement", "spring_2027"},
+		// winter and spring are the same intake, not two
+		{"Analyst Intern - Winter 2027", "", "spring_2027"},
+		// outside the three we track
+		{"Intern - Summer 2029", "", NotStated},
 	}
 
 	for _, tc := range cases {
