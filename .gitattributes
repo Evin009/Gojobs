@@ -1,0 +1,2 @@
+extension/frontend/tailwind.config.js linguist-vendored
+extension/frontend/postcss.config.js linguist-vendored
