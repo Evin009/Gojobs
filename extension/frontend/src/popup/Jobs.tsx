@@ -8,6 +8,7 @@ import {
   EDUCATION,
   LEVELS,
   REGIONS,
+  SPONSORSHIP,
   termChoices,
 } from "../lib/roles";
 import {
@@ -227,7 +228,7 @@ export function Jobs({
           />
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-1.5">
+        <div className="mb-4 grid grid-cols-3 gap-1.5">
           <Dropdown
             label="Education"
             options={EDUCATION}
@@ -243,6 +244,14 @@ export function Jobs({
             onChange={(next) => setFilter("terms", next)}
             anyLabel="Any"
             counts={feed?.counts?.terms}
+          />
+          <Dropdown
+            label="Sponsorship"
+            options={SPONSORSHIP}
+            selected={parseList(filters.sponsorship ?? "")}
+            onChange={(next) => setFilter("sponsorship", next)}
+            anyLabel="Any"
+            counts={feed?.counts?.sponsorship}
             alignRight
           />
         </div>

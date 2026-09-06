@@ -15,6 +15,7 @@ import (
 	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 	"github.com/Evin009/Gojobs/backend/internal/roles"
+	"github.com/Evin009/Gojobs/backend/internal/sponsorship"
 	"github.com/Evin009/Gojobs/backend/internal/term"
 )
 
@@ -278,6 +279,12 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	visas, err := db.GetChoice("sponsorship")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	found, err := db.ListJobsSince(since)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -310,6 +317,10 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !term.Matches(job.Term, terms) {
+			continue
+		}
+
+		if !sponsorship.Matches(job.Sponsorship, visas) {
 			continue
 		}
 
@@ -410,11 +421,12 @@ func parseRange(id string) (time.Time, string) {
 // forty US postings today, always — not forty given whatever else is ticked.
 func facetCounts(found []db.Job) map[string]map[string]int {
 	counts := map[string]map[string]int{
-		"roles":     {},
-		"levels":    {},
-		"regions":   {},
-		"education": {},
-		"terms":     {},
+		"roles":       {},
+		"levels":      {},
+		"regions":     {},
+		"education":   {},
+		"terms":       {},
+		"sponsorship": {},
 	}
 
 	for _, job := range found {
@@ -451,6 +463,13 @@ func facetCounts(found []db.Job) map[string]map[string]int {
 				counts["terms"][id]++
 			}
 		}
+
+		visa := job.Sponsorship
+		if visa == "" {
+			visa = sponsorship.NotStated
+		}
+
+		counts["sponsorship"][visa]++
 	}
 
 	return counts

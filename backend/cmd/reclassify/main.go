@@ -14,6 +14,7 @@ import (
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
 	"github.com/Evin009/Gojobs/backend/internal/education"
+	"github.com/Evin009/Gojobs/backend/internal/sponsorship"
 	"github.com/Evin009/Gojobs/backend/internal/term"
 )
 
@@ -49,11 +50,12 @@ func main() {
 	for _, j := range jobs {
 		levels := education.Levels(j.description)
 		intake := term.Detect(j.role, j.description)
+		visa := sponsorship.Classify(j.description)
 
 		tag, err := pool.Exec(ctx,
-			`UPDATE jobs SET education = $2, term = $3
-			 WHERE url = $1 AND (education <> $2 OR term <> $3)`,
-			j.url, levels, intake)
+			`UPDATE jobs SET education = $2, term = $3, sponsorship = $4
+			 WHERE url = $1 AND (education <> $2 OR term <> $3 OR sponsorship <> $4)`,
+			j.url, levels, intake, visa)
 		if err != nil {
 			fmt.Println("update:", err)
 			continue

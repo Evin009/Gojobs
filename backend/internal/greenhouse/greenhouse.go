@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/match"
+	"github.com/Evin009/Gojobs/backend/internal/sponsorship"
 	"github.com/Evin009/Gojobs/backend/internal/term"
 	"net/http"
 
@@ -73,8 +74,9 @@ func Save(jobs []Job) []jobposting.Posting {
 	for _, job := range jobs {
 		degrees := education.Levels(job.Content)
 		intake := term.Detect(job.Title, job.Content)
+		visa := sponsorship.Classify(job.Content)
 
-		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse", job.Location.Name, degrees, intake)
+		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse", job.Location.Name, degrees, intake, visa)
 		if err != nil {
 			fmt.Println(err)
 			continue

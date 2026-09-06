@@ -7,7 +7,9 @@ import (
 )
 
 // GetProfile returns every stored fact as key -> value, e.g.
-//   { "email": "you@example.com", "phone": "+1 555 0100" }
+//
+//	{ "email": "you@example.com", "phone": "+1 555 0100" }
+//
 // A map (not a slice) because callers look facts up by name.
 func GetProfile() (map[string]string, error) {
 	rows, err := pool.Query(context.Background(), "SELECT key, value FROM profile")

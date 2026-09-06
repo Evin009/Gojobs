@@ -56,3 +56,13 @@ export function termChoices(ids: string[]): Choice[] {
     { id: "not_stated", label: "Not stated" },
   ];
 }
+
+// Mirrors backend/internal/sponsorship. "Unclear" is visible rather than
+// hidden: the posting did say something about sponsorship, we just couldn't
+// read it with a keyword, and that's worth knowing before applying.
+export const SPONSORSHIP: Choice[] = [
+  { id: "sponsors", label: "Sponsors visas" },
+  { id: "no_sponsorship", label: "No sponsorship" },
+  { id: "unclear", label: "Unclear" },
+  { id: "not_stated", label: "Not stated" },
+];

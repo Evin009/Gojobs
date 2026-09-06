@@ -99,6 +99,12 @@ _What this feature is responsible for, agreed before testing._
 - Roughly 80% of tracker links are bespoke corporate sites (Tesla, TikTok, Oracle, Workday). Those stay without descriptions; scraping them is the fragile path this deliberately avoids.
 - Both columns derive at save time, not per request: descriptions are kilobytes each and re-parsing thousands on every panel load would be far too slow. Both have backfills, since `DO NOTHING` skips existing rows.
 
+- Sponsorship filter, read from descriptions. Four verdicts rather than three: "unclear" means the posting discussed sponsorship but not in a way a keyword could settle, which is different from never mentioning it. Those 32 are the ones worth sending to Claude later.
+- "Sponsor" alone means nothing — postings advertise "company sponsored conferences" and "sponsored hackathons". A match only counts near immigration words.
+- Refusals are checked before offers: a posting that sponsors for senior roles but not this one is refusing for this one. Covered by a test.
+- The context regex first required exactly "visa" and missed "visas", so a plain refusal read as not-stated. Caught by a test, not by reading it.
+- Verified on real data: 34 explicit refusals, 14 offering, 32 unclear, 523 silent. Filtering to refusals returns exactly 34.
+
 ### Found (monitoring itself)
 - The 30-minute loop had not fired in 282 minutes despite 4h44m uptime. `time.Ticker` doesn't fire while the machine sleeps, and delivers one tick on wake rather than the nine it missed. Not fixable locally in any real sense — monitoring needs a host, which is deferred.
 - `datadogs` is not a Greenhouse board (`datadog` is). It returns nothing and fails silently on every run; nothing in the UI says a configured board is dead.
@@ -157,13 +163,13 @@ message per run. No ranking, no descriptions, no applying.
 - [x] Total jobs found, and how many applied to
 - [x] "Applied" stays 0 until the tracker exists (Phase 16) — shown honestly, not hidden
 
-**E — Sponsorship filter** (last: needs descriptions, and costs money per job)
-- [ ] Fetch the full description per posting — Greenhouse has a per-job endpoint; GitHub trackers link out and will sometimes fail
-- [ ] Keyword pre-pass first: most descriptions that mention sponsorship use standard phrasing
-- [ ] Claude classifies only the ambiguous ones — same fast-path/AI-fallback shape as `/route`
-- [ ] Three verdicts: sponsors, explicitly will not, silent
-- [ ] Cache the verdict per job — a description doesn't change, so classify once ever
-- [ ] Expect "silent" to be the large majority; the filter is only as good as what companies actually write
+**E — Sponsorship filter**
+- [x] Fetch the full description per posting — done via `?content=true` and `internal/jobsource`
+- [x] Keyword pre-pass: refusals and offers both use standard phrasing
+- [x] Four verdicts: sponsors, will not, unclear, not stated
+- [x] Cached per job — a description doesn't change, so it's classified once
+- [ ] Claude reads the "unclear" ones — 32 of them, blocked on credits
+- [x] "Not stated" is the large majority, as expected: 523 of 603
 
 ### Tested
 

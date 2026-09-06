@@ -11,6 +11,7 @@ import (
 	"github.com/Evin009/Gojobs/backend/internal/greenhouse"
 	"github.com/Evin009/Gojobs/backend/internal/jobposting"
 	"github.com/Evin009/Gojobs/backend/internal/jobsource"
+	"github.com/Evin009/Gojobs/backend/internal/sponsorship"
 	"github.com/Evin009/Gojobs/backend/internal/term"
 )
 
@@ -183,7 +184,7 @@ func enrich(limit int) {
 				continue
 			}
 
-			if err := db.SaveJobDetail(url, text, education.Levels(text), term.Detect("", text)); err != nil {
+			if err := db.SaveJobDetail(url, text, education.Levels(text), term.Detect("", text), sponsorship.Classify(text)); err != nil {
 				fmt.Println("enrich: save:", err)
 				continue
 			}

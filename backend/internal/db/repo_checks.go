@@ -10,9 +10,10 @@ import (
 // GetRepoCheck returns a previously cached answer for owner/repo.
 //
 // Three outcomes, which the two booleans keep distinct:
-//   found=false            — never checked; the caller must resolve it
-//   found=true, feed=""    — checked, and this repo has no job feed
-//   found=true, feed="..." — checked, and this is where its jobs live
+//
+//	found=false            — never checked; the caller must resolve it
+//	found=true, feed=""    — checked, and this repo has no job feed
+//	found=true, feed="..." — checked, and this is where its jobs live
 func GetRepoCheck(owner, repo string) (feedURL string, found bool, err error) {
 	// feed_url is nullable, so scan into a *string — a plain string would
 	// error on NULL, which is exactly the "no feed" case we care about

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/match"
+	"github.com/Evin009/Gojobs/backend/internal/sponsorship"
 	"github.com/Evin009/Gojobs/backend/internal/term"
 	"io"
 	"net/http"
@@ -130,7 +131,7 @@ func Save(listings []Listing, repoName string) []jobposting.Posting {
 			location = listing.Location[0]
 		}
 
-		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github", location, education.NotStated, term.Detect(listing.Title, ""))
+		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github", location, education.NotStated, term.Detect(listing.Title, ""), sponsorship.NotStated)
 		if err != nil {
 			fmt.Println(err)
 			continue
