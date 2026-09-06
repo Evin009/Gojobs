@@ -21,30 +21,58 @@ const (
 	NotStated = "not_stated"
 )
 
-// Phrases are matched as substrings; they're long enough not to collide.
+// Long enough not to collide with ordinary words, so a substring check is safe.
 var phrases = map[string][]string{
-	Bachelors: {"bachelor", "undergraduate degree", "4-year degree", "four year degree"},
-	Masters:   {"master", "graduate degree"},
-	PhD:       {"phd", "ph.d", "doctorate", "doctoral"},
+	Bachelors: {
+		"bachelor", "baccalaureate", "undergraduate",
+		"4-year degree", "4 year degree", "four-year degree", "four year degree",
+		"b.tech", "btech", "b.e.", "b.eng", "beng",
+	},
+	Masters: {
+		"master", "postgraduate", "graduate degree",
+		"m.tech", "mtech", "m.eng", "meng", "mba",
+	},
+	PhD: {
+		"phd", "ph.d", "doctorate", "doctoral", "d.phil", "dphil",
+	},
 }
 
-// Abbreviations need word boundaries: bare "ms" appears inside "systems" and
-// "forms", "ba" inside "database".
+// Abbreviations, matched only as whole tokens: bare "ms" sits inside "systems"
+// and "ba" inside "database".
+//
+// "ma" is deliberately absent — it's the state code in "Boston, MA", which
+// turns up in job text constantly and has nothing to do with a degree.
 var codes = map[string][]string{
-	Bachelors: {"bs", "ba", "b.s.", "b.a.", "bsc"},
-	Masters:   {"ms", "ma", "m.s.", "m.a.", "msc"},
+	Bachelors: {"bs", "ba", "bsc", "b.s", "b.a", "b.s.", "b.a.", "bs/ba", "ba/bs"},
+	Masters:   {"ms", "msc", "m.s", "m.s.", "ms/phd", "bs/ms"},
 }
 
-var (
-	tags     = regexp.MustCompile(`<[^>]+>`)
-	boundary = map[string]*regexp.Regexp{}
-)
+// "MS" is also Microsoft. Without this, "MS Office" and "MS Excel" — which
+// appear in a large share of postings — would each read as a master's
+// requirement.
+var notADegree = regexp.MustCompile(`(?i)\bms[ .]?(office|excel|word|teams|sql|project|dynamics|azure|outlook|powerpoint|visio|access|windows|server)\b`)
+
+var tags = regexp.MustCompile(`<[^>]+>`)
+
+// Compiled once at start rather than lazily into a shared map: Save runs a
+// goroutine per company, and a map written from several at once is a crash,
+// not a slowdown.
+var boundary = func() map[string]*regexp.Regexp {
+	out := map[string]*regexp.Regexp{}
+
+	for _, list := range codes {
+		for _, code := range list {
+			out[code] = regexp.MustCompile(`(?i)(^|[^a-z0-9.])` + regexp.QuoteMeta(code) + `([^a-z0-9]|$)`)
+		}
+	}
+
+	return out
+}()
 
 func hasCode(text, code string) bool {
 	re, ok := boundary[code]
 	if !ok {
-		re = regexp.MustCompile(`(?i)(^|[^a-z0-9])` + regexp.QuoteMeta(code) + `([^a-z0-9]|$)`)
-		boundary[code] = re
+		return false
 	}
 
 	return re.MatchString(text)
@@ -58,6 +86,9 @@ func Levels(description string) string {
 	if strings.TrimSpace(text) == "" {
 		return NotStated
 	}
+
+	// strip Microsoft product names before looking for "ms"
+	text = notADegree.ReplaceAllString(text, " ")
 
 	var found []string
 

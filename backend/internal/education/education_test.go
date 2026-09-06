@@ -14,6 +14,22 @@ func TestLevels(t *testing.T) {
 		{"Great communication skills", NotStated},
 		// "ms" inside "systems" and "ba" inside "database" must not count
 		{"Experience with distributed systems and database design", NotStated},
+
+		// the abbreviations postings actually use
+		{"B.A. or B.S. in Computer Science", Bachelors},
+		{"BS/MS in a technical field", Bachelors + "," + Masters},
+		{"Pursuing a B.Tech in Electronics", Bachelors},
+		{"Currently enrolled in an undergraduate program", Bachelors},
+		{"MBA candidates preferred", Masters},
+		{"Baccalaureate degree required", Bachelors},
+		{"D.Phil in a quantitative discipline", PhD},
+
+		// Microsoft, not a master's — this appears in a large share of postings
+		{"Proficiency with MS Office and MS Excel", NotStated},
+		{"Strong MS SQL Server experience", NotStated},
+
+		// "MA" is the state code in a location line, not an arts degree
+		{"This role is based in Boston, MA", NotStated},
 		{"", NotStated},
 	}
 

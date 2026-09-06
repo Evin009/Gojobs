@@ -81,6 +81,11 @@ _What this feature is responsible for, agreed before testing._
 - Education filter (Bachelor's / Master's / PhD / Not stated), read from job descriptions. Greenhouse returns every job's full body in the same request with `?content=true`, so this costs one extra query parameter rather than one request per job.
 - Every level mentioned is recorded, not just the highest: "Bachelor's required, Master's preferred" is open to both.
 - Abbreviations need word boundaries — bare "ms" appears inside "systems" and "ba" inside "database". Caught by a test.
+- Patterns widened to what postings actually write: B.A./B.S./BSc, B.Tech, BEng, baccalaureate, undergraduate, MBA, M.Tech, postgraduate, D.Phil, and BS/MS-style pairs.
+- "MS" is also Microsoft: "MS Office", "MS Excel", "MS SQL" appear in a large share of postings and each read as a master's requirement. Product names are stripped before the abbreviation check.
+- "MA" removed as a code entirely — it's the state in "Boston, MA", which appears constantly and means nothing about a degree.
+- Real bug found while reading the code: the regex cache was a plain map written lazily, and `Save` runs a goroutine per company. Concurrent map writes crash Go rather than merely racing. Now compiled once at package start.
+- `cmd/reclassify` re-derives education and term from stored descriptions, since a stored verdict doesn't change when the classifier improves. First run: 187 descriptions re-read, 24 verdicts corrected.
 - "Not stated" is a real option rather than a silent pass. Only 127 of 615 Stripe postings mention a degree at all, so treating silence as "matches everything" would have made the filter useless.
 - Term filter (Spring/Summer/Fall/Winter by year), read from the title first and the description only as a fallback — descriptions mention other intakes in passing too often to trust.
 - The term list is three fixed intakes (Fall 2026, Spring 2027, Summer 2027), not a rolling window. A generated list produced Fall 2027 and Winter 2027 buckets holding the same postings as Summer and Spring 2027 — job text mentions future terms in passing far more often than it advertises them.
