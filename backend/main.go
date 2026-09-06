@@ -244,6 +244,8 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 // "Today" is midnight in the reset zone, not a rolling 24 hours — the count is
 // meant to go back to zero at a predictable time.
 func jobsHandler(w http.ResponseWriter, r *http.Request) {
+	since, rangeID := parseRange(r.URL.Query().Get("range"))
+
 	disciplines, levels, err := db.GetRoleKeywords()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -256,7 +258,7 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	found, err := db.ListJobsSince(db.StartOfDay())
+	found, err := db.ListJobsSince(since)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -266,7 +268,12 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 	// run, which is what "new" means to someone watching the panel.
 	recentSince := time.Now().Add(-30 * time.Minute)
 
+	// The panel renders a screenful at a time; the count still reflects every
+	// match, so "showing 200 of 5,759" stays honest.
+	const listCap = 200
+
 	jobs := []db.Job{}
+	matching := 0
 	recent := 0
 
 	for _, job := range found {
@@ -278,8 +285,12 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		job.Location = location.Display(job.Location)
-		jobs = append(jobs, job)
+		matching++
+
+		if len(jobs) < listCap {
+			job.Location = location.Display(job.Location)
+			jobs = append(jobs, job)
+		}
 
 		// counted inside the filter loop, so it tracks the chosen field, type
 		// and location like every other number on the panel
@@ -304,15 +315,36 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{
-		"jobs":   jobs,
-		"today":  len(jobs),
-		"recent": recent,
+		"jobs": jobs,
+		// matching is every job that passed the filters; jobs is the capped
+		// slice actually sent
+		"matching": matching,
+		"shown":    len(jobs),
+		"recent":   recent,
+		"range":    rangeID,
 		// applications aren't tracked yet (Phase 16). Sent as 0 rather than
 		// omitted, so the panel shows an honest zero instead of a blank.
 		"applied":      0,
 		"last_checked": lastChecked,
 		"counts":       counts,
 	})
+}
+
+// How far back the panel is looking. "today" is the default because the panel
+// is mainly a "what's new" feed; the wider ranges are for browsing what's
+// already been collected.
+//
+// An unrecognised value falls back to today rather than erroring — a bad query
+// string shouldn't empty the panel.
+func parseRange(id string) (time.Time, string) {
+	switch id {
+	case "week":
+		return time.Now().AddDate(0, 0, -7), "week"
+	case "all":
+		return time.Time{}, "all"
+	default:
+		return db.StartOfDay(), "today"
+	}
 }
 
 // facetCounts says how many of today's postings match each filter option on

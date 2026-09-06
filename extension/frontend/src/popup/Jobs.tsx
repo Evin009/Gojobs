@@ -12,6 +12,12 @@ import {
   type Settings,
 } from "../lib/api";
 
+const RANGES = [
+  { id: "today", label: "Today" },
+  { id: "week", label: "7 days" },
+  { id: "all", label: "All" },
+];
+
 function parseList(value: string): string[] {
   return value
     .split(",")
@@ -64,18 +70,27 @@ export function Jobs({
 }) {
   const [feed, setFeed] = useState<JobFeed | null>(null);
   const [filters, setFilters] = useState<Settings>({});
+  // How far back to look. Today by default — the panel is mainly a "what's
+  // new" feed, and the wider ranges are for browsing what's been collected.
+  const [range, setRange] = useState("today");
   const [state, setState] = useState<"loading" | "ready" | "offline">("loading");
 
-  async function load() {
-    const result = await getJobs();
+  async function load(which = range) {
+    const result = await getJobs(which);
     setFeed(result);
     setState(result ? "ready" : "offline");
+  }
+
+  function pickRange(next: string) {
+    setRange(next);
+    setState("loading");
+    load(next);
   }
 
   useEffect(() => {
     let live = true;
 
-    Promise.all([getSettings(), getJobs()]).then(([stored, result]) => {
+    Promise.all([getSettings(), getJobs("today")]).then(([stored, result]) => {
       if (!live) return;
 
       setFilters(stored);
@@ -115,7 +130,11 @@ export function Jobs({
         {/* Numbers first: the point of this view is "is it working", and a
             count answers that before any list does. */}
         <div className="mb-4 flex items-end gap-6 border-b border-ink-800 pb-4">
-          <Stat label="Today" value={feed?.today ?? 0} loading={state === "loading"} />
+          <Stat
+            label={RANGES.find((r) => r.id === range)?.label ?? "Today"}
+            value={feed?.matching ?? 0}
+            loading={state === "loading"}
+          />
           <Stat
             label="Last 30m"
             value={feed?.recent ?? 0}
@@ -132,6 +151,31 @@ export function Jobs({
               {state === "ready" ? checkedLabel(feed?.last_checked ?? "") : "—"}
             </p>
           </div>
+        </div>
+
+        {/* Range sits with the filters — it is one, just over time rather
+            than over content. */}
+        <div className="mb-3 flex gap-1">
+          {RANGES.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => pickRange(option.id)}
+              className={`relative rounded-md px-2 py-1 font-mono text-[9.5px] uppercase tracking-[0.12em] transition-colors ${
+                option.id === range
+                  ? "text-ink-950"
+                  : "text-ink-600 hover:text-ink-300"
+              }`}
+            >
+              {option.id === range && (
+                <motion.span
+                  layoutId="range-pill"
+                  transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  className="absolute inset-0 rounded-md bg-acid"
+                />
+              )}
+              <span className="relative">{option.label}</span>
+            </button>
+          ))}
         </div>
 
         <div className="mb-4 grid grid-cols-3 gap-1.5">
@@ -176,6 +220,12 @@ export function Jobs({
             title="Nothing found yet"
             body="Monitoring runs every 30 minutes. Widen the filters above, or add a board in Settings."
           />
+        )}
+
+        {state === "ready" && !!feed && feed.matching > feed.shown && (
+          <p className="mb-2 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-600">
+            Showing {feed.shown} of {feed.matching}
+          </p>
         )}
 
         {state === "ready" && !!feed?.jobs.length && (

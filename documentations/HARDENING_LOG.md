@@ -72,6 +72,14 @@ _What this feature is responsible for, agreed before testing._
 - Mid and senior levels removed. This is for students in tech; those two were noise, and their counts dwarfed everything else in the dropdown.
 - "Last 30m" counter added beside Today, matching the monitoring interval, and counted inside the filter loop so it tracks the chosen field, type and location like every other number.
 - "Checked" shows exact time and date rather than "3 hrs ago" — a panel that hasn't refreshed in hours should be obvious, not vague.
+- Range control (Today / 7 days / All). The panel was only ever showing jobs first seen today, so a tracker repo with 3,000 live listings looked like 253 — everything older was stored but invisible.
+- The list is capped at 200 rows while the count reflects every match, and the panel says "Showing 200 of 5,759" rather than quietly truncating.
+- An unrecognised range falls back to Today instead of erroring: a bad query string shouldn't empty the panel.
+
+### Found (monitoring itself)
+- The 30-minute loop had not fired in 282 minutes despite 4h44m uptime. `time.Ticker` doesn't fire while the machine sleeps, and delivers one tick on wake rather than the nine it missed. Not fixable locally in any real sense — monitoring needs a host, which is deferred.
+- `datadogs` is not a Greenhouse board (`datadog` is). It returns nothing and fails silently on every run; nothing in the UI says a configured board is dead.
+- Greenhouse publishes no directory of its customers, so a board name can only be validated by fetching it. Worth doing when one is added.
 
 ---
 

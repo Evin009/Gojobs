@@ -94,16 +94,18 @@ export type Facets = Record<string, Record<string, number>>;
 
 export type JobFeed = {
   jobs: Job[];
-  today: number;
+  // every job that passed the filters; `shown` is how many were actually sent
+  matching: number;
+  shown: number;
   recent: number;
   applied: number;
   last_checked: string;
   counts: Facets;
 };
 
-export async function getJobs(limit = 50): Promise<JobFeed | null> {
+export async function getJobs(range = "today"): Promise<JobFeed | null> {
   try {
-    const response = await fetch(`${BACKEND}/jobs?limit=${limit}`);
+    const response = await fetch(`${BACKEND}/jobs?range=${range}`);
     return response.ok ? await response.json() : null;
   } catch {
     // null, not an empty feed: "can't reach the backend" and "found nothing"
