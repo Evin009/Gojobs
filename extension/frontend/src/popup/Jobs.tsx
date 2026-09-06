@@ -3,7 +3,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { Chrome } from "../components/ui";
 import { Dropdown } from "../components/Dropdown";
-import { DISCIPLINES, LEVELS, REGIONS } from "../lib/roles";
+import {
+  DISCIPLINES,
+  EDUCATION,
+  LEVELS,
+  REGIONS,
+  termChoices,
+} from "../lib/roles";
 import {
   getJobs,
   getSettings,
@@ -193,7 +199,7 @@ export function Jobs({
           ))}
         </div>
 
-        <div className="mb-4 grid grid-cols-3 gap-1.5">
+        <div className="mb-1.5 grid grid-cols-3 gap-1.5">
           <Dropdown
             label="Field"
             options={DISCIPLINES}
@@ -217,6 +223,26 @@ export function Jobs({
             onChange={(next) => setFilter("regions", next)}
             anyLabel="Anywhere"
             counts={feed?.counts?.regions}
+            alignRight
+          />
+        </div>
+
+        <div className="mb-4 grid grid-cols-2 gap-1.5">
+          <Dropdown
+            label="Education"
+            options={EDUCATION}
+            selected={parseList(filters.education ?? "")}
+            onChange={(next) => setFilter("education", next)}
+            anyLabel="Any"
+            counts={feed?.counts?.education}
+          />
+          <Dropdown
+            label="Term"
+            options={termChoices(feed?.term_options ?? [])}
+            selected={parseList(filters.terms ?? "")}
+            onChange={(next) => setFilter("terms", next)}
+            anyLabel="Any"
+            counts={feed?.counts?.terms}
             alignRight
           />
         </div>

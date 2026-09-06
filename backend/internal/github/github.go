@@ -3,7 +3,9 @@ package github
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/match"
+	"github.com/Evin009/Gojobs/backend/internal/term"
 	"io"
 	"net/http"
 	"strings"
@@ -128,7 +130,7 @@ func Save(listings []Listing, repoName string) []jobposting.Posting {
 			location = listing.Location[0]
 		}
 
-		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github", location)
+		inserted, err := db.InsertJob(listing.CompanyName, listing.Title, "", listing.AbsoluteURL, "github", location, education.NotStated, term.Detect(listing.Title, ""))
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -137,6 +139,10 @@ func Save(listings []Listing, repoName string) []jobposting.Posting {
 		// already known: fill in a location if it's missing, since the insert
 		// above skipped the row entirely
 		if !inserted {
+			if err := db.BackfillTerm(listing.AbsoluteURL, term.Detect(listing.Title, "")); err != nil {
+				fmt.Println("backfill term:", err)
+			}
+
 			if err := db.BackfillLocation(listing.AbsoluteURL, location); err != nil {
 				fmt.Println("backfill location:", err)
 			}

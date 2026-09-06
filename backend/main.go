@@ -9,11 +9,13 @@ import (
 	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
+	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/github"
 	"github.com/Evin009/Gojobs/backend/internal/location"
 	"github.com/Evin009/Gojobs/backend/internal/match"
 	"github.com/Evin009/Gojobs/backend/internal/monitor"
 	"github.com/Evin009/Gojobs/backend/internal/roles"
+	"github.com/Evin009/Gojobs/backend/internal/term"
 )
 
 // withCORS wraps a handler to allow the extension (running on other origins,
@@ -264,6 +266,18 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	degrees, err := db.GetChoice("education")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	terms, err := db.GetChoice("terms")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	found, err := db.ListJobsSince(since)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -288,6 +302,14 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !location.Matches(job.Location, regions) {
+			continue
+		}
+
+		if !education.Matches(job.Education, degrees) {
+			continue
+		}
+
+		if !term.Matches(job.Term, terms) {
 			continue
 		}
 
@@ -332,6 +354,9 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		"shown":    len(jobs),
 		"recent":   recent,
 		"range":    rangeID,
+		// the term list moves forward with the calendar, so the panel is told
+		// which ones to offer rather than hardcoding them
+		"term_options": term.Recent(),
 		// applications aren't tracked yet (Phase 16). Sent as 0 rather than
 		// omitted, so the panel shows an honest zero instead of a blank.
 		"applied":      0,
@@ -385,9 +410,11 @@ func parseRange(id string) (time.Time, string) {
 // forty US postings today, always — not forty given whatever else is ticked.
 func facetCounts(found []db.Job) map[string]map[string]int {
 	counts := map[string]map[string]int{
-		"roles":   {},
-		"levels":  {},
-		"regions": {},
+		"roles":     {},
+		"levels":    {},
+		"regions":   {},
+		"education": {},
+		"terms":     {},
 	}
 
 	for _, job := range found {
@@ -411,6 +438,18 @@ func facetCounts(found []db.Job) map[string]map[string]int {
 			counts["regions"][location.US]++
 		case location.Canada:
 			counts["regions"][location.Canada]++
+		}
+
+		for _, level := range append(strings.Split(job.Education, ","), "") {
+			if level != "" {
+				counts["education"][level]++
+			}
+		}
+
+		for _, id := range strings.Split(job.Term, ",") {
+			if id != "" {
+				counts["terms"][id]++
+			}
 		}
 	}
 

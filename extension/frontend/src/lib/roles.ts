@@ -31,3 +31,28 @@ export const REGIONS: Choice[] = [
   { id: "us", label: "United States" },
   { id: "canada", label: "Canada" },
 ];
+
+// Mirrors backend/internal/education. "Not stated" is an option rather than a
+// silent pass: most descriptions never mention a degree, so hiding those
+// behind an invisible rule would make the filter meaningless.
+export const EDUCATION: Choice[] = [
+  { id: "bachelors", label: "Bachelor's" },
+  { id: "masters", label: "Master's" },
+  { id: "phd", label: "PhD" },
+  { id: "not_stated", label: "Not stated" },
+];
+
+// Terms come from the server — the list moves forward with the calendar, so
+// hardcoding it here would rot.
+export function termChoices(ids: string[]): Choice[] {
+  return [
+    ...ids.map((id) => {
+      const [season, year] = id.split("_");
+      return {
+        id,
+        label: `${season.charAt(0).toUpperCase()}${season.slice(1)} ${year}`,
+      };
+    }),
+    { id: "not_stated", label: "Not stated" },
+  ];
+}

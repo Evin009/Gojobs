@@ -3,7 +3,9 @@ package greenhouse
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/Evin009/Gojobs/backend/internal/education"
 	"github.com/Evin009/Gojobs/backend/internal/match"
+	"github.com/Evin009/Gojobs/backend/internal/term"
 	"net/http"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
@@ -20,7 +22,10 @@ type Job struct {
 	AbsoluteURL string   `json:"absolute_url"`
 	CompanyName string   `json:"company_name"`
 	Location    Location `json:"location"`
-	UpdatedAt   string   `json:"updated_at"`
+	// Full HTML description. Only present with ?content=true, which costs
+	// nothing extra — the same one request returns every job with its body.
+	Content   string `json:"content"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 type response struct {
@@ -29,7 +34,9 @@ type response struct {
 
 // FetchJobs hits Greenhouse's public JSON API for a company's job board.
 func FetchJobs(company string) ([]Job, error) {
-	url := "https://boards-api.greenhouse.io/v1/boards/" + company + "/jobs"
+	// content=true so descriptions arrive with the listing. Without it we'd
+	// need one request per job to read education requirements.
+	url := "https://boards-api.greenhouse.io/v1/boards/" + company + "/jobs?content=true"
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -64,7 +71,10 @@ func Save(jobs []Job) []jobposting.Posting {
 	var newJobs []jobposting.Posting
 
 	for _, job := range jobs {
-		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse", job.Location.Name)
+		degrees := education.Levels(job.Content)
+		intake := term.Detect(job.Title, job.Content)
+
+		inserted, err := db.InsertJob(job.CompanyName, job.Title, "", job.AbsoluteURL, "greenhouse", job.Location.Name, degrees, intake)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -75,6 +85,14 @@ func Save(jobs []Job) []jobposting.Posting {
 		if !inserted {
 			if err := db.BackfillLocation(job.AbsoluteURL, job.Location.Name); err != nil {
 				fmt.Println("backfill location:", err)
+			}
+
+			if err := db.BackfillEducation(job.AbsoluteURL, degrees); err != nil {
+				fmt.Println("backfill education:", err)
+			}
+
+			if err := db.BackfillTerm(job.AbsoluteURL, intake); err != nil {
+				fmt.Println("backfill term:", err)
 			}
 		}
 

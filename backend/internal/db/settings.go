@@ -96,6 +96,17 @@ func GetRegions() ([]string, error) {
 	return listSetting(settings, "regions"), nil
 }
 
+// GetChoice returns any comma-separated multi-select setting by key —
+// education, terms, and anything added later.
+func GetChoice(key string) ([]string, error) {
+	settings, err := GetSettings()
+	if err != nil {
+		return nil, err
+	}
+
+	return listSetting(settings, key), nil
+}
+
 // Splits a comma-separated setting into trimmed, non-empty entries.
 func listSetting(settings map[string]string, key string) []string {
 	var out []string

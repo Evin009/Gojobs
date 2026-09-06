@@ -101,6 +101,7 @@ export type JobFeed = {
   applied: number;
   last_checked: string;
   counts: Facets;
+  term_options: string[];
 };
 
 export async function getJobs(range = "today", q = ""): Promise<JobFeed | null> {

@@ -78,6 +78,14 @@ _What this feature is responsible for, agreed before testing._
 - Search bar under the filters, matching company, role and location. Runs on the server, before the 200-row cap — a browser-side search would silently miss every match past row 200.
 - Every term must appear, so "stripe intern" narrows rather than widens. Substring rather than whole-word, since searching is exploratory and "eng" should find "Engineering".
 - Debounced 250ms: one request per pause in typing, not one per keystroke. The empty state names the query that found nothing.
+- Education filter (Bachelor's / Master's / PhD / Not stated), read from job descriptions. Greenhouse returns every job's full body in the same request with `?content=true`, so this costs one extra query parameter rather than one request per job.
+- Every level mentioned is recorded, not just the highest: "Bachelor's required, Master's preferred" is open to both.
+- Abbreviations need word boundaries — bare "ms" appears inside "systems" and "ba" inside "database". Caught by a test.
+- "Not stated" is a real option rather than a silent pass. Only 127 of 615 Stripe postings mention a degree at all, so treating silence as "matches everything" would have made the filter useless.
+- Term filter (Spring/Summer/Fall/Winter by year), read from the title first and the description only as a fallback — descriptions mention other intakes in passing too often to trust.
+- The term list is generated from the current date, six terms ahead, and sent to the panel. Hardcoding it would rot within a year.
+- Season and year must appear within 20 characters of each other; further apart is usually two unrelated facts in one sentence.
+- Both columns derive at save time, not per request: descriptions are kilobytes each and re-parsing thousands on every panel load would be far too slow. Both have backfills, since `DO NOTHING` skips existing rows.
 
 ### Found (monitoring itself)
 - The 30-minute loop had not fired in 282 minutes despite 4h44m uptime. `time.Ticker` doesn't fire while the machine sleeps, and delivers one tick on wake rather than the nine it missed. Not fixable locally in any real sense — monitoring needs a host, which is deferred.
