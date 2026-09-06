@@ -75,6 +75,9 @@ _What this feature is responsible for, agreed before testing._
 - Range control (Today / 7 days / All). The panel was only ever showing jobs first seen today, so a tracker repo with 3,000 live listings looked like 253 — everything older was stored but invisible.
 - The list is capped at 200 rows while the count reflects every match, and the panel says "Showing 200 of 5,759" rather than quietly truncating.
 - An unrecognised range falls back to Today instead of erroring: a bad query string shouldn't empty the panel.
+- Search bar under the filters, matching company, role and location. Runs on the server, before the 200-row cap — a browser-side search would silently miss every match past row 200.
+- Every term must appear, so "stripe intern" narrows rather than widens. Substring rather than whole-word, since searching is exploratory and "eng" should find "Engineering".
+- Debounced 250ms: one request per pause in typing, not one per keystroke. The empty state names the query that found nothing.
 
 ### Found (monitoring itself)
 - The 30-minute loop had not fired in 282 minutes despite 4h44m uptime. `time.Ticker` doesn't fire while the machine sleeps, and delivers one tick on wake rather than the nine it missed. Not fixable locally in any real sense — monitoring needs a host, which is deferred.

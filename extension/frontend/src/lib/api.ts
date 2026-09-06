@@ -103,9 +103,10 @@ export type JobFeed = {
   counts: Facets;
 };
 
-export async function getJobs(range = "today"): Promise<JobFeed | null> {
+export async function getJobs(range = "today", q = ""): Promise<JobFeed | null> {
   try {
-    const response = await fetch(`${BACKEND}/jobs?range=${range}`);
+    const params = new URLSearchParams({ range, q });
+    const response = await fetch(`${BACKEND}/jobs?${params}`);
     return response.ok ? await response.json() : null;
   } catch {
     // null, not an empty feed: "can't reach the backend" and "found nothing"

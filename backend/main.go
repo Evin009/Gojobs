@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Evin009/Gojobs/backend/internal/db"
@@ -246,6 +247,11 @@ func settingsHandler(w http.ResponseWriter, r *http.Request) {
 func jobsHandler(w http.ResponseWriter, r *http.Request) {
 	since, rangeID := parseRange(r.URL.Query().Get("range"))
 
+	// Searched here rather than in the panel: the panel only receives the
+	// capped list, so a browser-side search would silently miss every match
+	// past row 200.
+	query := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
+
 	disciplines, levels, err := db.GetRoleKeywords()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -282,6 +288,10 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !location.Matches(job.Location, regions) {
+			continue
+		}
+
+		if !matchesQuery(job, query) {
 			continue
 		}
 
@@ -328,6 +338,26 @@ func jobsHandler(w http.ResponseWriter, r *http.Request) {
 		"last_checked": lastChecked,
 		"counts":       counts,
 	})
+}
+
+// matchesQuery checks the free-text search against the fields a person would
+// actually search by. Substring rather than whole-word here — searching is
+// exploratory, and "eng" should find "Engineering".
+func matchesQuery(job db.Job, query string) bool {
+	if query == "" {
+		return true
+	}
+
+	haystack := strings.ToLower(job.Company + " " + job.Role + " " + job.Location)
+
+	// every term must appear, so "stripe intern" narrows rather than widens
+	for _, term := range strings.Fields(query) {
+		if !strings.Contains(haystack, term) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // How far back the panel is looking. "today" is the default because the panel

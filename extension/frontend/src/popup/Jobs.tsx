@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Chrome } from "../components/ui";
 import { Dropdown } from "../components/Dropdown";
@@ -73,10 +73,11 @@ export function Jobs({
   // How far back to look. Today by default — the panel is mainly a "what's
   // new" feed, and the wider ranges are for browsing what's been collected.
   const [range, setRange] = useState("today");
+  const [query, setQuery] = useState("");
   const [state, setState] = useState<"loading" | "ready" | "offline">("loading");
 
-  async function load(which = range) {
-    const result = await getJobs(which);
+  async function load(which = range, q = query) {
+    const result = await getJobs(which, q);
     setFeed(result);
     setState(result ? "ready" : "offline");
   }
@@ -84,13 +85,27 @@ export function Jobs({
   function pickRange(next: string) {
     setRange(next);
     setState("loading");
-    load(next);
+    load(next, query);
   }
+
+  // Debounced: one request per pause in typing, not one per keystroke. Skipped
+  // on the first render so it doesn't duplicate the initial load.
+  const typed = useRef(false);
+
+  useEffect(() => {
+    if (!typed.current) {
+      typed.current = true;
+      return;
+    }
+
+    const timer = setTimeout(() => load(range, query), 250);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     let live = true;
 
-    Promise.all([getSettings(), getJobs("today")]).then(([stored, result]) => {
+    Promise.all([getSettings(), getJobs("today", "")]).then(([stored, result]) => {
       if (!live) return;
 
       setFilters(stored);
@@ -206,6 +221,29 @@ export function Jobs({
           />
         </div>
 
+        <div className="relative mb-4">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search company, role or location"
+            className="w-full rounded-md border border-ink-700 bg-ink-900 py-1.5 pl-7 pr-7 font-mono text-[10.5px] text-ink-100 outline-none transition placeholder:text-ink-600 focus:border-acid/60 focus:ring-2 focus:ring-acid/10"
+          />
+
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-ink-600">
+            ⌕
+          </span>
+
+          {!!query && (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 font-mono text-[11px] text-ink-600 transition-colors hover:text-ink-100"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+
         {state === "loading" && <Skeleton />}
 
         {state === "offline" && (
@@ -217,8 +255,12 @@ export function Jobs({
 
         {state === "ready" && !feed?.jobs.length && (
           <Empty
-            title="Nothing found yet"
-            body="Monitoring runs every 30 minutes. Widen the filters above, or add a board in Settings."
+            title={query ? "No matches" : "Nothing found yet"}
+            body={
+              query
+                ? `Nothing matches "${query}" in this range.`
+                : "Monitoring runs every 30 minutes. Widen the filters above, or add a board in Settings."
+            }
           />
         )}
 
