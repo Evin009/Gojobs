@@ -148,3 +148,59 @@ func BackfillLocation(url, location string) error {
 
 	return err
 }
+
+// Hosts we can actually fetch a description from. Filtering here rather than
+// in Go matters: without it the newest 150 rows are mostly bespoke career
+// sites we can't call, so every run would burn its slice on the same
+// unfetchable jobs and never reach the ones it could do something with.
+var fetchableHosts = []string{
+	"jobs.ashbyhq.com",
+	"job-boards.greenhouse.io",
+	"boards.greenhouse.io",
+	"jobs.lever.co",
+	"jobs.smartrecruiters.com",
+}
+
+// JobsNeedingDetail returns jobs we have no description for yet, newest first.
+//
+// Capped by the caller: enrichment hits third-party APIs, so it works through
+// the backlog a slice at a time rather than in one burst.
+func JobsNeedingDetail(limit int) ([]Job, error) {
+	patterns := make([]string, 0, len(fetchableHosts))
+	for _, host := range fetchableHosts {
+		patterns = append(patterns, "https://"+host+"/%")
+	}
+
+	rows, err := pool.Query(context.Background(),
+		`SELECT company, role, url, source, location, education, term, created_at
+		 FROM jobs WHERE description = '' AND source = 'github'
+		 AND url LIKE ANY($2)
+		 ORDER BY created_at DESC LIMIT $1`, limit, patterns)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var jobs []Job
+
+	for rows.Next() {
+		var job Job
+		if err := rows.Scan(&job.Company, &job.Role, &job.URL, &job.Source,
+			&job.Location, &job.Education, &job.Term, &job.CreatedAt); err != nil {
+			return nil, err
+		}
+
+		jobs = append(jobs, job)
+	}
+
+	return jobs, rows.Err()
+}
+
+// SaveJobDetail stores a fetched description and what was read out of it.
+func SaveJobDetail(url, description, education, term string) error {
+	_, err := pool.Exec(context.Background(),
+		`UPDATE jobs SET description = $2, education = $3, term = $4 WHERE url = $1`,
+		url, description, education, term)
+
+	return err
+}

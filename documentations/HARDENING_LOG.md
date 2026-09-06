@@ -85,6 +85,11 @@ _What this feature is responsible for, agreed before testing._
 - Term filter (Spring/Summer/Fall/Winter by year), read from the title first and the description only as a fallback — descriptions mention other intakes in passing too often to trust.
 - The term list is generated from the current date, six terms ahead, and sent to the panel. Hardcoding it would rot within a year.
 - Season and year must appear within 20 characters of each other; further apart is usually two unrelated facts in one sentence.
+- Tracker jobs now get real descriptions. Their links point at an ATS — Ashby 318, Greenhouse 302, Lever 119, SmartRecruiters 105 of a 4,000 sample — so `internal/jobsource` reads the provider and job id out of the URL and calls that provider's API instead of scraping a rendered page.
+- Fetched per board, not per job: Ashby and Lever only offer a board endpoint anyway, and for the others it turns dozens of requests into one.
+- 150 jobs per run, so the backlog drains over a few cycles rather than firing a thousand requests at once.
+- The pending query filters to fetchable hosts in SQL. Without it the newest 150 rows were mostly bespoke career sites, so each run burned its slice on the same unfetchable jobs and never reached the ones it could do something with — yield went from 22/150 to 134/150.
+- Roughly 80% of tracker links are bespoke corporate sites (Tesla, TikTok, Oracle, Workday). Those stay without descriptions; scraping them is the fragile path this deliberately avoids.
 - Both columns derive at save time, not per request: descriptions are kilobytes each and re-parsing thousands on every panel load would be far too slow. Both have backfills, since `DO NOTHING` skips existing rows.
 
 ### Found (monitoring itself)
