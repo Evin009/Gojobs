@@ -1,1 +1,6 @@
-.nosync
+# Both names: the folder is renamed .nosync so iCloud leaves it alone, and the
+# rename slipped it past a plain "node_modules/" rule — 3,466 dependency files
+# went into the repo before this was noticed.
+node_modules/
+node_modules.nosync/
+dist/
